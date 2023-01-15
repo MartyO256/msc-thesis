@@ -4,4 +4,13 @@
 
 \begin{document}
 
+\begin{figure}
+\begin{tabular}{llll}
+\LF kinds & $ K $ & $ \Coloneqq $ & $ \mathsf{type} \mid \Pi x {:} A. K \mid A \to K $\\
+\LF types & $ A, B $ & $ \Coloneqq $ & $ \mathbf{a} \mid A \to B \mid A \; M_1 \; M_2 \; \dots \; M_n $\\
+\LF terms & $ M, N $ & $ \Coloneqq $ & $ \mathbf{c} \mid x \mid \lambda x {:} A. M \mid M \; N_1 \; N_2 \; \dots \; N_n \mid M : A $
+\end{tabular}
+
+\caption{External syntax definition.}
+\end{figure}
 \end{document}
