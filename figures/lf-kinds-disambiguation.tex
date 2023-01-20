@@ -1,5 +1,4 @@
-\begin{figure}
-$ \boxed{\Xi \vdash \ucorner{K} \rightsquigarrow_K K' \dashv \Xi'} $ \quad The parser object $ \ucorner{K} $ is disambiguated to the \LF kind $ K' $ under the disambiguation context $ \Xi $, which produces the output disambiguation state $ \Xi' $.
+\noindent $ \boxed{\Xi \vdash \ucorner{K} \rightsquigarrow_K K' \dashv \Xi'} $ \quad The parser object $ \ucorner{K} $ is disambiguated to the \LF kind $ K' $ under the disambiguation context $ \Xi $, which produces the output disambiguation state $ \Xi' $.
 
 \begin{equation}
 \infer{\Xi \vdash \ucorner{\mathsf{type}} \rightsquigarrow_K \mathsf{type} \dashv \Xi}{}
@@ -12,6 +11,3 @@ $ \boxed{\Xi \vdash \ucorner{K} \rightsquigarrow_K K' \dashv \Xi'} $ \quad The p
 \begin{equation}
 \infer{\Xi \vdash \ucorner{\Pi x {:} A. K} \rightsquigarrow_K \Pi x {:} A. K \dashv \Xi}{\Xi \vdash \ucorner{A} \rightsquigarrow_A A \dashv \Xi & \Xi, x : \mathsf{LF}_{\mathsf{term}} \vdash \ucorner{K} \rightsquigarrow_K K \dashv \Xi}
 \end{equation}
-
-\caption{Algorithm for the disambiguation of \LF kinds from the parser syntax to the external syntax.}\label{figure:lf-kind-disambiguation}
-\end{figure}

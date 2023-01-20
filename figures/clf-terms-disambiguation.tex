@@ -1,0 +1,19 @@
+\noindent $ \boxed{\Xi \vdash \ucorner{M} \rightsquigarrow_{M_c} M' \dashv \Xi'} $ \quad The parser object $ \ucorner{M} $ is disambiguated to the contextual \LF term $ M' $ under the disambiguation context $ \Xi $, which produces the output disambiguation state $ \Xi' $.
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{x} \rightsquigarrow_{M_c} x \dashv \Xi}{(x : \mathsf{LF}_{\mathsf{term}}) \in \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{c} \rightsquigarrow_{M_c} c \dashv \Xi}{(c : \mathsf{LF}_{\mathsf{term}}) \in \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{\lambda x {:} A. M} \rightsquigarrow_{M_c} \lambda x {:} A. M \dashv \Xi}{\Xi \vdash \ucorner{A }\rightsquigarrow_A A \dashv \Xi & \Xi, x : \mathsf{LF}_{\mathsf{term}} \vdash \ucorner{M} \rightsquigarrow M \dashv \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{M \; M_1 \; M_2 \; \dots \; M_n} \rightsquigarrow_{M_c} M \; M_1 \; M_2 \; \dots \; M_n \dashv \Xi}{\Xi \vdash \ucorner{M} \rightsquigarrow_{M_c} M \dashv \Xi & (\Xi \vdash \ucorner{M_i} \rightsquigarrow_{M_c} M_i \dashv \Xi)_{i \in \{1, 2, \dots, n\}}}
+\end{equation}
+
+% TODO: The rest

@@ -1,0 +1,17 @@
+\noindent $ \boxed{\Xi \vdash \ucorner{E} \rightsquigarrow_E E' \dashv \Xi'} $ \quad The parser object $ \ucorner{E} $ is disambiguated to the computation-level expression $ E' $ under the disambiguation state $ \Xi $, which produces the disambiguation state $ \Xi' $.
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{x} \rightsquigarrow_E x \dashv \Xi}{(x : \mathsf{Comp}_{\mathsf{term}}) \in \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{c} \rightsquigarrow_E c \dashv \Xi}{(c : \mathsf{Comp}_{\mathsf{term}}) \in \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{\mathsf{fn} \; x_1 \; x_2 \; \dots \; x_n \Rightarrow E} \rightsquigarrow_E \mathsf{fn} \; x_1 \; x_2 \; \dots \; x_n \Rightarrow E \dashv \Xi}{\Xi, x_1 : \mathsf{Comp}_{\mathsf{term}}, x_2 : \mathsf{Comp}_{\mathsf{term}}, \dots, x_n : \mathsf{Comp}_{\mathsf{term}} \vdash \ucorner{E} \rightsquigarrow_E E \dashv \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{\mathsf{let} \; P = E_1 \; \mathsf{in} \; E_2} \rightsquigarrow_E \mathsf{let} \; P = E_1 \; \mathsf{in} \; E_2 \dashv \Xi}{\Xi \vdash \ucorner{E_1} \rightsquigarrow_E E_1 \dashv \Xi & \Xi; \cdot \vdash \ucorner{P} \rightsquigarrow_P P \dashv \Xi; \Xi_p & \Xi, \Xi_p \vdash \ucorner{E_2} \rightsquigarrow_E E_2 \dashv \Xi}
+\end{equation}

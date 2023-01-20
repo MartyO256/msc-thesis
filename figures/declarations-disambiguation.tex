@@ -1,0 +1,61 @@
+\noindent $ \boxed{\Xi; \Xi_m \vdash \ucorner{D} \rightsquigarrow_D D' \dashv \Xi'; \Xi_m'} $ \quad The parser object $ \ucorner{D} $ is disambiguated to the \Beluga signature declaration $ D' $ under the outer and module disambiguation contexts $ \Xi $ and $ \Xi_m $ respectively, which produces the output outer and module disambiguation states $ \Xi' $ and $ \Xi_m' $ respectively.
+
+\begin{equation}
+\infer{
+	\splitdfrac{
+		\Xi; \Xi_m \vdash \ucorner{\mathsf{module} \; x = \mathsf{struct} \; D_1 \; D_2 \; \dots \; D_n \; \mathsf{end}} \rightsquigarrow_D
+	}{
+		\splitdfrac{
+			\mathsf{module} \; x = \mathsf{struct} \; D_1 \; D_2 \; \dots \; D_n \; \mathsf{end} \dashv
+		}{
+			\Xi, x : \mathsf{module}(\Xi_m^{\{n\}}); \Xi_m, x : \mathsf{module}(\Xi_m^{\{n\}})
+		}
+	}
+}{
+	\deduce{(\Xi^{\{t - 1\}}; \Xi_m^{\{t - 1\}} \vdash \ucorner{D_t} \rightsquigarrow_D D_t \dashv \Xi^{\{t\}}; \Xi_m^{\{t\}})_{t \in \{1, 2, \dots, n\}}}{\Xi^{\{0\}} = \Xi & \Xi_m^{\{0\}} = \cdot}
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Xi; \Xi_m \vdash \ucorner{\mathsf{\text{-}\text{-}open} \; x.} \rightsquigarrow_D \mathsf{\text{-}\text{-}open} \; x. \dashv \Xi, \Xi_x; \Xi_m
+}{
+	(x : \mathsf{module}(\Xi_x)) \in \Xi
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Xi; \Xi_m \vdash \ucorner{x : K} \rightsquigarrow_D x : K \dashv \Xi, x : \mathsf{LF}_{\mathsf{type}}; \Xi_m, x : \mathsf{LF}_{\mathsf{type}}
+}{
+	\Xi \vdash \ucorner{K} \rightsquigarrow_K K \dashv \Xi
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Xi; \Xi_m \vdash \ucorner{x : A} \rightsquigarrow_D x : A \dashv \Xi, x : \mathsf{LF}_{\mathsf{term}}; \Xi_m, x : \mathsf{LF}_{\mathsf{term}}
+}{
+	\Xi \vdash \ucorner{A} \rightsquigarrow_A A \dashv \Xi
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\splitdfrac{
+		\Xi; \Xi_m \vdash \ucorner{\mathsf{LF} \; x : K = x_1 : A_1 \mid x_2 : A_2 \mid \dots \mid x_n : A_n;} \rightsquigarrow_D
+	}{
+		\splitdfrac{
+			\mathsf{LF} \; x : K = x_1 : A_1 \mid x_2 : A_2 \mid \dots \mid x_n : A_n; \dashv
+		}{
+			\Xi, x : \mathsf{LF}_{\mathsf{type}}, (x_t : \mathsf{LF}_{\mathsf{term}})_{t \in \{1, 2, \dots, n\}}; \Xi_m, x : \mathsf{LF}_{\mathsf{type}}, (x_t : \mathsf{LF}_{\mathsf{term}})_{t \in \{1, 2, \dots, n\}}
+		}
+	}
+}{
+	\deduce{
+		(\Xi, x : \mathsf{LF}_{\mathsf{type}} \vdash \ucorner{A_t} \rightsquigarrow_A A_t \dashv \Xi, x : \mathsf{LF}_{\mathsf{type}})_{t \in \{1, 2, \dots, n\}}
+	}{
+		\Xi \vdash \ucorner{K} \rightsquigarrow_K K \dashv \Xi
+	}
+}
+\end{equation}

@@ -1,0 +1,21 @@
+\noindent $ \boxed{\Xi \vdash \ucorner{A} \rightsquigarrow_{A_c} A' \dashv \Xi'} $ \quad The parser object $ \ucorner{A} $ is disambiguated to the contextual \LF type $ A' $ under the disambiguation context $ \Xi $, which produces the output disambiguation state $ \Xi' $.
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{c} \rightsquigarrow_{A_c} c \dashv \Xi}{(c : \mathsf{LF}_{\mathsf{type}}) \in \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{A \to B} \rightsquigarrow_{A_c} A \to B \dashv \Xi}{\Xi \vdash \ucorner{A} \rightsquigarrow_{A_c} A \dashv \Xi & \Xi \vdash \ucorner{B} \rightsquigarrow_{A_c} B \dashv \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{\Pi x {:} A. B} \rightsquigarrow_{A_c} \Pi x {:} A. B \dashv \Xi}{\Xi \vdash \ucorner{A} \rightsquigarrow_{A_c} A \dashv \Xi & \Xi, x : \mathsf{LF}_{\mathsf{term}} \vdash \ucorner{B} \rightsquigarrow_{A_c} B \dashv \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{A \; M_1 \; M_2 \; \dots \; M_n} \rightsquigarrow_{A_c} A \; M_1 \; M_2 \; \dots \; M_n \dashv \Xi}{\Xi \vdash \ucorner{A} \rightsquigarrow_{A_c} A \dashv \Xi & (\Xi \vdash \ucorner{M_i} \rightsquigarrow_{M_c} M_i \dashv \Xi)_{i \in \{1, 2, \dots, n\}}}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash \ucorner{\mathsf{block} \; (x_1 : A_1, x_2 : A_2, \dots, x_n : A_n)} \rightsquigarrow_{A_c} \mathsf{block} \; (x_1 : A_1, x_2 : A_2, \dots, x_n : A_n) \dashv \Xi}{(\Xi, x_1 : \mathsf{LF}_{\mathsf{term}}, x_2 : \mathsf{LF}_{\mathsf{term}}, \dots, x_{t - 1} : \mathsf{LF}_{\mathsf{term}} \vdash \ucorner{A_t} \rightsquigarrow_{A_c} A_t \dashv \Xi)_{t \in \{1, 2, \dots, n\}}}
+\end{equation}
