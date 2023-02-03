@@ -1,5 +1,5 @@
-\noindent $ \boxed{\Xi_o; \Xi_i; \Xi_p \vdash \ucorner{C_p} \rightsquigarrow_{C_p} C_p' \dashv \Xi_o'; \Xi_i'; \Xi_p'} $ \quad The parser object $ \ucorner{C_p} $ is disambiguated to the meta-pattern$ C_p' $ under the outer, inner and pattern disambiguation contexts $ \Xi_o $, $ \Xi_i $ and $ \Xi_p $, which produces the output outer, inner and pattern disambiguation contexts $ \Xi_o' $, $ \Xi_i' $ and $ \Xi_p' $.
+\noindent $ \boxed{\Xi; \mathbb{I}; \mathbb{P} \vdash \ucorner{C_p} \rightsquigarrow_{C_p} C_p' \dashv \Xi'; \mathbb{I}'; \mathbb{P}'} $ \quad The parser object $ \ucorner{C_p} $ is disambiguated to the meta-pattern $ C_p' $ under the outer, inner and pattern disambiguation contexts $ \Xi $, $ \mathbb{I} $ and $ \mathbb{P} $, which produces the output outer, inner and pattern disambiguation contexts $ \Xi' $, $ \mathbb{I}' $ and $ \mathbb{P}' $.
 
 \begin{equation}
-\infer{\Xi_o; \Xi_i; \Xi_p \vdash \ucorner{[\Psi \vdash M_p] \rightsquigarrow_{C_p} [\Psi \vdash M_p]} \dashv \Xi_o; \Xi_i; \Xi_p'}{\Xi_o, \Xi_i \vdash \ucorner{\Psi} \rightsquigarrow_\Psi \Psi \dashv \Xi_o, \Xi_i & \Xi_o; \Xi_i, \Psi; \Xi_p \vdash \ucorner{M_p} \rightsquigarrow_{M_p} M_p \dashv \Xi_o; \Xi_i; \Xi_p'}
+\infer{\Xi; \mathbb{I}; \mathbb{P} \vdash \ucorner{[\Psi \vdash M_p] \rightsquigarrow_{C_p} [\Psi \vdash M_p]} \dashv \Xi; \mathbb{I}; \mathbb{P}'}{\Xi, \mathbb{I} \vdash \ucorner{\Psi} \rightsquigarrow_\Psi \Psi \dashv \Xi, \mathbb{I} & \Xi; \mathbb{I}, \Psi; \mathbb{P} \vdash \ucorner{M_p} \rightsquigarrow_{M_p} M_p \dashv \Xi; \mathbb{I}; \mathbb{P}'}
 \end{equation}
