@@ -4,6 +4,28 @@
 
 \begin{document}
 
+\include{partials/title-page}
+
+\include{partials/abstract-en}
+
+\clearpage
+
+\include{partials/abstract-fr}
+
+\clearpage
+
+\include{partials/acknowledgements}
+
+\clearpage
+
+\include{partials/contributions}
+
+\clearpage
+
+{\linespread{0.5}
+\tableofcontents
+}
+\clearpage
 \begin{figure}
 \begin{tabular}{llll}
 \LF kinds & $ K $ & $ \Coloneqq $ & $ \mathsf{type} \mid \Pi x {:} A. K \mid A \to K $\\
@@ -16,5 +38,9 @@
 \appendix
 
 \include{chapters/disambiguation}
+
+\bibliographystyle{plain}
+
+\bibliography{bibliography}
 
 \end{document}
