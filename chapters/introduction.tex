@@ -1,18 +1,22 @@
 \chapter{Introduction}
 
+% TODO: Citations
+
+% TODO(Antoine): You answer a lot of "what" questions.  For an introduction, the "why" questions are maybe more important.  "Why mechanized meta-theory?"  "Why dependent types?"  "Why structural editing?"  As a reader, I don't know what problems are solved with these tools.
+
 % What is mechanized meta-theory?
 
 % What are dependently-typed programming languages?
 
 % What is Beluga? What is HOAS? What is contextual modal type theory?
-\Beluga is a domain-specific dependently-typed programming language for specifying and proving properties of formal systems using contextual modal type theory.
-It leverages the logical framework \LF extended with explicit contexts and substitutions, which allow for logic reasoning involving open terms.
+\Beluga is a domain-specific dependently-typed programming language for specifying and proving properties about formal systems using contextual modal type theory.
+It leverages the logical framework \LF extended with explicit contexts, contextual objects and substitutions, which allow for logic reasoning involving open terms.
 
 % How does one specify a formal system using Beluga?
 
 % What are interactive theorem provers?
 Interactive theorem proving is the computer-assisted process of finding valid proofs for propositions in a logic system.
-Proof assistants have been implemented and successfully leveraged to prove fundamentals of mathematics, category theory and type theories.
+Proof assistants have been implemented and successfully leveraged to prove fundamentals of mathematics and type theories.
 \Agda, \Coq, \textsc{Isabelle} and \textsc{Lean} are among the most prevalent proof assistants used in the formalization of programming languages.
 
 % What is Harpoon?
@@ -20,9 +24,9 @@ Proof assistants have been implemented and successfully leveraged to prove funda
 Its design is largely inspired by \Coq's interactive proof mode using tactics to solve unproven goals.
 
 % What is structured editing?
-Structural (or projectional) editing in programming language tooling is the functionality of a software editor that allows the user to manipulate abstract syntax trees (ASTs) directly.
-This is in contrast with plain text editors in which users may only edit textual representations of their programs, which then require parsing to be interpreted.
-The \textsc{Hazel} functional programming environment is a notable example of structural editor in the functional programming community as it dynamically provides useful information as the user writes programs with holes.
+Structural (or projectional) editing in programming language tooling is the functionality of a software editor that allows the user to manipulate \acp{AST} directly.
+This is in contrast with plain text editors in which users may only edit textual representations of their programs, that then require parsing to be interpreted.
+The \textsc{Hazel} functional programming environment is a notable example of a structural editor in the functional programming community for its ability to dynamically provide useful information as the user writes programs with holes.
 
 % What are typical edit actions in programming languages?
 Structural editors define a set of edit actions the user may execute at any given point in their editing session.
@@ -30,28 +34,31 @@ Typical edit actions include navigating the AST being modified, as well as const
 These actions are then reflected in the editor state.
 
 % What are edit actions required by Beluga and Harpoon?
-Although \Beluga's interactive mode and \Harpoon are read-eval-print loops (REPLs) as opposed to structural editors, those systems do share functional requirements.
-Indeed, like in \textsc{Hazel}, users of \Beluga and \Harpoon typically postpone the completion of programs or proof scripts by inserting holes in them.
-These holes are later filled in with the help of a proof assistant, providing typing information for the identifiers in scope at any given hole.
-As such, both REPLs and structural editors are required to construct and update an editor state as the user performs edit actions.
+Although \Beluga's interactive mode and \Harpoon are \acp{REPL} as opposed to structural editors, they do share functional requirements.
+Indeed, as in \textsc{Hazel}, users of \Beluga and \Harpoon postpone the completion of programs or proof scripts by inserting holes in them.
+These holes are later filled in with the help of a proof assistant that provides typing information for the identifiers in scope for each hole.
+As such, both \acp{REPL} and structural editors are required to construct and update an editor state as the user performs edit actions.
 
 % In general, what are challenges to implementing edit actions?
-Edit actions in \Beluga and \Harpoon include navigating between holes in programs and proof scripts respectively, as well as displaying type information for constants, and performing case analyses on meta-level and computation-level variables.
-These actions require surgical manipulation of the editor state to ensure they preserve the soundness of the AST being edited, as well as to prevent the undesirable propagation of information like typing constraints to unrelated edit locations.
+Edit actions in \Beluga and \Harpoon include navigating between holes in programs and proof scripts respectively, as well as displaying type information for constants, and performing case analyses on meta-level and computation-level objects identified by (meta-)variables.
+These actions require surgical manipulation of the editor state to ensure soundness of the \ac{AST} being edited is preserved, as well as to prevent the undesirable propagation of information like typing constraints in unrelated edit locations.
 
 % In Beluga and Harpoon specifically, what are the challenges to implementing edit actions?
-Historically, \Beluga was not implemented with the mindset of supporting the level of interactivity that \Harpoon purpots to have.
-Indeed, as is the case with prototype implementations of programming languages, \Beluga's early development focused on implementing a type-checker for its type theory, and a parser for its concrete syntax.
-The software architectural pattern that arose from this implementation was the pipeline pattern, whereby the data processing of programs from its textual to its AST representation is handled in single-responsibility phases that sequentially augment and refine the data for later use.
-Specifically with respect to \Beluga, these phases have evolved to include implicit argument reconstruction, the translation from a named to a nameless representation of binders using de Bruijn indices, normalization, type-checking and totality-checking to name a few.
+Historically, \Beluga was not implemented with the mindset of supporting the level of interactivity that \Harpoon purports to have.
+Indeed, as is the case with prototype implementations of programming languages, \Beluga's early development focused on implementing a type-checker for its type theory and a parser for its concrete syntax.
+The software architectural pattern that arose from this implementation was the pipeline pattern, in which the data processing of programs from its textual to its \ac{AST} representation is handled in single-responsibility phases that sequentially augment and refine the data for later use.
+Specifically with respect to \Beluga, these phases have evolved to include implicit argument reconstruction, the translation from a named to a nameless representation of binders using de Bruijn indices, normalization, type-checking, and totality-checking.
 What transpires from this design is a unilateral flow of information from the concrete syntax to the internal representation of programs in \Beluga.
-Consequently, early optimizations were put in place to maximize the performance of the processing pipeline.
+Early optimizations were put in place to maximize the performance of this processing pipeline.
 In particular, a single global representation of the \Beluga program being processed was implemented to provide information to later processing phases in a feedforward fashion.
 This design was sound only under the assumption that the information in the application would flow in only one direction.
-The introduction of \Beluga's interactive mode and subsequently \Harpoon broke that assumption, as was discovered in later mechanization case studies using the two tools.
+Unfortunately, the introduction of \Beluga's interactive mode and subsequently \Harpoon inadvertedly broke that assumption.
 
+% TODO: Try to bring this to the beginning of the introduction
 % What is the proposed approach to supporting edit actions in Beluga and Harpoon?
 This thesis reports on implementation changes made to \Beluga and \Harpoon to address some of the soundness issues in interactive proof development in these two systems.
-Particularly, we present an explicitly stateful algorithm for the parsing, disambiguation and indexing of \Beluga programs to ensure correct name resolutions across editing states.
+In particular, we present an explicitly stateful algorithm for the parsing, disambiguation and indexing of \Beluga programs to ensure correct name resolutions across editing states.
+% TODO: Elaborate on what are the soundness issues in Beluga
+% TODO(Johanna): What was the outcome of your changes? Did they fix the soundness issues?
 
 % TODO:
