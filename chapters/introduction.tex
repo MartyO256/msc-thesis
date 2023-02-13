@@ -9,24 +9,24 @@
 % What are dependently-typed programming languages?
 
 % What is Beluga? What is HOAS? What is contextual modal type theory?
-\Beluga is a domain-specific dependently-typed programming language for specifying and proving properties about formal systems using contextual modal type theory.
-It leverages the logical framework \LF extended with explicit contexts, contextual objects and substitutions, which allow for logic reasoning involving open terms.
+\Beluga~\cite{pientka2010beluga} is a domain-specific dependently-typed programming language for specifying and proving properties about formal systems using contextual modal type theory~\cite{nanevski2008contextual}.
+It leverages the logical framework \LF~\cite{harper1993framework} extended with explicit contexts, contextual objects and substitutions~\cite{abel2010explicit, cave2013first}, which allow for logic reasoning involving open terms.
 
 % How does one specify a formal system using Beluga?
 
 % What are interactive theorem provers?
 Interactive theorem proving is the computer-assisted process of finding valid proofs for propositions in a logic system.
 Proof assistants have been implemented and successfully leveraged to prove fundamentals of mathematics and type theories.
-\Agda, \Coq, \textsc{Isabelle} and \textsc{Lean} are among the most prevalent proof assistants used in the formalization of programming languages.
+\Agda~\cite{10.1007/11559306_17}, \Coq~\cite{Coq, bertot2013interactive}, \textsc{Isabelle}~\cite{nipkow2002isabelle} and \textsc{Lean}~\cite{10.1007/978-3-030-79876-5_37} are among the most prevalent proof assistants used in the formalization of programming languages.
 
 % What is Harpoon?
-\Harpoon is an interactive frontend to \Beluga for proving theorems interactively.
+\Harpoon~\cite{errington2021harpoon} is an interactive frontend to \Beluga for proving theorems interactively.
 Its design is largely inspired by \Coq's interactive proof mode using tactics to solve unproven goals.
 
 % What is structured editing?
 Structural (or projectional) editing in programming language tooling is the functionality of a software editor that allows the user to manipulate \acp{AST} directly.
 This is in contrast with plain text editors in which users may only edit textual representations of their programs, that then require parsing to be interpreted.
-The \textsc{Hazel} functional programming environment is a notable example of a structural editor in the functional programming community for its ability to dynamically provide useful information as the user writes programs with holes.
+The \textsc{Hazel}~\cite{omar2017hazelnut, omar2019live} functional programming environment is a notable example of a structural editor in the functional programming community for its ability to dynamically provide useful information as the user writes programs with holes.
 
 % What are typical edit actions in programming languages?
 Structural editors define a set of edit actions the user may execute at any given point in their editing session.
