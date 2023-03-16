@@ -1,10 +1,14 @@
-LATEX := xelatex --shell-escape -interaction=nonstopmode -halt-on-error
+LATEX := pdflatex -synctex=1 --shell-escape -interaction=nonstopmode -halt-on-error
+BIBTEX := bibtex
 MAIN := main
 
 .PHONY: clean
 
 all : clean chapters/ figures/
-	$(LATEX) "$(MAIN).tex" 
+	$(LATEX) $(MAIN)
+	$(BIBTEX) $(MAIN)
+	$(LATEX) $(MAIN)
+	$(LATEX) $(MAIN)
 
 clean:
 	rm -rf *run.xml *-blx.bib *.aux *.bbl *.blg *.brf *.log *.lof *.lot *.lol *.out *.tcp *.toc *.tps *.bak *.backup *.pdfsync *.synctex.gz *.*~
