@@ -1,0 +1,62 @@
+\chapter{Revised Frontend Architecture}
+
+% TODO:
+
+\section{Syntax Representation}
+
+% TODO:
+
+\section{Parser Pipeline}
+
+% TODO:
+
+\section{Pretty-Printing}
+
+% What is pretty-printing?
+
+Pretty-printing is the process that transforms an \ac{AST} back into its textual representation.
+This feature of programming languages is often used to implement automated formatting software as part of tooling.
+As it pertains to \Beluga and \Harpoon, pretty-printing is also used as part of debugging in order to trace the runtime execution the signature reconstruction and type-checker algorithms, as well as for displaying programmatically generated programs back to the user in interactive sessions.
+
+% What are considerations to make when it comes to implementing pretty-printing?
+
+Depending on the lexical conventions used during parsing, a pretty-printed \ac{AST} may not exactly correspond to its initial textual representation.
+Indeed, the program's layout may change, inline comments may be printed in different locations, and extraneous parentheses may be removed.
+
+Handling of the printed program's layout can be implemented using the algorithm described in~\cite{oppen1980prettyprinting}, whereby layout boxes and break hints are output during printing, and then actual break point locations are later computed to satisfy the layout and margin constraints.
+The \OCaml standard library provides an implementation of this algorithm in its \mintinline{ocaml}|Format| module~\cite{leroy2022ocaml}.
+
+The usual lexical convention is to treat comments as white spaces.
+This simplifies the \ac{AST} representation of programs by effectively discarding all the comments.
+However, during pretty-printing for formatting a program, those comments need to be restored.
+A separate interval map data structure may be created during the lexing stage in order to keep track of inline comments with respect to their location.
+Provided the program \ac{AST} is annotated with locations, then it is possible during printing to determine where a comment should be spliced in.
+
+Handling of parentheses is less straightforward.
+Indeed, a node in the program's \ac{AST} needs to be mapped back to the parser production that created it in order to determine its precedence.
+Additionally, the associativity of operators appearing at the same precedence level must be taken into consideration to avoid producing ambiguous textual representations.
+
+% How can pretty-printing be implemented in Beluga?
+
+Pretty-printing of \Beluga's internal syntax requires the generation of fresh identifiers to replace de Bruijn indices.
+Hence, not only is printing stateful, it also needs an auxiliary data structure containing the set of identifiers that are used by sub-expressions.
+This data structure may be implement in many ways, and it reduces to the problem of annotating a tree with additional data:
+
+\begin{itemize}
+\item
+Parallel data types equipped with extra fields may be defined for each kind of node in the \ac{AST}.
+During pretty-printing, the \ac{AST} and this auxiliary data structure then must be traversed at the same time.
+\item
+Each node in the \ac{AST} may be equipped with a unique identifier to be used as key in a map data structure.
+Then, lookups can be made on that map during printing to fetch the necessary data.
+\item
+The auxiliary data may be embedded type-safely into the \ac{AST} using recursion schemes.
+\end{itemize}
+
+The less invasive approach is to traverse the \ac{AST} in a top-down fashion and construct closures accepting the binding state to first compute the set of used offsets and then the identifiers corresponding to those offsets.
+
+% TODO:
+
+\section{Testing}
+
+% TODO:
