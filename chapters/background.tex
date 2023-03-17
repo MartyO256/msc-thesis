@@ -37,22 +37,24 @@ A parse forest refers to a collection of parse trees.
 % What is ambiguity in parsing?
 
 A program's textual representation is ambiguous if it can be parsed into multiple parse trees.
-By way of analogy, a sentence in a natural language is ambiguous if it can be interpreted in multiple valid ways, even though exactly one meaning was meant to be conveyed by it.
+By way of analogy, a sentence in a natural language is ambiguous if it can be interpreted in multiple valid ways, even though the sentence was meant to convey exactly one meaning.
 Since programming languages are tools for describing computerized systems, it is imperative that every valid written program has exactly one interpretation.
 In the strictest of cases, this unicity of interpretation may be enforced at the level of the parser, such that valid programs correspond to exactly one parse tree.
 This is typically achieved using rules and syntactic conventions that prevent ambiguous programs from being written in the first place.
 
-Despite that, certain kinds of ambiguities are unavoidable, and oftentimes useful.
-Indeed, programming languages often reuse or overload syntactic constructs to reduce the number and complexity of rules that users have to learn in order to read and write programs.
+Despite that, certain kinds of ambiguities are unavoidable in programming languages, and are oftentimes useful to the end user.
+Indeed, programming languages often reuse or overload syntactic constructs to reduce both the number and complexity of rules that users have to learn in order to read and write programs.
 Additional mechanisms then need to be put in place as part of the compiler's implementation to detect ambiguities, and either signal them as errors, or resolve them using conventions.
 
 % What is disambiguation in parsing?
 
 Disambiguation is the process by which a parse forest is filtered down to a single parse tree.
-It refers to the procedures used to resolve ambiguities in a parse tree.
-Increasing the amount of computation required to disambiguate the textual representation of a program negatively impacts the maintainability and readability of that program.
-In increasing level of complexity, we may distinguish three kinds of concrete syntax ambiguities that may arise during parsing:
-\begin{itemize}
+It refers to the procedures used to resolve ambiguities in the result of parsing.
+In parsing systems that do not output parse forests, disambiguation typically involves manipulating the \ac{AST} representation of a single parse tree that captures ambiguities.
+Increasing the amount of computation required to disambiguate the textual representation of a program negatively impacts the maintainability and readability of that program for the end user.
+Different kinds of concrete syntax ambiguities may arise during parsing of a programming language.
+As it pertains to \Beluga, we distinguish three kinds of syntactic ambiguities, in increasing level of computational complexity required to solve them:
+\begin{enumerate}
 \item
 Operator ambiguities: operators and their operands may be interpreted in different orders.
 These are typically resolved by assigning a precedence level, a fixity and an associativity to each operator in the language.
@@ -60,19 +62,40 @@ These are typically resolved by assigning a precedence level, a fixity and an as
 Name-based ambiguities: overloaded identifiers may be resolved to different binding sites depending on where they appear in an expression.
 Semantic analysis of the \ac{AST} with respect to a symbol table and lexical convention is usually sufficient in those cases.
 \item
-Type-based ambiguities: the correct interpretation of an identifier may only be determined once a type has been inferred for it.
-Some type information may be provided by a symbol table if the type ascribed to the identifier is known at the declaration site, but in general it is impossible to disambiguate those identifiers before type-checking.
-\end{itemize}
+Type-based ambiguities: the correct interpretation of an expression may only be determined once a type has been inferred for it.
+If the expression is an identifier, then some type information may be provided by a symbol table if the type ascribed to an identifier is known at the declaration site.
+In general it is impossible to disambiguate those expressions before type-checking.
+\end{enumerate}
 
 % TODO: Figure showcasing typical ambiguities
 
 % What is the typical workflow for designing syntaxes and implementing parsers? What are parser generators? What are their limitations?
 
-Typically, language designers specify the concrete syntax of their language using a context-free grammar.
+Typically, language designers specify the concrete syntax of their language using a context-free grammar, which they denote in \ac{EBNF}.
+If a language can be specified by a context-free grammar, then we say that the language is context-free as well.
 This has many advantages, including the fact that there is an abundance of battle-tested tools for generating parsers for such languages.
-These include \textsc{Yacc}, \textsc{Bison}, \textsc{ocamlyacc}, \textsc{Menhir}, and \textsc{Tree-Sitter}.
-Early versions of \Beluga used \textsc{Camlp4} for parsing, but given the complexity of \Beluga's grammar, the errors generated by that implementation were not sufficiently informative.
-Hence, \Beluga version \texttt{1.0.0} features a handmade parser using monadic parser combinators.
+Crucially, context-free languages are easy to parse, both by the parsing algorithm and by the end user.
+As the name suggests, a context-free language does not require keeping track of a context of data during parsing.
+This ensures that programs can scale and be readable by the user without having to fully understand the context in which they appear in order to disambiguate them.
+Operator ambiguities as mentioned above can be resolved by rewriting the grammar while keeping it context-free.
+The other two kinds of ambiguities however give rise to context-sensitive or strictly Turing-recognizable languages~\cite{chomsky1956three}.
+Consequently, the design for the concrete syntax of a programming language is intrinsically linked with the algorithm required to parse it.
+
+% What are some language design considerations?
+
+We say that a grammar is user-extensible if the way a program is parsed is influenced by directives in the programs, and otherwise we say that the grammar is static.
+Languages for specifying logics tend to favour user-extensible grammars over static ones.
+Indeed, \Agda and \Isabelle/\HOL have mixfix operators, \Coq has notations, and \Beluga has prefix, infix and postfix operators specified by pragmas.
+This is justified by the need for more concise and expressive ways to convey the meaning of definitions and lemmas.
+However, that design choice negatively impacts the implementation of tooling for the language.
+Indeed, it complicates the implementation of incremental parsing, for efficient parsing of edits in a text editor, and indexing, for resolving identifiers to their binding site.
+%This is notably the case for tooling in \textsc{C++} because of its rich pre-processor that increases the complexity of parsing and name resolution.
+
+Early versions of \Beluga were context-free and used \textsc{Camlp4} as parser generator for implementing its parser.
+\Beluga became a strictly Turing-recognizable language with the addition of user-defined operators as in \Twelf.
+This did not pose a problem with the parser's implementation per se, but it did require the introduction of a disambiguation phase.
+As the \Beluga language grew, so did the complexity of its grammar, such that the errors generated by \textsc{Camlp4} were deemed not sufficiently informative to the end-user.
+Hence, \Beluga version \texttt{1.0.0} featured a new parser implemented using monadic parser combinators.
 
 % What are parser combinators? What are some well-known libraries for parser combinators? What are their limitations?
 
@@ -81,12 +104,6 @@ Monadic parser combinators are higher-order functions for constructing top-down 
 % TODO: Define user-extensible grammars, static grammars
 % whereby users may define prefix, infix, postfix or even mixfix operators using bound identifiers
 
-% What are some language design considerations?
-
-The design for the concrete syntax of a programming language is intrinsically linked with the algorithm required to parse it.
-Languages for specifying logics tend to favour user-extensible grammars over static ones.
-This is justified by the need for more concise and expressive ways to convey the meaning of definitions and lemmas.
-However, that design choice negatively impacts the implementation of tooling for the language, specifically when it comes to incremental parsing and indexing.
 
 % TODO:
 
