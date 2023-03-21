@@ -1,6 +1,6 @@
 \documentclass[letter, 12pt, oneside]{report}
 
-\input{prelude.tex}
+\input{prelude}
 
 \begin{document}
 
@@ -8,9 +8,7 @@
 
 \clearpage
 
-{\linespread{0.5}
-\tableofcontents
-}
+\include{partials/table-of-contents}
 
 \clearpage
 
@@ -30,6 +28,14 @@
 
 \clearpage
 
+\include{partials/list-of-figures-and-tables}
+
+\clearpage
+
+\include{partials/list-of-abbreviations}
+
+\clearpage
+
 \begin{figure}
 \begin{tabular}{rrll}
 \LF kinds & $ K $ & $ \Coloneqq $ & $ \mathsf{type} \mid \Pi x {:} A. K \mid A \to K $\\
@@ -42,7 +48,7 @@
 
 \include{chapters/introduction}
 
-\include{chapters/background}
+\include{chapters/parsing}
 
 \include{chapters/existing-system-architecture}
 

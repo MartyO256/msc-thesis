@@ -1,32 +1,6 @@
-\chapter{Background}
+\chapter{Parsing}
 
-% TODO:
-
-\section{\Beluga and \Harpoon}
-
-% TODO: To justify the addition of modules (functioning only as namespaces), use an example of translation between two languages (deBruijn vs. HOAS for instance)
-% TODO: To justify the dynamic side of things, consider a query appearing in the middle of a signature. The logic engine is considering too large of a search space by including the constants appearing later in the signature.
-% TODO: To additionally justify the dynamic side of things, talk about structured proof editing in a dynamic environment like Harpoon, or Beluga's interactive mode.
-
-% TODO: LFMTP Mid-April, system description of revised parser frontend
-% TODO: Drop Harpoon, focus on tension between static and dynamic settings
-% TODO: Add the Beluga language specification as an appendix
-
-% What are dependent types? What is LF? What is Twelf? What proofs have been successfully mechanized in Twelf?
-
-% What is contextual modal type theory? Why do we want contextual modal type theory?
-
-% What is Beluga? What proofs have been successfully mechanized in Beluga?
-
-% What is Harpoon? What proofs have been successfully mechanized in Harpoon?
-
-% TODO:
-
-\section{Structured Editing}
-
-% TODO:
-
-\section{Parsing}
+\section{Introduction}
 
 % What is parsing?
 
@@ -73,7 +47,7 @@ In general it is impossible to disambiguate those expressions before type-checki
 
 Typically, language designers specify the concrete syntax of their language using a context-free grammar, which they denote in \ac{EBNF}.
 If a language can be specified by a context-free grammar, then we say that the language is context-free as well.
-This has many advantages, including the fact that there is an abundance of battle-tested tools for generating parsers for such languages.
+Context-free languages have many advantages, including the fact that there is an abundance of battle-tested tools for generating parsers for them.
 Crucially, context-free languages are easy to parse, both by the parsing algorithm and by the end user.
 As the name suggests, a context-free language does not require keeping track of a context of data during parsing.
 This ensures that programs can scale and be readable by the user without having to fully understand the context in which they appear in order to disambiguate them.
@@ -100,15 +74,38 @@ Hence, \Beluga version \texttt{1.0.0} featured a new parser implemented using mo
 % What are parser combinators? What are some well-known libraries for parser combinators? What are their limitations?
 
 Monadic parser combinators are higher-order functions for constructing top-down recursive descent parsers~\cite{Burge1975-BURRPT, hutton1996monadic, leijen2001parsec, generalparsercombs}.
+They provide a more declarative way of constructing complex parsers than shift-reduce parsers.
+The intent of re-implementing \Beluga's parser to use parser combinators was to both improve error-reporting for the user and maintainability of the implementation for subsequent developers.
 
-% TODO: Define user-extensible grammars, static grammars
-% whereby users may define prefix, infix, postfix or even mixfix operators using bound identifiers
-
-
-% TODO:
+% TODO: Note that the parser before Jake's had mix/unmix types.
+% TODO: Read "Resolvable Ambiguity" https://arxiv.org/pdf/1911.05672.pdf
 
 % TODO: Define notation-based ambiguities (precedence, fixity, associativity)
 % TODO: Define scope-based ambiguities (identifier classes, mutual recurrences)
 % TODO: Define type-based ambiguities (identifier classes, extrinsics, type reconstruction)
 
 % TODO: Define stateless and stateful ambiguity resolutions
+
+\section{\Beluga Parsing and Disambiguation Phases}
+
+\section{Parsing User-Defined Operators}
+
+In \Beluga, users may define identifiers to be used as operators in expression applications using pragmas as shown in figure~\ref{figure:operator-pragmas}.
+This feature was ported over from \Twelf, and subsequently improved to support shadowing of operators with bound variables.
+As outlined below, the supported notations for user-defined operators are more restrictive than that of \Agda with its mixfix expression parsing algorithm~\cite{danielsson2008parsing}.
+
+In \Beluga, at the precedence level of expression applications, there are four scenarios to disambiguate:
+\begin{enumerate}
+\item Prefix operators followed by their operand,
+\item Left-associative, right-associative or non-associative infix operators preceded and followed by their operands,
+\item Postifx operators preceded by their operand, and
+\item Juxtaposed expressions having no operator.
+\end{enumerate}
+
+\begin{figure}[!htb]
+% TODO:
+\label{figure:operator-pragmas}
+\caption{User-defined operator definition in \Beluga using pragmas.}
+\end{figure}
+
+
