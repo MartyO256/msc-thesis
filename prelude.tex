@@ -24,7 +24,7 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 
-\usepackage{acronym}
+\usepackage[printonlyreused, withpage]{acronym}
 
 \usepackage{minted}
 
@@ -42,60 +42,6 @@
 \setlength{\rightmargin}{1in}
 
 \raggedbottom
-
-\makeatletter
-\newcommand\ackname{Acknowledgements}
-\if@titlepage
-  \newenvironment{acknowledgements}{%
-      \titlepage
-      \null\vfil
-      \@beginparpenalty\@lowpenalty
-      \begin{center}%
-        \bfseries \ackname
-        \@endparpenalty\@M
-      \end{center}}%
-     {\par\vfil\null\endtitlepage}
-\else
-  \newenvironment{acknowledgements}{%
-      \if@twocolumn
-        \section*{\abstractname}%
-      \else
-        \small
-        \begin{center}%
-          {\bfseries \ackname\vspace{-.5em}\vspace{\z@}}%
-        \end{center}%
-        \quotation
-      \fi}
-      {\if@twocolumn\else\endquotation\fi}
-\fi
-\makeatother
-
-\makeatletter
-\newcommand\contname{Contributions}
-\if@titlepage
-  \newenvironment{contributions}{%
-      \titlepage
-      \null\vfil
-      \@beginparpenalty\@lowpenalty
-      \begin{center}%
-        \bfseries \contname
-        \@endparpenalty\@M
-      \end{center}}%
-     {\par\vfil\null\endtitlepage}
-\else
-  \newenvironment{contributions}{%
-      \if@twocolumn
-        \section*{\abstractname}%
-      \else
-        \small
-        \begin{center}%
-          {\bfseries \contname\vspace{-.5em}\vspace{\z@}}%
-        \end{center}%
-        \quotation
-      \fi}
-      {\if@twocolumn\else\endquotation\fi}
-\fi
-\makeatother
 
 %\usepackage{lineno}
 %\linenumbers

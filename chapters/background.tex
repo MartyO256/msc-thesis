@@ -1,0 +1,34 @@
+\chapter{Background}
+
+\section{The \Beluga Language}
+
+\section{The Implementation of \Beluga}
+
+This section presents an overview of the implementation of \Beluga before any contribution detailed in this thesis were made\footnote{Revision \href{https://github.com/Beluga-lang/Beluga/tree/4769323d701722bde42a0e2570d892ef78cd2d04}{3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2} on Github.}.
+
+\Beluga is implemented following the pipeline architectural pattern, whereby processing of a \Beluga signature is implemented in distinct phases, and data flows in a feed-forward fashion throughout.
+The compilation of \Beluga programs to machine code is not supported, so the implementation only covers the frontend component of compilation, which is responsible for parsing and semantic analysis of programs.
+
+% TODO: Figure illustrating the compilation phases
+
+\section{Stateful and Incremental Program Development}
+
+% What is the name resolution problem in incremental program development?
+One of the main challenges in implementing incremental program development is that a compilation unit may only be revisited with the processing state it was defined in.
+This means that a process performing name lookups or mutations on the \ac{AST} at a given node may only do so using the variables and declarations in scope at that \ac{AST} node, just as the user does when editing the textual representation of that \ac{AST} node.
+This problem arises when a compiler is extended to support user interactions or non-sequential compilation steps.
+
+% What are some user interactions that need to be scope safe?
+In the context of tooling for a programming language, users benefit from interacting with the code they are editing by way of auxiliary software that performs actions on the textual representation of a program or its \ac{AST}.
+These actions range widely in functionalities depending on the programming language's features, but typically include automated code formatters, linters, debuggers, type inspectors, code-completion suggestions, as well as edit actions to assist in refactoring existing code.
+These tools are typically implemented separately from the compiler, and hence may only be reliably implemented with respect to a specification of the language.
+
+% What are some non-sequential compilation steps that need to be scope safe?
+Non-sequential processes in compilation design refer to compilation steps that occur concurrently, or occur using a subset of the data from previous compilation phases.
+These processes typically appear in the incremental compilation of programs for languages where compilation units may be arranged in a \ac{DAG}.
+This allows for multithreading to be used in reducing overall compilation times, as well as reducing the number of compilation needing to be recompiled after an edit action is performed.
+Implementing these features may require caching of compilation results and restoring processing states from those caches.
+
+% What is the general solution to the name resolution problem in incremental program development?
+The general solution to stateful and incremental program development is to parameterize the non-sequential processes with a visiting state that keeps track of bound variables and constants.
+The issue then becomes how to efficiently maintain this visiting state, specifically in compilers for functional programming languages like \Beluga.

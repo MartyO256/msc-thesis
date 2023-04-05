@@ -1,4 +1,4 @@
-\chapter{Parsing}
+\chapter{Implementing a Parser for \Beluga}
 
 \section{Introduction}
 
@@ -45,11 +45,11 @@ In general it is impossible to disambiguate those expressions before type-checki
 
 % What is the typical workflow for designing syntaxes and implementing parsers? What are parser generators? What are their limitations?
 
-Typically, language designers specify the concrete syntax of their language using a context-free grammar, which they denote in \ac{EBNF}.
-If a language can be specified by a context-free grammar, then we say that the language is context-free as well.
-Context-free languages have many advantages, including the fact that there is an abundance of battle-tested tools for generating parsers for them.
-Crucially, context-free languages are easy to parse, both by the parsing algorithm and by the end user.
-As the name suggests, a context-free language does not require keeping track of a context of data during parsing.
+Typically, language designers specify the concrete syntax of their language using a \ac{CFG}, which they denote in \ac{EBNF}.
+If a language can be specified by a \ac{CFG}, then we say that it is a \ac{CFL}.
+\Acp{CFL} have many advantages, including the fact that there is an abundance of battle-tested tools for generating parsers for them.
+Crucially, \acp{CFL} are easy to parse, both by the parsing algorithm and by the end user.
+As the name suggests, a \ac{CFL} does not require keeping track of a context of data during parsing specifically for disambiguation.
 This ensures that programs can scale and be readable by the user without having to fully understand the context in which they appear in order to disambiguate them.
 Operator ambiguities as mentioned above can be resolved by rewriting the grammar while keeping it context-free.
 The other two kinds of ambiguities however give rise to context-sensitive or strictly Turing-recognizable languages~\cite{chomsky1956three}.
@@ -57,7 +57,7 @@ Consequently, the design for the concrete syntax of a programming language is in
 
 % What are some language design considerations?
 
-We say that a grammar is user-extensible if the way a program is parsed is influenced by directives in the programs, and otherwise we say that the grammar is static.
+We say that a grammar is dynamic (or user-extensible) if the way a program is parsed is influenced by directives in the program, and otherwise we say that the grammar is static.
 Languages for specifying logics tend to favour user-extensible grammars over static ones.
 Indeed, \Agda and \Isabelle/\HOL have mixfix operators, \Coq has notations, and \Beluga has prefix, infix and postfix operators specified by pragmas.
 This is justified by the need for more concise and expressive ways to convey the meaning of definitions and lemmas.
@@ -86,7 +86,19 @@ The intent of re-implementing \Beluga's parser to use parser combinators was to 
 
 % TODO: Define stateless and stateful ambiguity resolutions
 
+% TODO: Does Abella support incremental development?
+% TODO: See if Agda breaks with splicing
+% TODO: See if Coq has incremental development as well
+
 \section{\Beluga Parsing and Disambiguation Phases}
+
+The parsing algorithm I contributed to \Beluga is split into a parsing phase to a concrete \ac{AST}, and a disambiguation phase that translates it to the external \ac{AST}.
+
+Parsing is achieved using $ \mathsf{LALR(\infty)} $ parsing in pathological cases and $ \mathsf{LALR(1)} $ parsing in most cases.
+This is implemented using monadic parser combinators with unlimited backtracking only enabled in those pathological cases, or if no input token has been consumed.
+
+The disambiguation phase of parsing statefully keeps track of the identifiers in scope at any given point during the concrete \ac{AST} traversal.
+This is implemented using an instance of the state monad equipped with a binding tree and auxiliary data structures to deal with patterns, modules and pragmas.
 
 \section{Parsing User-Defined Operators}
 
@@ -108,4 +120,4 @@ In \Beluga, at the precedence level of expression applications, there are four s
 \caption{User-defined operator definition in \Beluga using pragmas.}
 \end{figure}
 
-
+\section{Related Work}

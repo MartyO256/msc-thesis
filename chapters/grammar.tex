@@ -1,12 +1,13 @@
 \chapter{\textsc{Beluga} Grammar}
 
+This appendix describes the \ac{CFG} for \Beluga and \Harpoon in their entirety as a specification for the parsing algorithm.
 
 \section{Syntax}\label{section:syntax}
 
-This section presents the syntax for \Beluga signatures using ambiguous context-free grammars.
+This section presents the syntax for \Beluga signatures using ambiguous \acp{CFG}.
 It is intended to serve as a specification for validating the parser's implementation, as well as to assist in making changes to the parser.
 Rewriting of the grammar for optimization, left recursion elimination, and disambiguation purposes is outside the scope of this presentation.
-Section~\ref{section:resolving-grammar-ambiguities} presents a context-free grammar for \Beluga that is suitable for parsing with a separate stage for disambiguation.
+Section~\ref{section:resolving-grammar-ambiguities} presents a \ac{CFG} for \Beluga that is suitable for parsing with a separate stage for disambiguation.
 
 The \ac{EBNF} metasyntax used in the sections hereafter follows this notation:
 
@@ -516,7 +517,7 @@ In particular, pragmas allow the user to choose a notation for operators.
 \alt `--open <qualified-identifier> `.'
 \alt `--abbrev <qualified-identifier> <identifier> `.'
 \alt `--query' (`*' | <integer>) (`*' | <integer>)\\
-(`{' <meta-object-identifier> `:' <meta-type> `}')* [<identifier> `:'] <lf-term> `.'
+(`{' <meta-object-identifier> `:' <meta-type> `}')* [<identifier> `:'] <clf-term> `.'
 
 <global-pragma> ::= `--nostrenghten' | `--coverage' | `--warncoverage'
 \end{grammar}
