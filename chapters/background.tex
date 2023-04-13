@@ -8,27 +8,40 @@ This section presents an overview of the implementation of \Beluga before any co
 
 \Beluga is implemented following the pipeline architectural pattern, whereby processing of a \Beluga signature is implemented in distinct phases, and data flows in a feed-forward fashion throughout.
 The compilation of \Beluga programs to machine code is not supported, so the implementation only covers the frontend component of compilation, which is responsible for parsing and semantic analysis of programs.
+Since \Beluga is a dependently-typed language featuring code coverage analysis and termination checking, this semantic analysis is a complex process.
 
 % TODO: Figure illustrating the compilation phases
 
+Indexing in \Beluga is the frontend process where the concrete syntax is elaborated into an approximate syntax where variables are replaced with de Bruijn indices.
+This process is responsible for disambiguating applications (which may contain user-defined operators) and resolving constants, which is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings.
+Using the centralized store of declarations, some measure of overloading of identifiers is supported by resolving them with a pre-defined order of lookups based on the kind of identifier that is expected for a given \ac{AST} node.
+For instance, computation-level identifiers are resolved by looking up in order the store of computation-level variables, the store of program constants, and then the store of data type constructors.
+
 \section{Stateful and Incremental Program Development}
 
-% What is the name resolution problem in incremental program development?
+Incremental program development in compiler design is the problem of applying edit actions to programs in \ac{AST} or representation while only re-processing a minimal portion of the program under edit.
+
+% What is the key problem in incremental program development?
 One of the main challenges in implementing incremental program development is that a compilation unit may only be revisited with the processing state it was defined in.
-This means that a process performing name lookups or mutations on the \ac{AST} at a given node may only do so using the variables and declarations in scope at that \ac{AST} node, just as the user does when editing the textual representation of that \ac{AST} node.
+This means, for instance, that a process performing name lookups or mutations on the \ac{AST} at a given node may only do so using the variables and declarations in scope at that \ac{AST} node, just as the user does when editing the textual representation of that \ac{AST} node.
+As such, edit actions on an \ac{AST} must preserve its semantic correctness properties so that serializing and subsequently deserializing it produces the same \ac{AST}.
 This problem arises when a compiler is extended to support user interactions or non-sequential compilation steps.
 
 % What are some user interactions that need to be scope safe?
-In the context of tooling for a programming language, users benefit from interacting with the code they are editing by way of auxiliary software that performs actions on the textual representation of a program or its \ac{AST}.
+In the context of tooling for a programming language, users benefit from interacting with the code they are editing by way of auxiliary software that performs actions on the textual representation of the program or its \ac{AST}.
 These actions range widely in functionalities depending on the programming language's features, but typically include automated code formatters, linters, debuggers, type inspectors, code-completion suggestions, as well as edit actions to assist in refactoring existing code.
 These tools are typically implemented separately from the compiler, and hence may only be reliably implemented with respect to a specification of the language.
 
+% TODO: Figure of a DAG
+
 % What are some non-sequential compilation steps that need to be scope safe?
 Non-sequential processes in compilation design refer to compilation steps that occur concurrently, or occur using a subset of the data from previous compilation phases.
-These processes typically appear in the incremental compilation of programs for languages where compilation units may be arranged in a \ac{DAG}.
-This allows for multithreading to be used in reducing overall compilation times, as well as reducing the number of compilation needing to be recompiled after an edit action is performed.
-Implementing these features may require caching of compilation results and restoring processing states from those caches.
+These processes typically appear in the incremental compilation of programs for languages where compilation units may be arranged in a lattice.
+A \ac{DAG} of the compilation units is constructed where edges denote dependency.
+A topological ordering is then computed for that \ac{DAG} and used to create a compilation schedule, with forked compilation processes for independent compilation units.
+This allows for multithreading to be used to reduce compilation time, and reduce the number of compilation units that need to be recompiled after an edit action is performed.
+Implementing these features may require caching of compilation results and restoring processing states from those caches, which may introduce cache invalidation issues.
 
 % What is the general solution to the name resolution problem in incremental program development?
 The general solution to stateful and incremental program development is to parameterize the non-sequential processes with a visiting state that keeps track of bound variables and constants.
-The issue then becomes how to efficiently maintain this visiting state, specifically in compilers for functional programming languages like \Beluga.
+The issue then becomes how to efficiently construct and preserve the correctness of this visiting state, specifically in compilers for functional programming languages like \Beluga.
