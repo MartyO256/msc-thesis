@@ -2,20 +2,45 @@
 
 \section{The \Beluga Language}
 
-\section{The Implementation of \Beluga}
+\section{The Implementation of \Beluga} \label{section:beluga-implementation}
 
 This section presents an overview of the implementation of \Beluga before any contribution detailed in this thesis were made\footnote{Revision \href{https://github.com/Beluga-lang/Beluga/tree/4769323d701722bde42a0e2570d892ef78cd2d04}{3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2} on Github.}.
 
 \Beluga is implemented following the pipeline architectural pattern, whereby processing of a \Beluga signature is implemented in distinct phases, and data flows in a feed-forward fashion throughout.
 The compilation of \Beluga programs to machine code is not supported, so the implementation only covers the frontend component of compilation, which is responsible for parsing and semantic analysis of programs.
-Since \Beluga is a dependently-typed language featuring code coverage analysis and termination checking, this semantic analysis is a complex process.
+Since \Beluga is a dependently-typed language featuring code coverage analysis and termination checking, this semantic analysis process is complex.
 
 % TODO: Figure illustrating the compilation phases
 
+The processing of a \Beluga signature starts with a tokenization and parsing phase that converts the textual representation of the signature to an \ac{AST}.
+The model for this \ac{AST} contains ambiguous nodes, meaning that some kinds of \ac{AST} nodes capture multiple parse trees.
+Specifically, the application of LF type-level and term-level constants is represented as a list of parsemes.
+Parsing of signature-level declarations also features mixing/unmixing flags to postpone some elements of disambiguation to phases after context-free parsing.
+
 Indexing in \Beluga is the frontend process where the concrete syntax is elaborated into an approximate syntax where variables are replaced with de Bruijn indices.
-This process is responsible for disambiguating applications (which may contain user-defined operators) and resolving constants, which is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings.
+This process is run after parsing, and is responsible for disambiguating applications (which may contain user-defined operators), disambiguating \LF objects, and resolving constants, which is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings to produce the referencing environment.
 Using the centralized store of declarations, some measure of overloading of identifiers is supported by resolving them with a pre-defined order of lookups based on the kind of identifier that is expected for a given \ac{AST} node.
 For instance, computation-level identifiers are resolved by looking up in order the store of computation-level variables, the store of program constants, and then the store of data type constructors.
+
+After indexing, the reconstruction phase is run to reconstruct holes in types and terms for omitted arguments.
+This process infers types for synthesizing expressions and performs type-driven unmixing of overloaded syntactic forms.
+% TODO: Expand
+
+After reconstruction, an abstraction phase is run to abstract over free variables, which effectively introduces binders for implicit parameters.
+% TODO: Expand
+
+Finally, type-checking is run to ensure signature reconstruction yielded valid programs.
+This includes running coverage-checking and totality-checking, which are processes that ensure case analyses are exhaustive and that functions annotated with a totality declaration terminate for all inputs.
+% TODO: Expand
+
+Starting with the indexing phase, data is shared between the phases of signature reconstruction using a global mutable store.
+This auxiliary data structure is a set of tables mapping constant identifiers to meta-data like in a relational database.
+Crucially, the referencing environment used during indexing is computed using this store.
+% TODO: Expand
+
+% TODO: Interactive REPL and Harpoon
+
+% TODO: What the focus of this thesis is
 
 \section{Stateful and Incremental Program Development}
 
@@ -44,4 +69,7 @@ Implementing these features may require caching of compilation results and resto
 
 % What is the general solution to the name resolution problem in incremental program development?
 The general solution to stateful and incremental program development is to parameterize the non-sequential processes with a visiting state that keeps track of bound variables and constants.
-The issue then becomes how to efficiently construct and preserve the correctness of this visiting state, specifically in compilers for functional programming languages like \Beluga.
+The issue then becomes how to efficiently construct and preserve the correctness of this visiting state, specifically in compilers for functional programming languages like \Beluga, and \acp{REPL} instantiated at program holes.
+
+% An open stateful function is a function parameterized over some state, and the lifecycle of the mutable state is extrinsinc.
+% A closed stateful function is a function that internally uses mutable states, whose lifecycle is intrinsically maintained.

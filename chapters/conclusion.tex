@@ -9,3 +9,13 @@
 \section{Future Work}
 
 % TODO:
+
+%The \Harpoon interactive proof environment is too tightly coupled with the rest of the \Beluga system.
+%In particular, \Harpoon proof scripts are too verbose, error-prone and redundant.
+%Indeed, serializing the meta and computation contexts is unnecessary since they can always be reconstructed, albeit with different names for the bindings.
+%Holes in \Beluga programs can represent backward reasoning settings.
+%The following snippet describes a proof by backward reasoning, whereby a proof for the subgoal can be constructed by invoking f with unknown arguments x and y.
+%
+%let x : t1 = ?
+%and y : t2 = ?
+%in f x y

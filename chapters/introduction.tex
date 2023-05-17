@@ -9,7 +9,7 @@
 % What are dependently-typed programming languages?
 
 % What is Beluga? What is HOAS? What is contextual modal type theory?
-\Beluga~\cite{pientka2010beluga} is a domain-specific dependently-typed programming language for specifying and proving properties about formal systems using contextual modal type theory~\cite{nanevski2008contextual}.
+\Beluga~\cite{pientka2010beluga} is a dependently-typed programming language for specifying and proving properties about formal systems using contextual modal type theory~\cite{nanevski2008contextual}.
 It leverages \LF, the Edinburgh Logical Framework~\cite{harper1993framework}, extended with explicit contexts, contextual objects and substitutions~\cite{DBLP:journals/corr/abs-1009-2789, cave2013first}, which allow for logic reasoning involving open terms.
 Using \ac{HOAS}~\cite{pfenning1988higher}, elegant and succinct definitions can be made in \LF to subsequently prove theorems pertaining to programming languages and $ \lambda $-calculi, such as type safety for System F, cut-admissibility in the intuitionistic sequent calculus, or termination of weak-head normalization for the simply-typed lambda calculus.
 
@@ -52,15 +52,20 @@ Specifically with respect to \Beluga, these phases have evolved to include impli
 What transpires from this design is a unilateral flow of information from the concrete syntax to the internal representation of programs in \Beluga.
 Early optimizations were put in place to maximize the performance of this processing pipeline.
 In particular, a single global representation of the \Beluga program being processed was implemented to provide information to later processing phases in a feedforward fashion.
+This simplified the implementation of new features since globally accessible data does not need dependency injection.
 This design was sound only under the assumption that the information in the application would flow in only one direction.
-Unfortunately, the introduction of \Beluga's interactive mode and subsequently \Harpoon inadvertedly broke that assumption.
+Unfortunately, the introduction of \Beluga's interactive mode and subsequently \Harpoon inadvertently broke that assumption.
+Indeed, soundness issues have arose with regards to features and processes of the two system that require inspecting only a subset of a signature and its referencing environment.
+This issue of locality further has further been shown to deteriorate the performance of the logic programming engine used to automate proof search.
 
-% TODO: Try to bring this to the beginning of the introduction
 % What is the proposed approach to supporting edit actions in Beluga and Harpoon?
-This thesis reports on implementation changes made to \Beluga and \Harpoon to address some of the soundness issues in interactive proof development in these two systems.
+This thesis reports on improvements made to the implementation \Beluga and \Harpoon to address some of the soundness issues in interactive proof development in these two systems.
 In particular, we present an explicitly stateful algorithm for the parsing, disambiguation and indexing of \Beluga programs to ensure correct name resolutions across editing states.
-% TODO: Elaborate on what are the soundness issues in Beluga
-% TODO(Johanna): What was the outcome of your changes? Did they fix the soundness issues?
+This fixed the soundness issue for \Harpoon proof sessions whereby constants declared after the proof hole would be in scope and shadow earlier declarations.
+The revised approach to name resolution allowed for consistent namespacing of constants to be implemented.
+Additionally, the \Beluga feature of fixity pragmas for defining prefix, infix or postfix notations for \LF-level constants was expanded upon to also work with computation-level constants.
+Using the proposed specification for \Beluga and \Harpoon's grammars, the generation of \textsc{HTML} pages corresponding to signatures was restored, with a new and improved pretty-printing algorithm of the concrete syntax.
+Overall, the changes have improved the maintainability, resiliency and stability of the affected modules, and have proposed better architectural design patterns that may be applied to the rest of the implementation.
 
 % TODO:
 
@@ -73,7 +78,6 @@ In particular, we present an explicitly stateful algorithm for the parsing, disa
 % TODO: To justify the dynamic side of things, consider a query appearing in the middle of a signature. The logic engine is considering too large of a search space by including the constants appearing later in the signature.
 % TODO: To additionally justify the dynamic side of things, talk about structured proof editing in a dynamic environment like Harpoon, or Beluga's interactive mode.
 
-% TODO: LFMTP Mid-April, system description of revised parser frontend
 % TODO: Drop Harpoon, focus on tension between static and dynamic settings
 % TODO: Add the Beluga language specification as an appendix
 

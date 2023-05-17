@@ -13,7 +13,7 @@ A parse forest refers to a collection of parse trees.
 A program's textual representation is ambiguous if it can be parsed into multiple parse trees.
 By way of analogy, a sentence in a natural language is ambiguous if it can be interpreted in multiple valid ways, even though the sentence was meant to convey exactly one meaning.
 Since programming languages are tools for describing computerized systems, it is imperative that every valid written program has exactly one interpretation.
-In the strictest of cases, this unicity of interpretation may be enforced at the level of the parser, such that valid programs correspond to exactly one parse tree.
+In the strictest of cases, this unicity of interpretation may be enforced at the level of the parser, such that all valid programs correspond to exactly one parse tree.
 This is typically achieved using rules and syntactic conventions that prevent ambiguous programs from being written in the first place.
 
 Despite that, certain kinds of ambiguities are unavoidable in programming languages, and are oftentimes useful to the end user.
@@ -27,7 +27,8 @@ It refers to the procedures used to resolve ambiguities in the result of parsing
 In parsing systems that do not output parse forests, disambiguation typically involves manipulating the \ac{AST} representation of a single parse tree that captures ambiguities.
 Increasing the amount of computation required to disambiguate the textual representation of a program negatively impacts the maintainability and readability of that program for the end user.
 Different kinds of concrete syntax ambiguities may arise during parsing of a programming language.
-As it pertains to \Beluga, we distinguish three kinds of syntactic ambiguities, in increasing level of computational complexity required to solve them:
+We distinguish three kinds of syntactic ambiguities, listed below in increasing level of computational complexity required to solve them.
+This list is not exhaustive, but highlights an important design decision in crafting the external syntax of \Beluga:
 \begin{enumerate}
 \item
 Operator ambiguities: operators and their operands may be interpreted in different orders.
@@ -50,19 +51,19 @@ If a language can be specified by a \ac{CFG}, then we say that it is a \ac{CFL}.
 \Acp{CFL} have many advantages, including the fact that there is an abundance of battle-tested tools for generating parsers for them.
 Crucially, \acp{CFL} are easy to parse, both by the parsing algorithm and by the end user.
 As the name suggests, a \ac{CFL} does not require keeping track of a context of data during parsing specifically for disambiguation.
-This ensures that programs can scale and be readable by the user without having to fully understand the context in which they appear in order to disambiguate them.
+This ensures that programs can scale and be readable by the user without having to fully known the context in which the programs appear in order to disambiguate them.
 Operator ambiguities as mentioned above can be resolved by rewriting the grammar while keeping it context-free.
 The other two kinds of ambiguities however give rise to context-sensitive or strictly Turing-recognizable languages~\cite{chomsky1956three}.
 Consequently, the design for the concrete syntax of a programming language is intrinsically linked with the algorithm required to parse it.
 
 % What are some language design considerations?
 
-We say that a grammar is dynamic (or user-extensible) if the way a program is parsed is influenced by directives in the program, and otherwise we say that the grammar is static.
+We say that a grammar is dynamic (or user-extensible, or featuring syntax extensions) if the way a program is parsed is influenced by directives in the program itself, and otherwise we say that the grammar is static.
 Languages for specifying logics tend to favour user-extensible grammars over static ones.
-Indeed, \Agda and \Isabelle/\HOL have mixfix operators, \Coq has notations, and \Beluga has prefix, infix and postfix operators specified by pragmas.
+Indeed, \Agda and \Isabelle/\HOL support mixfix operators, \Coq has notations, and \Beluga has prefix, infix and postfix operators specified by pragmas.
 This is justified by the need for more concise and expressive ways to convey the meaning of definitions and lemmas.
-However, that design choice negatively impacts the implementation of tooling for the language.
-Indeed, it complicates the implementation of incremental parsing, for efficient parsing of edits in a text editor, and indexing, for resolving identifiers to their binding site.
+However, that design choice negatively impacts the implementation of tools for the language.
+Indeed, user-defined syntax extensions complicate the implementation of incremental parsing for efficient parsing of edits in a text editor, and indexing for resolving identifiers to their binding site.
 %This is notably the case for tooling in \textsc{C++} because of its rich pre-processor that increases the complexity of parsing and name resolution.
 
 Early versions of \Beluga were context-free and used \textsc{Camlp4} as parser generator for implementing its parser.
@@ -75,6 +76,7 @@ Hence, \Beluga version \texttt{1.0.0} featured a new parser implemented using mo
 
 Monadic parser combinators are higher-order functions for constructing top-down recursive descent parsers~\cite{Burge1975-BURRPT, hutton1996monadic, leijen2001parsec, generalparsercombs}.
 They provide a more declarative way of constructing complex parsers than shift-reduce parsers.
+Indeed, the combination of smaller parsers using operators closely resembles grammar specifications using \acp{CFG}.
 The intent of re-implementing \Beluga's parser to use parser combinators was to both improve error-reporting for the user and maintainability of the implementation for subsequent developers.
 
 % TODO: Note that the parser before Jake's had mix/unmix types.
@@ -92,32 +94,124 @@ The intent of re-implementing \Beluga's parser to use parser combinators was to 
 
 \section{\Beluga Parsing and Disambiguation Phases}
 
-The parsing algorithm I contributed to \Beluga is split into a parsing phase to a concrete \ac{AST}, and a disambiguation phase that translates it to the external \ac{AST}.
+The parsing algorithm contributed to \Beluga is split into a parsing phase to a concrete/parser \ac{AST}, and a disambiguation phase that translates it to the external \ac{AST}.
 
 Parsing is achieved using $ \mathsf{LALR(\infty)} $ parsing in pathological cases and $ \mathsf{LALR(1)} $ parsing in most cases.
-This is implemented using monadic parser combinators with unlimited backtracking only enabled in those pathological cases, or if no input token has been consumed.
+This is implemented using the monadic parser combinator libary introduced in the latest release of \Beluga.
+Unlimited backtracking is only enabled in pathological cases, or if no input token has been consumed.
 
-The disambiguation phase of parsing statefully keeps track of the identifiers in scope at any given point during the concrete \ac{AST} traversal.
-This is implemented using an instance of the state monad equipped with a binding tree and auxiliary data structures to deal with patterns, modules and pragmas.
+The disambiguation phase of parsing statefully keeps track of the identifiers in scope at any given point during the parser \ac{AST} traversal.
+This is implemented using a mutable state with auxiliary data structures to deal with patterns, modules and pragmas.
+Specifically, bindings during this phase are modelled using a stack of scopes, each of which contains a tree mapping fully qualified identifiers to minimal descriptions of bound variables and constants.
 
 \section{Parsing User-Defined Operators}
 
 In \Beluga, users may define identifiers to be used as operators in expression applications using pragmas as shown in figure~\ref{figure:operator-pragmas}.
 This feature was ported over from \Twelf, and subsequently improved to support shadowing of operators with bound variables.
-As outlined below, the supported notations for user-defined operators are more restrictive than that of \Agda with its mixfix expression parsing algorithm~\cite{danielsson2008parsing}.
+As outlined below, the supported notations for user-defined operators are more restrictive than that of \Agda because \Beluga does not support mixfix operators~\cite{danielsson2008parsing}.
+
+\begin{figure}[!htb]
+\begin{Verbatim}[commandchars=\\\{\}]
+\verbbf{LF} p : \verbbf{type} =
+| ⊃ : p → p → p
+| ⊂ : p → p → p
+| ∧ : p → p → p
+| ∨ : p → p → p
+| ¬ : p → p
+| ⊤ : p
+| ⊥ : p
+;
+\verbprag{--infix ⊃ 3 right.}    \verbcomment{% Declare ⊃ as a right-associative infix operator}
+\verbprag{--infix ⊂ 3 left.}     \verbcomment{% with precedence 3}
+\verbprag{--infix ∧ 5 right.}
+\verbprag{--infix ∨ 4 right.}
+\verbprag{--prefix ¬ 10.}
+
+\verbbf{let} a = [x : p ⊢ ¬ ¬ ¬ x]
+\verbbf{let} b = [x : p, y : p ⊢ ¬ x ⊂ y ⊂ ⊥]
+\verbbf{let} c = [x : p, y : p, z : p ⊢ ⊤ ∨ x ∧ ¬ y ⊃ ¬ z]
+\verbbf{let} d = [f : p -> p, x : p ⊢ ¬ f x ∨ f ⊥]
+\end{Verbatim}
+\caption{Example of user-defined operator definitions in \Beluga using pragmas. The subsequent meta-objects \texttt{a}, \texttt{b}, \texttt{c} and \texttt{d} use those notations.}
+\label{figure:operator-pragmas}
+\end{figure}
+
+In the legacy \Beluga system, user-defined operators are only supported for LF type-level and term-level applications.
+As such, only LF type-level and term-level constants could be defined as operators.
+The proposed revisions allow for user-defined operators to be used in all applications, meaning that computation-level types and expressions may also benefit from prefix, infix and postfix notations.
 
 In \Beluga, at the precedence level of expression applications, there are four scenarios to disambiguate:
 \begin{enumerate}
 \item Prefix operators followed by their operand,
 \item Left-associative, right-associative or non-associative infix operators preceded and followed by their operands,
-\item Postifx operators preceded by their operand, and
+\item Postfix operators preceded by their operand, and
 \item Juxtaposed expressions having no operator.
 \end{enumerate}
 
+During the disambiguation phase of parsing, where the referencing environment is available for resolving identifiers, an additional parsing pass is done on applications.
+Those applications were represented as a list of nodes in the \ac{AST}, so we only need to determine the structure of applicands and arguments for those nodes.
+The implementation of this parser is inspired by the general purpose expression parser from the \texttt{Parsec} library~\cite{leijen2001parsec}, as well as a parser scheme specification in figure~\ref{figure:user-defined-operators-grammar}, which is inspired by the one found in~\cite{danielsson2008parsing}.
+
+{\newcommand{\prefix}{\mathsf{op}_{\text{prefix}}}
+\newcommand{\infix}{\mathsf{op}_{\text{infix}}}
+\newcommand{\infixl}{\mathsf{op}_{\text{infix}}^L}
+\newcommand{\infixr}{\mathsf{op}_{\text{infix}}^R}
+\newcommand{\infixn}{\mathsf{op}_{\text{infix}}^N}
+\newcommand{\postfix}{\mathsf{op}_{\text{postfix}}}
 \begin{figure}[!htb]
-% TODO:
-\label{figure:operator-pragmas}
-\caption{User-defined operator definition in \Beluga using pragmas.}
-\end{figure}
+\begin{subfigure}{\linewidth}
+\centering
+\begin{tabular}{rrl}
+$ \angled{e} $ & $ \Coloneqq $ & $ \angled{\prefix} \; \angled{e} $\\
+& $ \mid $ & $ \angled{e} \; \angled{\infix} \; \angled{e} $\\
+& $ \mid $ & $ \angled{e} \; \angled{\postfix} $\\
+& $ \mid $ & $ \mathbf{a}+ $
+\end{tabular}
+\caption{Ambiguous grammar. The terminal $ \mathbf{a} $ is for expressions that were parsed previously at a higher precedence level than any user-defined operator.}
+\label{figure:user-defined-operators-initial-grammar}
+\end{subfigure}
+\par\bigskip
+\begin{subfigure}{\linewidth}
+\centering
+\begin{tabular}{rrl}
+$ \angled{e} $ & $ \Coloneqq $ & $ \angled{e}_1 $\\
+$ \angled{e}_p $ & $ \Coloneqq $ & $ \angled{e}_{p + 1} \; \angled{\infixn}_p \; \angled{e}_{p + 1} $\\
+& $ \mid $ & $ (\angled{\prefix}_p \mid \angled{e}_{p + 1} \; \angled{\infixr}_p){+} \; \angled{e}_{p + 1} $\\
+& $ \mid $ & $ \angled{e}_{p + 1} \; (\angled{\postfix}_p \mid \angled{\infixl}_p \; \angled{e}_{p + 1}){+} $\\
+& $ \mid $ & $ \angled{e}_{p + 1} $\\
+$ \angled{e}_{P + 1} $ & $ \Coloneqq $ & $ \mathbf{a}+ $
+\end{tabular}
+\caption{Initial grammar scheme. $ P $ is the number of distinct precedence levels induced by the user-defined operators appearing in the application, and $ \angled{e}_p $ is the production for an expression at precedence level $ p $.}
+\label{figure:user-defined-operators-initial-grammar-scheme}
+\end{subfigure}
+\caption{Grammars for parsing user-defined operators in \Beluga.}
+\label{figure:user-defined-operators-grammar}
+\end{figure}%
+\begin{figure}\ContinuedFloat
+\begin{subfigure}{\linewidth}
+\centering
+\begin{tabular}{rrl}
+$ \angled{e} $ & $ \Coloneqq $ & $ \angled{e}_1 $\\
+$ \angled{e}_p $ & $ \Coloneqq $ & $ \angled{\prefix}_p \; \angled{e_r}_p $\\
+& $ \mid $ & $ \angled{e}_{p + 1} \; \angled{e_t}_p $\\
+$ \angled{e_t}_p $ & $ \Coloneqq $ & $ \angled{\infixn}_p \; \angled{e}_{p + 1} $\\
+& $ \mid $ & $ \angled{\infixr}_p \; \angled{e_r}_p $\\
+& $ \mid $ & $ \angled{\infixl}_p \; \angled{e}_{p + 1} \; \angled{e_l}_p $\\
+& $ \mid $ & $ \angled{\postfix}_p \; \angled{e_l}_p $\\
+& $ \mid $ & $ \varepsilon $\\
+$ \angled{e_l}_p $ & $ \Coloneqq $ & $ \angled{\postfix}_p \angled{e_l}_p $\\
+& $ \mid $ & $ \angled{\infixl}_p \angled{e}_{p + 1} \angled{e_l}_p $\\
+& $ \mid $ & $ \varepsilon $\\
+$ \angled{e_r}_p $ & $ \Coloneqq $ & $ \angled{\prefix}_p \angled{e_r}_p $\\
+& $ \mid $ & $ \angled{e}_{p + 1} \angled{e_r'}_p $\\
+$ \angled{e_r'}_p $ & $ \Coloneqq $ & $ \angled{\infixr}_p \angled{e_r}_p $\\
+& $ \mid $ & $ \varepsilon $\\
+$ \angled{e}_{P + 1} $ & $ \Coloneqq $ & $ \mathbf{a}+ $
+\end{tabular}
+\caption{Factored grammar scheme derived from figure~\ref{figure:user-defined-operators-initial-grammar-scheme}. The parser implementation using that grammar additionally intersperses failure productions to peek at the next token in the input stream and raise an exception if that token is an operator in an ambiguous position.}
+\label{figure:user-defined-operators-final-grammar-scheme}
+\end{subfigure}
+\caption{Grammars for parsing user-defined operators in \Beluga (cont.).}
+\end{figure}}
 
 \section{Related Work}
