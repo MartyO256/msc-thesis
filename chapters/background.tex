@@ -4,20 +4,29 @@
 
 \section{The Implementation of \Beluga} \label{section:beluga-implementation}
 
-This section presents an overview of the implementation of \Beluga before any contribution detailed in this thesis were made\footnote{Revision \href{https://github.com/Beluga-lang/Beluga/tree/4769323d701722bde42a0e2570d892ef78cd2d04}{3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2} on Github.}.
+This section presents an overview of the implementation of \Beluga before any contribution detailed in this thesis were made\footnote{Revision \href{https://github.com/Beluga-lang/Beluga/tree/3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2}{3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2} on Github.}.
 
 \Beluga is implemented following the pipeline architectural pattern, whereby processing of a \Beluga signature is implemented in distinct phases, and data flows in a feed-forward fashion throughout.
 The compilation of \Beluga programs to machine code is not supported, so the implementation only covers the frontend component of compilation, which is responsible for parsing and semantic analysis of programs.
 Since \Beluga is a dependently-typed language featuring code coverage analysis and termination checking, this semantic analysis process is complex.
 
-% TODO: Figure illustrating the compilation phases
+\begin{figure}
+\centering
+\includegraphics{figures/legacy-beluga-processing-pipeline.eps}
+\label{figure:legacy-beluga-processing-pipeline}
+\caption{%
+Overview of the implementation of \Beluga v1.0's processing pipeline.
+The syntax analysis process converts the textual representation of \Beluga programs into an initial \ac{AST}.
+The semantic analysis process refines this \ac{AST} by performing type-directed signature reconstruction, using global mutable data structures that include a store of signature entries.
+}%
+\end{figure}
 
-The processing of a \Beluga signature starts with a tokenization and parsing phase that converts the textual representation of the signature to an \ac{AST}.
-The model for this \ac{AST} contains ambiguous nodes, meaning that some kinds of \ac{AST} nodes capture multiple parse trees.
+As illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline}, the processing of a \Beluga signature starts with syntax analysis, which is comprised of a tokenization and parsing phase that converts the textual representation of the signature to an \ac{AST}, called the external \ac{AST}.
+The model for this \ac{AST} contains ambiguous nodes, meaning that some \ac{AST} node variants capture multiple parse trees.
 Specifically, the application of LF type-level and term-level constants is represented as a list of parsemes.
 Parsing of signature-level declarations also features mixing/unmixing flags to postpone some elements of disambiguation to phases after context-free parsing.
 
-Indexing in \Beluga is the frontend process where the concrete syntax is elaborated into an approximate syntax where variables are replaced with de Bruijn indices.
+Indexing in \Beluga is the frontend process where the concrete syntax is elaborated to an approximate syntax in which variables are replaced with de Bruijn indices.
 This process is run after parsing, and is responsible for disambiguating applications (which may contain user-defined operators), disambiguating \LF objects, and resolving constants, which is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings to produce the referencing environment.
 Using the centralized store of declarations, some measure of overloading of identifiers is supported by resolving them with a pre-defined order of lookups based on the kind of identifier that is expected for a given \ac{AST} node.
 For instance, computation-level identifiers are resolved by looking up in order the store of computation-level variables, the store of program constants, and then the store of data type constructors.
@@ -29,8 +38,8 @@ This process infers types for synthesizing expressions and performs type-driven 
 After reconstruction, an abstraction phase is run to abstract over free variables, which effectively introduces binders for implicit parameters.
 % TODO: Expand
 
-Finally, type-checking is run to ensure signature reconstruction yielded valid programs.
-This includes running coverage-checking and totality-checking, which are processes that ensure case analyses are exhaustive and that functions annotated with a totality declaration terminate for all inputs.
+Finally, a semantic checking phase is run to ensure signature reconstruction yielded valid programs.
+This includes performing type-checking, coverage-checking and totality-checking, which are processes that ensure that \LF-level and computation-level expressions are well-typed, that case analyses are exhaustive, and that functions annotated with a totality declaration terminate for all inputs.
 % TODO: Expand
 
 Starting with the indexing phase, data is shared between the phases of signature reconstruction using a global mutable store.
