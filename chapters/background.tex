@@ -13,21 +13,21 @@ Since \Beluga is a dependently-typed language featuring code coverage analysis a
 \begin{figure}
 \centering
 \includegraphics{figures/legacy-beluga-processing-pipeline.eps}
+\caption[Overview of the implementation of \Beluga version \texttt{1.0.0}'s processing pipeline.]{%
+Overview of the implementation of \Beluga version \texttt{1.0.0}'s processing pipeline.
+The syntax analysis process converts the textual representation of \Beluga programs into an initial \acs{AST}.
+The semantic analysis process refines this \acs{AST} by performing type-directed signature reconstruction, using global mutable data structures that include a store of signature entries.
+}
 \label{figure:legacy-beluga-processing-pipeline}
-\caption{%
-Overview of the implementation of \Beluga v1.0's processing pipeline.
-The syntax analysis process converts the textual representation of \Beluga programs into an initial \ac{AST}.
-The semantic analysis process refines this \ac{AST} by performing type-directed signature reconstruction, using global mutable data structures that include a store of signature entries.
-}%
 \end{figure}
 
 As illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline}, the processing of a \Beluga signature starts with syntax analysis, which is comprised of a tokenization and parsing phase that converts the textual representation of the signature to an \ac{AST}, called the external \ac{AST}.
 The model for this \ac{AST} contains ambiguous nodes, meaning that some \ac{AST} node variants capture multiple parse trees.
-Specifically, the application of LF type-level and term-level constants is represented as a list of parsemes.
+Specifically, the application of \ac{LF} type-level and term-level constants is represented as a list of parsemes.
 Parsing of signature-level declarations also features mixing/unmixing flags to postpone some elements of disambiguation to phases after context-free parsing.
 
 Indexing in \Beluga is the frontend process where the concrete syntax is elaborated to an approximate syntax in which variables are replaced with de Bruijn indices.
-This process is run after parsing, and is responsible for disambiguating applications (which may contain user-defined operators), disambiguating \LF objects, and resolving constants, which is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings to produce the referencing environment.
+This process is run after parsing, and is responsible for disambiguating applications (which may contain user-defined operators), disambiguating \ac{LF} objects, and resolving constants, which is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings to produce the referencing environment.
 Using the centralized store of declarations, some measure of overloading of identifiers is supported by resolving them with a pre-defined order of lookups based on the kind of identifier that is expected for a given \ac{AST} node.
 For instance, computation-level identifiers are resolved by looking up in order the store of computation-level variables, the store of program constants, and then the store of data type constructors.
 
@@ -39,7 +39,7 @@ After reconstruction, an abstraction phase is run to abstract over free variable
 % TODO: Expand
 
 Finally, a semantic checking phase is run to ensure signature reconstruction yielded valid programs.
-This includes performing type-checking, coverage-checking and totality-checking, which are processes that ensure that \LF-level and computation-level expressions are well-typed, that case analyses are exhaustive, and that functions annotated with a totality declaration terminate for all inputs.
+This includes performing type-checking, coverage-checking and totality-checking, which are processes that ensure that \ac{LF}-level and computation-level expressions are well-typed, that case analyses are exhaustive, and that functions annotated with a totality declaration terminate for all inputs.
 % TODO: Expand
 
 Starting with the indexing phase, data is shared between the phases of signature reconstruction using a global mutable store.
