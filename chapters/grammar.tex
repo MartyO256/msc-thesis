@@ -307,8 +307,7 @@ Meta-types and meta-objects may be embedded in the computation level by denoting
 Modifying the box annotation by prefixing it with \syntax{\#} or \syntax{\$} syntactically forces it to be a specific variant of meta-type or meta-object.
 Substitution types and objects are required to be annotated with a \syntax{\$}-box to disambiguate them from contextual types and terms respectively.
 When paired with an identifier in a declaration such as in a meta-context, the prefixes of the identifier and the boxed meta-type must match.
-
-Schema meta-types are not boxed.
+Exceptionally, schema meta-types are not boxed.
 
 \begin{grammar}
 <schema> ::= <qualified-identifier>
@@ -622,10 +621,10 @@ That is, type constants, term constants, programs and proofs are arranged as lis
 
 \section{Resolving Syntactic Ambiguities}\label{section:resolving-grammar-ambiguities}
 
-This section highlights some ambiguities in the syntax for \Beluga as presented in section~\ref{section:syntax}, and presents strategies for resolving them.
+This section highlights some syntactic ambiguities in the syntax for \Beluga as presented in section~\ref{section:syntax}, and presents strategies for resolving them.
 Ambiguities in the syntax include:
 \begin{itemize}
-\item Qualified identifiers, projections and destructors use the same dot operator.
+\item Qualified identifiers, projections, $\lambda$-terms, old-style \ac{LF} declarations and destructors use the same dot operator.
 \item \ac{LF} kinds, types and terms share syntactic constructs for arrows, $ \Pi $'s and applications.
 \item Contextual \ac{LF} types, terms and patterns share syntactic constructs for arrows and applications.
 \item Computation kinds and types share syntactic constructs for arrows, $ \Pi $'s and applications.
@@ -640,7 +639,7 @@ Ambiguities for the built-in operators in the syntax may be resolved statelessly
 The remainder of the ambiguities listed above must be resolved statefully since they require complete scope information to correctly resolve operator sorts and the parser settings defined by the user.
 Furthermore, given that declarations in a \Beluga signature may be mutually recursive, resolving these ambiguities is best done in a separate phase after parsing.
 Indeed, attempting to resolve these ambiguities in a top-down parser would require possibly unbounded lookaheads and more costly backtracking.
-As such, a \Beluga signature is first parsed into an \ac{AST} with ambiguous nodes, and then a separate disambigution phase elaborates that \ac{AST} to the external syntax.
+As such, a \Beluga signature is first parsed into an \ac{AST} with ambiguous nodes, and then a separate disambiguation phase elaborates that \ac{AST} to the external syntax.
 By design, the grammar of section~\ref{section:syntax} does not require type information for disambiguation.
 Hence, the symbol table only keeps track of identifiers in scope and their associated sort without types.
 

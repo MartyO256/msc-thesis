@@ -4,11 +4,19 @@
 
 \section{Signature Reconstruction Pipeline}
 
-% TODO:
+% TODO: Provide a more fine-grained presentation of \Beluga's semantic analysis phase, with an emphasis on explicit state management and ACID transactions
 
 \section{Indexing}
 
 % TODO:
+
+% TODO: Present the data structures for name resolution in the implementation (binding tree, binding domains, scope stack, context sizes for de Bruijn indices computations)
+
+% TODO: Purpot that we can have a unification algorithm in a named setting if we compute de Bruijn indices on the fly
+
+% TODO: Prupot that this implementation is scalable to multi-modal logics and multi-level contextual modal logic
+
+% TODO: Present a model for mechanizing name resolution semantic analysis, using an association list, context sizes and binding sorts (bindings tagged with their domains)
 
 \section{Pretty-Printing}
 
@@ -40,7 +48,9 @@ Additionally, the associativity of operators appearing at the same precedence le
 
 Pretty-printing of \Beluga's internal syntax requires the generation of fresh identifiers to replace de Bruijn indices.
 Hence, not only is printing stateful, it also needs an auxiliary data structure containing the set of identifiers that are used by sub-expressions.
-This data structure may be implement in many ways, and it reduces to the problem of annotating a tree with additional data:
+Indeed, one needs to know what identifiers are used in the term under a $\lambda$-abstraction before generating an identifier for the $\lambda$-abstraction's parameter.
+Otherwise, the generated identifier may shadow a referenced identifier.
+The data structure to support this feature may be implemented in many ways, but in general this problem reduces to the problem of annotating a tree with additional data~\cite{najd2016trees}:
 
 \begin{itemize}
 \item
@@ -59,6 +69,8 @@ The less invasive approach is to traverse the \ac{AST} in a top-down fashion and
 
 \section{Testing}
 
-% TODO:
+% TODO: Present data-driven testing
+% TODO: Present the micro-tests and benefits of having an unambiguous AST to inspect
+% TODO: Present the parser test using pretty-printing
 
 \section{Related Work}
