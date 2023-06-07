@@ -162,6 +162,15 @@ The subsequent meta-objects \texttt{a}, \texttt{b}, \texttt{c} and \texttt{d} us
 \label{figure:operator-pragmas}
 \end{figure}
 
+\begin{figure}
+\includegraphics[width=\textwidth]{figures/operator-table.eps}
+\caption[Example operator table for parsing user-defined operators.]{%
+Example operator table for parsing user-defined operators for applications containing the operators $\lnot$, $\land$, $\lor$ and $\subset$ from figure~\ref{figure:operator-pragmas}.
+For instance, this table would be used to parse $x \subset x \lor y \lor \lnot z \land w$ as $x \subset (x \lor (y \lor ((\lnot z) \land w)))$.
+}
+\label{figure:operator-table}
+\end{figure}
+
 In the legacy \Beluga system, user-defined operators are only supported for \ac{LF} type-level and term-level applications.
 As such, only \ac{LF} type-level and term-level constants could be defined as operators.
 The proposed revisions allow for user-defined operators to be used in all applications, meaning that computation-level types and expressions may also benefit from prefix, infix and postfix notations.
