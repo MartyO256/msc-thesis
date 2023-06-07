@@ -18,6 +18,23 @@
 
 % TODO: Present a model for mechanizing name resolution semantic analysis, using an association list, context sizes and binding sorts (bindings tagged with their domains)
 
+\begin{figure}
+\centering
+\begin{tabular}{lrcl}
+Referencing environment & $\Xi$ & $\Coloneqq$ & $\cdot \mid \Xi, \mathbb{S} \mid \Xi, \mathbb{M} \mid \Xi, \mathbb{P}$\\
+Plain scope & $\mathbb{S}$ & $\Coloneqq$ & $\cdot \mid \mathbb{S}, x : \mathbb{E}$\\
+Module scope & $\mathbb{M}$ & $\Coloneqq$ & $\cdot \mid \mathbb{M}, x_\Downarrow : \mathbb{E} \mid \mathbb{M}, x_\Uparrow : \mathbb{E}$\\
+Pattern scope & $\mathbb{P}$ & $\Coloneqq$ & $\cdot \mid \mathbb{P}, x_\downarrow : \mathbb{E} \mid \mathbb{P}, x_\uparrow : \mathbb{E}$\\
+Entry & $\mathbb{E}$ & $\Coloneqq$ & $\mathsf{LF}_{\mathsf{type}} \mid \mathsf{LF}_{\mathsf{term}} \mid \mathsf{Module}\left(\overrightarrow{x_\Uparrow : \mathbb{E}}\right) \mid \cdots$
+\end{tabular}
+\caption[Definition of the structure of referencing environments for indexing \Beluga signatures.]{%
+Definition of the structure of referencing environments for indexing \Beluga signatures.
+Some variants for entries have been omitted for brevity.
+Identifiers denoted as $x_\Downarrow$ and $x_\Uparrow$ in a module scope denote private declarations and public declarations respectively.
+Likewise, identifiers denoted as $x_\downarrow$ and $x_\uparrow$ in a pattern scope denote inner-pattern variables and pattern variables respectively.
+}
+\end{figure}
+
 \section{Pretty-Printing}
 
 % What is pretty-printing?
