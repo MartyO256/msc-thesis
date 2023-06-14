@@ -69,7 +69,7 @@ Indeed, one needs to know what identifiers are used in the term under a $\lambda
 Otherwise, the generated identifier may shadow a referenced identifier.
 The data structure to support this feature may be implemented in many ways, but in general this problem reduces to the problem of annotating a tree with additional data~\cite{najd2016trees}:
 
-\begin{itemize}
+\begin{enumerate}
 \item
 Parallel data types equipped with extra fields may be defined for each kind of node in the \ac{AST}.
 During pretty-printing, the \ac{AST} and this auxiliary data structure then must be traversed at the same time.
@@ -78,7 +78,7 @@ Each node in the \ac{AST} may be equipped with a unique identifier to be used as
 Then, lookups can be made on that map during printing to fetch the necessary data.
 \item
 The auxiliary data may be embedded type-safely into the \ac{AST} using recursion schemes.
-\end{itemize}
+\end{enumerate}
 
 The less invasive approach is to traverse the \ac{AST} in a top-down fashion and construct closures accepting the binding state to first compute the set of used offsets and then the identifiers corresponding to those offsets.
 
