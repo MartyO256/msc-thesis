@@ -20,7 +20,7 @@ Since programming languages are tools for describing computerized systems, it is
 In the strictest of cases, this unicity of interpretation may be enforced at the level of the parser, such that all valid programs correspond to exactly one parse tree.
 This is typically achieved using rules and syntactic conventions that prevent ambiguous programs from being written in the first place.
 
-Despite that, certain kinds of syntactic ambiguities are unavoidable in programming languages, and are oftentimes useful to the end user.
+Despite that, certain kinds of syntactic ambiguities are unavoidable in programming languages, and are frequently useful to the end user.
 Indeed, programming languages often reuse or overload syntactic constructs to reduce both the number and complexity of rules that users have to learn in order to read and write programs.
 Ambiguous syntax can also make programs more terse, which may improve some workflows.
 Additional mechanisms need to be put in place as part of the compiler's implementation to detect ambiguities, and either signal them as errors, or resolve them using additional conventions.
@@ -29,8 +29,14 @@ Additional mechanisms need to be put in place as part of the compiler's implemen
 
 Disambiguation is the process by which a parse forest is filtered down to a single parse tree.
 It refers to the procedures used to resolve ambiguities in the result of parsing.
-In parsing systems that do not output parse forests, disambiguation typically involves manipulating the \ac{AST} representation of a single parse tree that captures ambiguities, with node variants that suspend parsing.
+In parsing systems that do not output parse forests, disambiguation typically involves manipulating the \ac{AST} representation of a single parse tree that captures ambiguities, meaning that some of its nodes represent the overlapping of syntactic constructs.
+Functionally, these nodes suspend parsing until more information is available to disambiguate them to the correct node variant.
+
+% What is the impact of disambiguation on program readability?
+
 Increasing the amount of computation required to disambiguate the textual representation of a program negatively impacts the maintainability and readability of that program for the end user.
+Indeed, some forms of ambiguity in the syntax of a program may prevent the end user from fully understanding it in isolation from the rest of the compilation units.
+As such, one can argue that the strategies for disambiguating the syntax of a programming language should be intuitive.
 Different kinds of concrete syntax ambiguities may arise during parsing of a programming language.
 We distinguish three kinds of syntactic ambiguities that come into play in the implementation of \Beluga, listed below in increasing level of computational complexity required to solve them:
 \begin{enumerate}
@@ -60,7 +66,7 @@ Crucially, \acp{CFL} are easy to parse, both by the parsing algorithm and by the
 As the name suggests, a \ac{CFL} does not require keeping track of a context of data during parsing specifically for disambiguation.
 This ensures that programs can scale and be readable by the user without having to fully known the context in which the programs appear in order to disambiguate them.
 Operator ambiguities as mentioned above can be resolved by rewriting the grammar while keeping it context-free.
-The other two kinds of ambiguities however give rise to either context-sensitive or strictly Turing-recognizable languages~\cite{chomsky1956three}.
+The other two kinds of ambiguities however give rise to context-sensitive, or even strictly Turing-recognizable, languages~\cite{chomsky1956three}.
 As the name suggests, context-sensitive languages necessitate additional data about the context in which parts of the program appears.
 This usually means that some semantic analysis needs to be performed during parsing in order to complete the syntactic analysis.
 Consequently, the concrete syntax's design for a programming language is intrinsically linked with the algorithm required to parse it.
@@ -111,6 +117,22 @@ Nonetheless, there was still room to improve in the way of user-friendly error m
 \Beluga's parser was re-implemented to handle expressions in non-normal form, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
 Particularly, semantic analysis is introduced as part of a new disambiguation phase to the parser in order to produce a fully unambiguous \ac{AST}.
 Additionally, this implementation supports incremental program development.
+
+The motivation for these changes to the implementation can be summarized in the following points:
+\begin{enumerate}
+\item
+Expand the operator pragmas feature to computation-level types and expressions.
+This involved the implementation of a reusable process for disambiguating function applications denoted by the juxtaposition of terms.
+\item
+Improve syntax error messages.
+By accepting a wider range of programs at the level of the parser, the subsequent disambiguation phase can more precisely identify the cause for syntax errors and report them accurately.
+\item
+Improve the parser's maintainability.
+By decoupling disambiguation from indexing, both phases now respect the single-responsibility principle, which in turn simplifies the information flow at the early stage of signature reconstruction.
+\item
+Provide verifiably-correct external \acp{AST} to enable debugging of signature reconstruction.
+Since the disambiguated external \ac{AST} of a program fully captures what the user wrote, then the internal \ac{AST} as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} is no longer the only complete data representation of the program.
+\end{enumerate}
 
 The revised parsing algorithm for \Beluga signatures is split into three phases, namely: lexing, parsing and disambiguation.
 First, lexing is implemented just like in typical whitespace-agnostic programming languages, except for one lexer hack used to handle some overloading of the dot operator.
@@ -284,4 +306,4 @@ $ \angled{e}_{P + 1} $ & $ \Coloneqq $ & $ \mathbf{a}+ $
 
 \section{Related Work}
 
-% TODO: Agda embraces ambiguity, and spreads 
+% TODO: Agda embraces ambiguity, and spreads ambiguities across more syntaxes https://agda.readthedocs.io/en/v2.6.2.2/language/core-language.html#:~:text=The%20syntax%20of%20an%20Agda,Pragmas%20define%20program%20options.
