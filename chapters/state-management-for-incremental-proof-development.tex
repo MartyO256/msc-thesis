@@ -21,19 +21,109 @@
 \begin{figure}
 \centering
 \begin{tabular}{lrcl}
-Referencing environment & $\Xi$ & $\Coloneqq$ & $\cdot \mid \Xi, \mathbb{S} \mid \Xi, \mathbb{M} \mid \Xi, \mathbb{P}$\\
-Plain scope & $\mathbb{S}$ & $\Coloneqq$ & $\cdot \mid \mathbb{S}, x : \mathbb{E}$\\
-Module scope & $\mathbb{M}$ & $\Coloneqq$ & $\cdot \mid \mathbb{M}, x_\Downarrow : \mathbb{E} \mid \mathbb{M}, x_\Uparrow : \mathbb{E}$\\
-Pattern scope & $\mathbb{P}$ & $\Coloneqq$ & $\cdot \mid \mathbb{P}, x_\downarrow : \mathbb{E} \mid \mathbb{P}, x_\uparrow : \mathbb{E}$\\
-Entry & $\mathbb{E}$ & $\Coloneqq$ & $\mathsf{LF}_{\mathsf{type}} \mid \mathsf{LF}_{\mathsf{term}} \mid \mathsf{Module}\left(\overrightarrow{x_\Uparrow : \mathbb{E}}\right) \mid \cdots$
+Referencing environment & $\Xi$ & $\Coloneqq$ & $\cdot \mid \Xi; \mathbb{S} \mid \Xi; \mathbb{M} \mid \Xi; \mathbb{P}$\\
+Plain scope & $\mathbb{S}$ & $\Coloneqq$ & $\cdot \mid \mathbb{S}, x : \mathbb{V}$\\
+Module scope & $\mathbb{M}$ & $\Coloneqq$ & $\cdot \mid \mathbb{M}, x_\Downarrow : \mathbb{C} \mid \mathbb{M}, x_\Uparrow : \mathbb{C}$\\
+Pattern scope & $\mathbb{P}$ & $\Coloneqq$ & $\cdot \mid \mathbb{P}, x_\downarrow : \mathbb{V} \mid \mathbb{P}, x_\uparrow : \mathbb{V}$\\
+Entry & $\mathbb{E}$ & $\Coloneqq$ & $ \mathbb{C} \mid \mathbb{V} $\\
+Constant & $ \mathbb{C} $ & $ \Coloneqq $ & $\mathsf{LF}_{\mathsf{type\ const}} \mid \mathsf{LF}_{\mathsf{term\ const}} \mid \mathsf{Module}\left(\overrightarrow{x_\Uparrow : \mathbb{C}}\right) \mid \cdots$\\
+Variable & $ \mathbb{V} $ & $ \Coloneqq $ & $ \mathsf{LF}_{\mathsf{term}} \mid \mathsf{Comp}_{\mathsf{term}} \mid \mathsf{Subst} \mid \mathsf{Ctx} \mid \mathsf{Param} $
 \end{tabular}
 \caption[Definition of the structure of referencing environments for indexing \Beluga signatures.]{%
 Definition of the structure of referencing environments for indexing \Beluga signatures.
-Some variants for entries have been omitted for brevity.
+Some variants for constant entries have been omitted for brevity.
 Identifiers denoted as $x_\Downarrow$ and $x_\Uparrow$ in a module scope denote private declarations and public declarations respectively.
 Likewise, identifiers denoted as $x_\downarrow$ and $x_\uparrow$ in a pattern scope denote inner-pattern variables and pattern variables respectively.
 }
 \end{figure}
+
+\begin{equation}
+\infer{x : \mathbb{V} \in \mathbb{S}, x : \mathbb{V}}{}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{V} \in \mathbb{S}, y : \mathbb{E}'}{x : \mathbb{V} \in \mathbb{S} & x \neq y}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{C} \in \mathbb{M}, x_\Downarrow : \mathbb{C}}{}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{C} \in \mathbb{M}, x_\Uparrow : \mathbb{C}}{}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{C} \in \mathbb{M}, y_\Downarrow : \mathbb{C}'}{x : \mathbb{C} \in \mathbb{M} & x \neq y}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{C} \in \mathbb{M}, y_\Uparrow : \mathbb{C}'}{x : \mathbb{C} \in \mathbb{M} & x \neq y}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{V} \in \mathbb{P}, x_\downarrow : \mathbb{V}}{}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{V} \in \mathbb{P}, y_\downarrow : \mathbb{V}}{x : \mathbb{V} \in \mathbb{P} & x \neq y}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{V} \in \mathbb{P}, y_\uparrow : \mathbb{V}}{x : \mathbb{V} \in \mathbb{P} & x \neq y}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{V} \in \Xi; \mathbb{S}}{x : \mathbb{V} \in \mathbb{S}}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{E} \in \Xi; \mathbb{S}}{x \notin \mathbb{S} & x : \mathbb{E} \in \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{C} \in \Xi; \mathbb{M}}{x : \mathbb{C} \in \mathbb{M}}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{E} \in \Xi; \mathbb{M}}{x \notin \mathbb{M} & x : \mathbb{E} \in \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{V} \in \Xi; \mathbb{P}}{x : \mathbb{V} \in \mathbb{P}}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{C} \in \Xi; \mathbb{P}}{x \notin \mathbb{P} & x : \mathbb{C} \in \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi; \mathbb{S}}{x_1 \notin \mathbb{S} & x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi; \mathbb{M}}{x_1 \notin \mathbb{M} & x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi; \mathbb{P}}{x_1 \notin \mathbb{P} & x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{C} \in \left(\overrightarrow{x_\Uparrow' : \mathbb{C}'}, x_\Uparrow : \mathbb{C}\right)}{}
+\end{equation}
+
+\begin{equation}
+\infer{x : \mathbb{C} \in \left(\overrightarrow{x_\Uparrow' : \mathbb{C}'}, y_\Uparrow : \mathbb{C}\right)}{x : \mathbb{C} \in \overrightarrow{x_\Uparrow' : \mathbb{C}'} & x \neq y}
+\end{equation}
+
+\begin{equation}
+\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{x_\Uparrow : \mathbb{C}'}}{x_1 : \mathsf{Module}\left(\overrightarrow{x_\Uparrow' : \mathbb{C}''}\right) \in \overrightarrow{x_\Uparrow : \mathbb{C}'} & x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{x_\Uparrow' : \mathbb{C}''}}
+\end{equation}
+
+\begin{equation}
+\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi; \mathbb{M}, x_1 : \mathsf{Module}\left(\overrightarrow{x_\Uparrow : \mathbb{C}'}\right)}{x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{x_\Uparrow : \mathbb{C}'}}
+\end{equation}
 
 \section{Pretty-Printing}
 
@@ -41,7 +131,7 @@ Likewise, identifiers denoted as $x_\downarrow$ and $x_\uparrow$ in a pattern sc
 
 Pretty-printing is the process that transforms an \ac{AST} back into its textual representation.
 This feature of programming languages is often used to implement automated formatting software as part of tooling.
-As it pertains to \Beluga and \Harpoon, pretty-printing is also used as part of debugging in order to trace the runtime execution of the signature reconstruction and type-checker algorithms, as well as for displaying programmatically generated programs back to the user in interactive sessions.
+As it pertains to \Beluga and \Harpoon, pretty-printing is used by the developers during debugging to trace the execution of signature reconstruction, and it is used by the user when programmatically generated programs need to be displayed in interactive sessions.
 
 % What are considerations to make when it comes to implementing pretty-printing?
 
@@ -67,7 +157,7 @@ Pretty-printing of \Beluga's internal syntax requires the generation of fresh id
 Hence, not only is printing stateful, it also needs an auxiliary data structure containing the set of identifiers that are used by sub-expressions.
 Indeed, one needs to know what identifiers are used in the term under a $\lambda$-abstraction before generating an identifier for the $\lambda$-abstraction's parameter.
 Otherwise, the generated identifier may shadow a referenced identifier.
-The data structure to support this feature may be implemented in many ways, but in general this problem reduces to the problem of annotating a tree with additional data~\cite{najd2016trees}:
+The data structure to support this feature may be implemented in many ways, but in general this problem reduces to annotating a tree with additional data~\cite{najd2016trees}:
 
 \begin{enumerate}
 \item
@@ -80,7 +170,8 @@ Then, lookups can be made on that map during printing to fetch the necessary dat
 The auxiliary data may be embedded type-safely into the \ac{AST} using recursion schemes.
 \end{enumerate}
 
-The less invasive approach is to traverse the \ac{AST} in a top-down fashion and construct closures accepting the binding state to first compute the set of used offsets and then the identifiers corresponding to those offsets.
+The approach with the least impact on the rest of the implementation is to construct printing closures using a top-down traversal of the \ac{AST}.
+At any given node, this traversal recursively computes the set of used de Bruijn offsets, and then constructs a closure accepting the referencing environment to determine the identifiers corresponding to those offsets.
 
 % TODO:
 

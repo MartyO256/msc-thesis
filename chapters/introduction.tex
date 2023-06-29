@@ -11,7 +11,7 @@
 % What is Beluga? What is HOAS? What is contextual modal type theory?
 \Beluga~\cite{pientka2010beluga} is a dependently-typed programming language for specifying and proving properties about formal systems using contextual modal type theory~\cite{nanevski2008contextual}.
 It leverages the \acf{LF}~\cite{harper1993framework}, extended with explicit contexts, contextual objects and substitutions~\cite{DBLP:journals/corr/abs-1009-2789, cave2013first}, which allow for logic reasoning involving open terms.
-Using \ac{HOAS}~\cite{pfenning1988higher}, elegant and succinct definitions can be made in \ac{LF} to subsequently prove theorems pertaining to programming languages and $ \lambda $-calculi, such as type safety for System F, cut-admissibility in the intuitionistic sequent calculus, or termination of weak-head normalization for the simply-typed lambda calculus.
+Using \ac{HOAS}~\cite{pfenning1988higher}, elegant and succinct definitions can be made in \LF to subsequently prove theorems pertaining to programming languages and $ \lambda $-calculi, such as type safety for System F, cut-admissibility in the intuitionistic sequent calculus, or termination of weak-head normalization for the simply-typed lambda calculus.
 
 % How does one specify a formal system using Beluga?
 
@@ -63,7 +63,7 @@ This thesis reports on improvements made to the implementation \Beluga and \Harp
 In particular, we present an explicitly stateful algorithm for the parsing, disambiguation and indexing of \Beluga programs to ensure correct name resolutions across editing states.
 This fixed the soundness issue for \Harpoon proof sessions whereby constants declared after the proof hole would be in scope and shadow earlier declarations.
 The revised approach to name resolution allowed for consistent namespacing of constants to be implemented.
-Additionally, the \Beluga feature of fixity pragmas for defining prefix, infix or postfix notations for \ac{LF}-level constants was expanded upon to also work with computation-level constants.
+Additionally, the \Beluga feature of fixity pragmas for defining prefix, infix or postfix notations for \LF-level constants was expanded upon to also work with computation-level constants.
 Using the proposed specification for \Beluga and \Harpoon's grammars, the generation of \textsc{HTML} pages corresponding to signatures was restored, with a new and improved pretty-printing algorithm of the concrete syntax.
 Overall, the changes have improved the maintainability, resiliency and stability of the affected modules, and have proposed better architectural design patterns that may be applied to the rest of the implementation.
 

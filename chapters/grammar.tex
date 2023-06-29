@@ -1,6 +1,7 @@
 \chapter{\textsc{Beluga} Grammar}
 
 This appendix describes the \ac{CFG} for \Beluga and \Harpoon in their entirety as a specification for the parsing algorithm.
+The lexical conventions are defined first, then ambiguous \acp{CFG} are presented for the various kinds of syntactic structures, and finally blurred \acp{CFG} are shown to illustrate how context-free parsing is done before disambiguation.
 
 \section{Syntax}\label{section:syntax}
 
@@ -18,7 +19,7 @@ The \ac{EBNF} metasyntax used in the sections hereafter follows this notation:
 \item $ a - b $ represents the application of $ a $ that cannot be the application of $ b $ if $ a $ and $ b $ are single-character length productions.
 \end{itemize}
 
-\subsection{Comments}
+\subsection{Comments}\label{section:comments-lexical-convention}
 
 \Beluga supports three kinds of comments:
 
@@ -36,7 +37,7 @@ These are used in documentation generation to \textsc{HTML} or \LaTeX.
 Documentation comments may only appear before or after signature-level declarations.
 \end{itemize}
 
-\subsection{Keywords}
+\subsection{Keywords}\label{section:keywords-lexical-convention}
 
 The following identifiers are reserved as keywords in \Beluga, and cannot be used otherwise.
 
@@ -101,10 +102,10 @@ Additionally, the following characters are reserved and cannot be used anywhere 
 \end{multicols}
 }
 
-\subsection{Lexical Conventions}
+\subsection{Lexical Conventions}\label{section:lexical-convention}
 
 \Beluga programs must be encoded in \textsc{UTF-8}.
-The production \synt{white-space} correspond to the Unicode property \texttt{White\_Space} as described in the Unicode Standard Version 15.0.0 Annex \#44, \href{https://www.unicode.org/reports/tr44/tr44-30.html#White_Space}{\textit{Unicode Character Database}}.
+The production \synt{white-space} corresponds to the Unicode property \texttt{White\_Space} as described in the Unicode Standard Version 15.0.0 Annex \#44, \href{https://www.unicode.org/reports/tr44/tr44-30.html#White_Space}{\textit{Unicode Character Database}}.
 The production \synt{any} stands for any unicode character.
 
 \begin{grammar}
@@ -192,7 +193,7 @@ The production \synt{any} stands for any unicode character.
 
 \subsection{Grammar for \acs{LF}}\label{section:syntax-lf}
 
-The following is the grammar for the definition of \ac{LF} kinds, types and terms.
+The following is the grammar for the definition of \LF kinds, types and terms.
 These syntactic constructs form a weak representational function space without case analysis or recursion.
 
 \begin{grammar}
@@ -225,7 +226,7 @@ These syntactic constructs form a weak representational function space without c
 
 \subsection{Grammar for Contextual \acs{LF}}\label{section:syntax-contextual-lf}
 
-The following is the grammar for the extension of \ac{LF} with substitutions, contexts and pattern-matching.
+The following is the grammar for the extension of \LF with substitutions, contexts and pattern-matching.
 
 \begin{grammar}
 <clf-type> ::= <qualified-identifier>
@@ -301,7 +302,7 @@ The following is the grammar for the extension of \ac{LF} with substitutions, co
 
 The following is the grammar for meta-level types (meta-types) and objects (meta-objects).
 Meta-types classify meta-objects.
-Meta-objects are contextual \ac{LF} terms, substitutions and contexts.
+Meta-objects are contextual \LF terms, substitutions and contexts.
 
 Meta-types and meta-objects may be embedded in the computation level by denoting them with boxes.
 Modifying the box annotation by prefixing it with \syntax{\#} or \syntax{\$} syntactically forces it to be a specific variant of meta-type or meta-object.
@@ -624,9 +625,9 @@ That is, type constants, term constants, programs and proofs are arranged as lis
 This section highlights some syntactic ambiguities in the syntax for \Beluga as presented in section~\ref{section:syntax}, and presents strategies for resolving them.
 Ambiguities in the syntax include:
 \begin{itemize}
-\item Qualified identifiers, projections, $\lambda$-terms, old-style \ac{LF} declarations and destructors use the same dot operator.
-\item \ac{LF} kinds, types and terms share syntactic constructs for arrows, $ \Pi $'s and applications.
-\item Contextual \ac{LF} types, terms and patterns share syntactic constructs for arrows and applications.
+\item Qualified identifiers, projections, $\lambda$-terms, old-style \LF declarations and destructors use the same dot operator.
+\item \LF kinds, types and terms share syntactic constructs for arrows, $ \Pi $'s and applications.
+\item Contextual \LF types, terms and patterns share syntactic constructs for arrows and applications.
 \item Computation kinds and types share syntactic constructs for arrows, $ \Pi $'s and applications.
 \item Ambiguities associated with the usual operators in expression grammars with their associativities and precedences.
 \item Ambiguities associated with user-defined operators with their fixities, associativities and precedences.
@@ -648,13 +649,13 @@ Rewriting the grammar for optimization, left recursion elimination, and stateles
 
 \subsection{Resolving Syntactic Ambiguities For \acs{LF}'s Grammar}
 
-The grammar for \ac{LF} kinds, types and terms from section~\ref{section:syntax-lf} is data-dependent because \ac{LF} term variables, type constants and term constants are syntactically indistinguishable from one another, and likewise for $ \Pi $-kinds and $ \Pi $-types.
-This next grammar blurs together \ac{LF} kinds, types and terms with corresponding productions \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} for context-free parsing.
+The grammar for \LF kinds, types and terms from section~\ref{section:syntax-lf} is data-dependent because \LF term variables, type constants and term constants are syntactically indistinguishable from one another, and likewise for $ \Pi $-kinds and $ \Pi $-types.
+This next grammar blurs together \LF kinds, types and terms with corresponding productions \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} for context-free parsing.
 Occurrences of \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} elsewhere in the grammar are replaced with \synt{lf-object}.
-Disambiguation of an \ac{LF} object as presented below requires:
+Disambiguation of an \LF object as presented below requires:
 \begin{itemize}
 \item complete scope information to resolve constants, and
-\item a target sort for the elaboration (i.e. knowing beforehand whether the \ac{LF} object should be a kind, type or term).
+\item a target sort for the elaboration (i.e. knowing beforehand whether the \LF object should be a kind, type or term).
 \end{itemize}
 
 \begin{grammar}
@@ -675,25 +676,25 @@ Disambiguation of an \ac{LF} object as presented below requires:
 Additionally, the syntax is disambiguated in order of decreasing precedence as follows:
 
 \begin{enumerate}
-\item The juxtaposition of \ac{LF} objects (separated by whitespace to denote application) is left-associative.
+\item The juxtaposition of \LF objects (separated by whitespace to denote application) is left-associative.
 \item User-declared infix, prefix (right-associative) and postfix (left-associative) operators.
 \item Forward arrows are right-associative, and backward arrows are left-associative, with equal precedence, hence they may not both appear at the same precedence level.
 \item Type ascriptions are left-associative.
-\item Binders are weak prefix operators, meaning that the identifier they introduce is in scope for the entire \ac{LF} object on the right.
+\item Binders are weak prefix operators, meaning that the identifier they introduce is in scope for the entire \LF object on the right.
 \end{enumerate}
 
 \subsection{Resolving Syntactic Ambiguities for Contextual \acs{LF}'s Grammar}
 
-The grammar for contextual \ac{LF} types, terms, patterns, substitutions, contexts and their patterns from section~\ref{section:syntax-contextual-lf} is data-dependent because contextual \ac{LF} term variables, type constants and term constants are syntactically indistinguishable from one another.
-This next grammar blurs together contextual \ac{LF} types, terms and patterns with corresponding productions \synt{clf-type}, \synt{clf-term} and \synt{clf-pattern} for context-free parsing.
+The grammar for contextual \LF types, terms, patterns, substitutions, contexts and their patterns from section~\ref{section:syntax-contextual-lf} is data-dependent because contextual \LF term variables, type constants and term constants are syntactically indistinguishable from one another.
+This next grammar blurs together contextual \LF types, terms and patterns with corresponding productions \synt{clf-type}, \synt{clf-term} and \synt{clf-pattern} for context-free parsing.
 Occurrences of \synt{clf-type}, \synt{clf-term} and \synt{clf-pattern} elsewhere in the grammar are replaced with \synt{clf-object}.
 Likewise, the productions \synt{clf-substitution}, \synt{clf-substitution-pattern}, \synt{clf-context} and \synt{clf-context-pattern} are blurred together as \synt{clf-context-object}.
-Disambiguation of a contextual \ac{LF} object as presented below requires:
+Disambiguation of a contextual \LF object as presented below requires:
 \begin{itemize}
 \item complete scope information to resolve constants, and
-\item a target sort for the elaboration (i.e. knowing beforehand whether the contextual \ac{LF} object should be a type, term or pattern).
+\item a target sort for the elaboration (i.e. knowing beforehand whether the contextual \LF object should be a type, term or pattern).
 \end{itemize}
-Additionally, contextual \ac{LF} contexts starting with an untyped identifier are always disambiguated as having a context variable in head position.
+Additionally, contextual \LF contexts starting with an untyped identifier are always disambiguated as having a context variable in head position.
 
 \begin{grammar}
 <clf-object> ::= <identifier>
@@ -725,18 +726,18 @@ Additionally, contextual \ac{LF} contexts starting with an untyped identifier ar
 Additionally, the syntax is disambiguated in order of decreasing precedence as follows:
 
 \begin{enumerate}
-\item The juxtaposition of contextual \ac{LF} objects (separated by whitespace to denote application) is left-associative.
+\item The juxtaposition of contextual \LF objects (separated by whitespace to denote application) is left-associative.
 \item User-declared infix, prefix and postfix operators.
 \item Projections are left-associative.
 \item Substitutions are left-associative.
 \item Forward arrows are right-associative, and backward arrows are left-associative, with equal precedence, hence they may not both appear at the same precedence level.
 \item Type ascriptions are left-associative.
-\item Binders are weak prefix operators, meaning that the identifier they introduce is in scope for the entire contextual \ac{LF} object on the right.
+\item Binders are weak prefix operators, meaning that the identifier they introduce is in scope for the entire contextual \LF object on the right.
 \end{enumerate}
 
 \subsection{Resolving Syntactic Ambiguities for the Meta-Level's Grammar}
 
-The grammar for context schemas, meta-types, meta-objects, meta-patterns and meta-contexts from section~\ref{section:syntax-meta-level} is ambiguous because the contextual \ac{LF} types and terms therein have ambiguous grammars.
+The grammar for context schemas, meta-types, meta-objects, meta-patterns and meta-contexts from section~\ref{section:syntax-meta-level} is ambiguous because the contextual \LF types and terms therein have ambiguous grammars.
 This next grammar blurs together meta-types, meta-objects and meta-patterns with corresponding productions \synt{meta-type}, \synt{meta-object} and \synt{meta-pattern} for context-free parsing.
 Occurrences of \synt{meta-type}, \synt{meta-object} and \synt{meta-pattern} elsewhere in the grammar are replaced with \synt{meta-thing}.
 Likewise, the productions \synt{schema} and \synt{meta-context} are replaced with \synt{schema-object} and \synt{meta-context-object} respectively.

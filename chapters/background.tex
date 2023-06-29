@@ -23,11 +23,11 @@ The semantic analysis process refines this \acs{AST} by performing type-directed
 
 As illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline}, the processing of a \Beluga signature starts with syntax analysis, which is comprised of a tokenization and parsing phase that converts the textual representation of the signature to an \ac{AST}, called the external \ac{AST}.
 The model for this \ac{AST} contains ambiguous nodes, meaning that some \ac{AST} node variants capture multiple parse trees.
-Specifically, the application of \ac{LF} type-level and term-level constants is represented as a list of parsemes.
+Specifically, the application of \LF type-level and term-level constants is represented as a list of parsemes.
 Parsing of signature-level declarations also features mixing/unmixing flags to postpone some elements of disambiguation to phases after context-free parsing.
 
 Indexing in \Beluga is the frontend process where the concrete syntax is elaborated to an approximate syntax in which variables are replaced with de Bruijn indices.
-This process is run after parsing, and is responsible for disambiguating applications (which may contain user-defined operators), disambiguating \ac{LF} objects, and resolving constants, which is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings to produce the referencing environment.
+This process is run after parsing, and is responsible for disambiguating applications (which may contain user-defined operators), disambiguating \LF objects, and resolving constants, which is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings to produce the referencing environment.
 Using the centralized store of declarations, some measure of overloading of identifiers is supported by resolving them with a pre-defined order of lookups based on the kind of identifier that is expected for a given \ac{AST} node.
 For instance, computation-level identifiers are resolved by looking up in order the store of computation-level variables, the store of program constants, and then the store of data type constructors.
 
@@ -39,7 +39,7 @@ After reconstruction, an abstraction phase is run to abstract over free variable
 % TODO: Expand
 
 Finally, a semantic checking phase is run to ensure signature reconstruction yielded valid programs.
-This includes performing type-checking, coverage-checking and totality-checking, which are processes that ensure that \ac{LF}-level and computation-level expressions are well-typed, that case analyses are exhaustive, and that functions annotated with a totality declaration terminate for all inputs.
+This includes performing type-checking, coverage-checking and totality-checking, which are processes that ensure that \LF-level and computation-level expressions are well-typed, that case analyses are exhaustive, and that functions annotated with a totality declaration terminate for all inputs.
 % TODO: Expand
 
 Starting with the indexing phase, data is shared between the phases of signature reconstruction using a global mutable store.
@@ -74,9 +74,9 @@ In general programming languages, these processes typically appear in the increm
 To implement this, a \ac{DAG} of the compilation units is constructed where edges denote dependency.
 A topological ordering is then computed for that \ac{DAG}, and used to create a compilation schedule with forked compilation processes for independent compilation units.
 This enables parallelism to be used to reduce compilation time, and potentially the number of compilation units that need to be recompiled after an edit action is performed.
-Implementing these features may require caching of compilation results and restoring processing states from those caches, which typically introduces cache invalidation concerns.
-Indeed, an incremental compilation process needs to be resumed in the state it originally happened, and changes that occur need to be propagated to the rest of the compiler's state.
-This in turn triggers additional compilation steps for units that have dependencies on the newly compiled unit.
+Implementing these features may require caching of compilation results and restoring processing states from those caches, which naturally raises the concern of cache invalidation.
+Indeed, an incremental compilation process needs to be resumed in the state it originally happened, and changes that occur as a result of this compilation need to be propagated to the rest of the compiler's state.
+This in turn triggers additional compilation steps for units that have explicit or transitive dependencies on the newly compiled unit.
 
 % What is the general solution to the name resolution problem in incremental program development?
 The general solution to stateful and incremental program development is to parameterize the non-sequential compilation processes with a visiting state that can be built in parallel with other processes.
