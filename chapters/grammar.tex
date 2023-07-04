@@ -1,4 +1,6 @@
-\chapter{\textsc{Beluga} Grammar}
+\chapter{\Beluga Grammar}
+
+\setlength{\grammarparsep}{0pt}
 
 This appendix describes the \ac{CFG} for \Beluga and \Harpoon in their entirety as a specification for the parsing algorithm.
 The lexical conventions are defined first, then ambiguous \acp{CFG} are presented for the various kinds of syntactic structures, and finally blurred \acp{CFG} are shown to illustrate how context-free parsing is done before disambiguation.
@@ -42,7 +44,7 @@ Documentation comments may only appear before or after signature-level declarati
 The following identifiers are reserved as keywords in \Beluga, and cannot be used otherwise.
 
 \begin{multicols}{4}
-\begin{itemize}[label={}]
+\begin{itemize}[label={}, nolistsep]
 \item \texttt{LF}
 \item \texttt{and}
 \item \texttt{impossible}
@@ -83,7 +85,7 @@ Additionally, the following characters are reserved and cannot be used anywhere 
 
 {\setlength{\columnseprule}{0.4pt}
 \begin{multicols}{3}
-\begin{itemize}[label={}]
+\begin{itemize}[label={}, nolistsep]
 \item \texttt{.}
 \item \texttt{…}
 \item \texttt{,}

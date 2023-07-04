@@ -34,7 +34,10 @@
 \usepackage[printonlyreused, withpage]{acronym}
 
 \usepackage{fancyvrb}
+\fvset{listparameters=\setlength{\topsep}{0pt}\setlength{\partopsep}{0pt}}
+\newcommand\verbpbf[1]{\textbf{#1}}
 \newcommand\verbbf[1]{\textcolor[rgb]{0,0,1}{\textbf{#1}}}
+\newcommand\verbrbf[1]{\textcolor[rgb]{1,0,0}{\textbf{#1}}}
 \newcommand\verbprag[1]{\textcolor[rgb]{0.1,0.66,0.51}{#1}}
 \newcommand\verbcomment[1]{\textcolor[rgb]{0.6,0.6,0.6}{#1}}
 

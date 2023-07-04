@@ -144,7 +144,7 @@ Finally, disambiguation converts the parsed \ac{AST} to a revised external \ac{A
 
 Lexical analysis for \Beluga uses regular expressions to convert sequences of characters into tokens to speed up recursive descent parsing.
 Sections~\ref{section:comments-lexical-convention}, \ref{section:keywords-lexical-convention} and \ref{section:lexical-convention} provide the functional requirements for this phase of the implementation.
-Notably, lexing of nested delimited comments (i.e., those comments enclosed in either \verb|%{|, \verb|}%| or \verb|%{{|, \verb|}}%|) is achieved by parameterizing with respect to the depth of the comment.
+Notably, lexing of nested delimited comments (i.e., those comments enclosed in either \verb|%{| and \verb|}%|, or \verb|%{{| and \verb|}}%|) is achieved by parameterizing with respect to the depth of the comment.
 This ensures that extraneous or missing right-delimiters are detected early.
 
 Where the lexing phase diverges from conventional implementations is with regards to the dot operator.
@@ -152,9 +152,9 @@ Indeed, usual lexical conventions dictate that whitespace may precede or follow 
 This cannot apply in \Beluga programs, where a dot denotes one the following:
 \begin{enumerate}
 \item
-The end of an \LF term-level or type-level constant declaration like in \Twelf.
+The end of an \LF term-level or type-level constant declaration, like in \Twelf.
 \item
-The beginning of a computation-level destructor application for coinductive expressions.
+The beginning of a computation-level observation application for coinductive objects.
 \item
 The delimiter between the parameter name and the body of an \LF $\lambda$-abstraction.
 \item
@@ -173,7 +173,51 @@ Parsing of \Beluga signatures is achieved using $ \mathsf{LALR(\infty)} $ parsin
 This is implemented using the monadic parser combinator library introduced in \Beluga version \texttt{1.0.0}.
 Unlimited backtracking of the parser state is enabled only in select cases, or if no input token has been consumed, which provides sufficient performance for parsing large \Beluga files.
 
-% TODO: Figure showcasing the improvement in error-reporting for unsupported substitutions
+% TODO: Refer to the next figure
+
+\begin{figure}[!htb]
+\begin{subfigure}{\linewidth}
+\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
+exp : \verbbf{type}.
+eq : exp -> exp -> \verbbf{type}.
+\verbbf{schema} ctx = \verbbf{block} (x : exp, t : eq x x);
+\verbbf{rec} reflexivity : \{g : ctx\} \{M : [g |- exp]\} [g |- (eq M M)[..]] = ?;
+\end{Verbatim}
+\caption{%
+Example theorem statement with a syntactically invalid substitution.
+The identity substitution \texttt{[..]} on the application of an \LF type constant in \texttt{(eq M M)[..]} is syntactically invalid in \Beluga because only canonical forms of \LF objects are recognized for signature reconstruction.
+}
+\end{subfigure}
+\begin{subfigure}{\linewidth}
+\begin{Verbatim}[baselinestretch=1]
+example.bel, line 5, column 59:
+Parse error.
+Unexpected token in stream
+  Expected token `]'
+  Got token `['
+\end{Verbatim}
+\caption{%
+Syntax error raised during context-free parsing in the previous parser implementation.
+Given the stricter grammar, it is true that the token \texttt{[} introducing the identity substitution is unexpected.
+However, the reason for this syntax error is not obvious, in part because the user unambiguously wrote a substitution.
+}
+\end{subfigure}
+\begin{subfigure}{\linewidth}
+\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
+\verbpbf{File "example.bel", line 5, column 52:}
+5 |rec reflexivity : \{g : ctx\} \{M : [g |- exp]\} [g |- (eq M M)[..]] = ?;
+                                                      \verbrbf{^^^^^^^^^^^^}      
+\verbrbf{Error:} Substitution terms may not appear as contextual LF types.
+\end{Verbatim}
+\caption{%
+Improved syntax error message produced during the disambiguation phase instead of during context-free parsing.
+Since the grammar for \LF objects was relaxed to support non-canonical forms, the parser recognizes the substitution, and then disambiguation identifies that it should be rejected.
+}
+\end{subfigure}
+\caption[Example of improved syntax error reporting]{%
+Example of improved syntax error reporting using less stringent syntactic rules at the level of the parser.
+}
+\end{figure}
 
 \subsection{Disambiguation}
 
@@ -192,7 +236,7 @@ This feature was ported over from \Twelf, and using the new parsing architecture
 As outlined below, the notation pragmas for user-defined operators in \Beluga are more restrictive than that of \Agda because \Beluga does not support mixfix operators~\cite{danielsson2008parsing}.
 
 \begin{figure}[!htb]
-\begin{Verbatim}[commandchars=\\\{\}]
+\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
 \verbbf{LF} p : \verbbf{type} =
 | ⊃ : p → p → p                  \verbcomment{% Logical implication}
 | ⊂ : p → p → p                  \verbcomment{% Converse implication}
