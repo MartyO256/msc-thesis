@@ -169,16 +169,28 @@ The projection out of a module acting as a namespace.
 
 \subsection{Parsing}
 
-Parsing of \Beluga signatures is achieved using $ \mathsf{LALR(\infty)} $ parsing in pathological cases and $ \mathsf{LALR(1)} $ parsing in most cases.
+Parsing of \Beluga signatures is achieved using $ \mathsf{LALR(\infty)} $ parsing in pathological cases and $ \mathsf{LALR(1)} $ parsing in the most frequent cases.
 This is implemented using the monadic parser combinator library introduced in \Beluga version \texttt{1.0.0}.
 Unlimited backtracking of the parser state is enabled only in select cases, or if no input token has been consumed, which provides sufficient performance for parsing large \Beluga files.
+
+The main contribution made to the context-free parsing phase of \Beluga is the simplification of its grammar.
+Indeed, the legacy parser was designed following the grammars developed along signature reconstruction and type-checking algorithms, which introduced syntactic classes that ensure some properties always hold.
+Specifically, since the index level \LF of \Beluga is strongly-normalizing, and since reconstruction for \LF terms and types operates best with objects in canonical form, then it is sensible to require the user to only write \LF terms and types in canonical form.
+Additionally, since \Beluga's type-checking algorithm is bidirectional, it also appeared sensible to split computation-level expressions into two syntactic classes, namely type-synthesizing expressions and type-checkable expressions.
+Implementation efforts revealed that these syntactic constraints are too stringent to be imposed at the level of the parser.
+Indeed, they increased the complexity of the parser, made operator precedence rules opaque, and yielded poor syntax error messages to the user.
+This is in part evidenced by the grammar in figure~\ref{figure:legacy-clf-parsing} and the example syntax error message in figure~\ref{figure:improved-syntax-error-message}.
+
+% TODO: Explain the solution, refer to the appendix
 
 \begin{figure}[!htb]
 \begin{grammar}
 <clf-normal> ::=
      `\\' <identifier> `.' <clf-term-application>
 \alt `(' <clf-term-application> [`:' <clf-type>] `)'
-\alt <clf-head>
+\alt <hash-identifier> [<clf-projection>] [ `[' <clf-substitution> `]' ]
+\alt <qualified-identifier> [<clf-projection>] [ `[' <clf-substitution> `]' ]
+\alt `_'
 \alt `?'<identifier>
 \alt `<' <clf-term-application> (`;' <clf-term-application>)+ `>'
 
@@ -202,14 +214,13 @@ Unlimited backtracking of the parser state is enabled only in select cases, or i
 \end{grammar}
 \caption[The grammar for parsing contextual \LF terms in normal form in the legacy parser.]{%
 The grammar for parsing contextual \LF terms in normal form in the legacy parser, denoted using the lexical conventions of section~\ref{section:lexical-convention}.
-The production \synt{clf-head} is omitted for brevity.
+The production \synt{clf-substitution} is omitted for brevity.
 The productions \synt{clf-term-application}, \synt{clf-head} and \synt{clf-type-atomic} showcase a dramatic increase in complexity for parsing contextual \LF terms and types.
 This is a consequence of trying to reject all non-normal forms at the level of the parser.
 This presentation also does not effectively demonstrate that left recursions never occur, and what precedence each operator has.
 }
+\label{figure:legacy-clf-parsing}
 \end{figure}
-
-% TODO: Refer to the next figure
 
 \begin{figure}[!htb]
 \begin{subfigure}{\linewidth}
@@ -220,8 +231,8 @@ eq : exp -> exp -> \verbbf{type}.
 \verbbf{rec} reflexivity : \{g : ctx\} \{M : [g |- exp]\} [g |- (eq M M)[..]] = ?;
 \end{Verbatim}
 \caption{%
-Example theorem statement with a syntactically invalid substitution.
-The identity substitution \texttt{[..]} on the application of an \LF type constant in \texttt{(eq M M)[..]} is syntactically invalid in \Beluga because only canonical forms of \LF objects are recognized for signature reconstruction.
+Example \Beluga theorem statement with a syntactically invalid substitution.
+The identity substitution \texttt{[..]} on the application of an \LF type constant in \texttt{(eq M M)[..]} is invalid because only canonical forms of \LF objects are recognized for signature reconstruction.
 }
 \end{subfigure}
 \begin{subfigure}{\linewidth}
@@ -234,7 +245,7 @@ Unexpected token in stream
 \end{Verbatim}
 \caption{%
 Syntax error raised during context-free parsing in the previous parser implementation.
-Given the stricter grammar, it is true that the token \texttt{[} introducing the identity substitution is unexpected.
+Given the stricter grammar of \synt{clf-type} in figure~\ref{figure:legacy-clf-parsing}, it is true that the token \texttt{[} introducing the identity substitution is unexpected.
 However, the reason for this syntax error is not obvious, in part because the user unambiguously wrote a substitution.
 }
 \end{subfigure}
@@ -247,12 +258,13 @@ However, the reason for this syntax error is not obvious, in part because the us
 \end{Verbatim}
 \caption{%
 Improved syntax error message produced during the disambiguation phase instead of during context-free parsing.
-Since the grammar for \LF objects was relaxed to support non-canonical forms, the parser recognizes the substitution, and then disambiguation identifies that it should be rejected.
+Since the grammar for \LF objects was relaxed to support non-canonical forms, the parser recognizes the invalid substitution, and then disambiguation identifies that it should be rejected.
 }
 \end{subfigure}
 \caption[Example of improved syntax error reporting]{%
 Example of improved syntax error reporting using less stringent syntactic rules at the level of the parser.
 }
+\label{figure:improved-syntax-error-message}
 \end{figure}
 
 \subsection{Disambiguation}
