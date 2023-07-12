@@ -1,7 +1,7 @@
 \chapter{Implementing a Parser for \Beluga}
 
 This chapter presents an overview of parsing and explains the motivation behind the contributions made to \Beluga's and \Harpoon's parsing algorithms.
-Some aspects of disambiguation are showcased, including grammars for parsing user-defined prefix, infix and postfix operators.
+Some aspects of context-sensitive disambiguation of \acp{AST} are showcased, including grammars for parsing user-defined prefix, infix and postfix operators.
 
 \section{Introduction}
 
@@ -42,7 +42,7 @@ Different kinds of concrete syntax ambiguities may arise during parsing of a pro
 We distinguish three kinds of syntactic ambiguities that come into play in the implementation of \Beluga, listed below in increasing level of computational complexity required to solve them:
 \begin{enumerate}
 \item
-Operator ambiguities: operators and their operands may be interpreted in different orders based on where they appear in a whitespace-delimited list of terms.
+Static operator ambiguities: operators, denoted with keywords, and their operands may be interpreted in different orders depending on where they appear in a whitespace-delimited list of terms.
 These are typically resolved by assigning a precedence level, a fixity and an associativity to each operator in the language.
 \item
 Name-based ambiguities: overloaded identifiers may be resolved to different binding sites depending on where they appear in an expression.
@@ -51,7 +51,7 @@ However overloading of identifiers in mixfix operators pose additional challenge
 \item
 Type-based ambiguities: the correct interpretation of an expression may only be determined once a type has been inferred for it.
 This does not refer to method overloading in object-oriented programming languages since the syntax for calling a method is not ambiguous.
-Rather, if an expression to parse is an identifier, then a type-based ambiguity may be that the expression falls into a different syntactic category based on the identifier's type.
+Rather, if the expression being parsed is an identifier, then a type-based ambiguity may be that that expression or a surrounding one falls into a different syntactic category based on the identifier's type or kind.
 In those cases, some type information may be provided by a symbol table if the type ascribed to an identifier is known at the declaration site.
 In general it is impossible to disambiguate expressions having type-based ambiguities before type-checking, especially when more intricate type inference algorithms need to be applied to determine the type of an identifier.
 \end{enumerate}
@@ -68,8 +68,8 @@ As the name suggests, a \ac{CFL} does not require keeping track of a context of 
 This ensures that programs can scale and be readable by the user without having to fully known the context in which the programs appear in order to disambiguate them.
 Operator ambiguities as mentioned above can be resolved by rewriting the grammar while keeping it context-free.
 The other two kinds of ambiguities however give rise to context-sensitive, or even strictly Turing-recognizable, languages~\cite{chomsky1956three}.
-As the name suggests, context-sensitive languages necessitate additional data about the context in which parts of the program appears.
-This usually means that some semantic analysis needs to be performed during parsing in order to complete the syntactic analysis.
+As the name suggests, context-sensitive languages necessitate additional data about the context in which parts of the program appears in order to parse it.
+This typically implies that some semantic analysis needs to be performed during parsing in order to complete the syntactic analysis.
 Consequently, the concrete syntax's design for a programming language is intrinsically linked with the algorithm required to parse it.
 
 % What are some language design considerations?
@@ -116,7 +116,7 @@ Nonetheless, there was still room to improve in the way of user-friendly error m
 \section{\Beluga Lexing, Parsing and Disambiguation Phases}
 
 \Beluga's parser was re-implemented to handle expressions in non-normal form, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
-Particularly, semantic analysis is introduced as part of a new disambiguation phase to the parser in order to produce a fully unambiguous \ac{AST} before signature reconstruction.
+Particularly, semantic analysis is introduced as part of a new context-sensitive disambiguation phase to the parser in order to produce a fully unambiguous \ac{AST} before signature reconstruction.
 Additionally, support for incremental program development was added using architectural refactoring techniques.
 
 The motivation for these changes to the implementation can be summarized in the following points:
@@ -135,7 +135,7 @@ Provide verifiably-correct external \acp{AST} to enable debugging of signature r
 Since the disambiguated external \ac{AST} of a program fully captures the meaning of what the user wrote, then the internal \ac{AST} as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} is no longer the only complete data representation of the program.
 \end{enumerate}
 
-The revised parsing algorithm for \Beluga signatures is split into three phases, namely: lexing, parsing and disambiguation.
+The revised parsing algorithm for \Beluga signatures is split into three phases, namely: lexing, parsing and disambiguation, which are outlined in the following sections.
 First, lexing is implemented just like in typical whitespace-agnostic programming languages, except for one lexer hack used to handle some overloading of a static operator.
 Then, parsing produces an \ac{AST} close to the concrete syntax, and featuring ambiguous nodes that effectively postpone parsing steps that require data for the referencing environment at a given node.
 Finally, disambiguation converts the parsed \ac{AST} to a revised external \ac{AST} without ambiguous nodes.
@@ -176,14 +176,12 @@ Unlimited backtracking of the parser state is enabled only in select cases, or i
 The main contribution made to the context-free parsing phase of \Beluga is the simplification of its grammar.
 Indeed, the legacy parser was designed following the grammars developed along signature reconstruction and type-checking algorithms, which introduced syntactic classes that ensure some properties always hold.
 Specifically, since the index level \LF of \Beluga is strongly-normalizing, and since reconstruction for \LF terms and types operates best with objects in canonical form, then it is sensible to require the user to only write \LF terms and types in canonical form.
-Additionally, since \Beluga's type-checking algorithm is bidirectional, it also appeared sensible to split computation-level expressions into two syntactic classes, namely type-synthesizing expressions and type-checkable expressions.
-Implementation efforts revealed that these syntactic constraints are too stringent to be imposed at the level of the parser.
+Additionally, since \Beluga's type-checking algorithm is bidirectional, it also appeared reasonable to split computation-level expressions into two syntactic classes, namely type-synthesizing expressions and type-checkable expressions.
+Implementation efforts revealed however that these syntactic constraints are too stringent to be imposed at the level of the parser.
 Indeed, they increased the complexity of the parser, made operator precedence rules opaque, and yielded poor syntax error messages to the user.
 This is in part evidenced by the grammar in figure~\ref{figure:legacy-clf-parsing} and the example syntax error message in figure~\ref{figure:improved-syntax-error-message}.
 
-% TODO: Explain the solution, refer to the appendix
-
-\begin{figure}[!htb]
+\begin{figure}[H]
 \begin{grammar}
 <clf-normal> ::=
      `\\' <identifier> `.' <clf-term-application>
@@ -216,13 +214,12 @@ This is in part evidenced by the grammar in figure~\ref{figure:legacy-clf-parsin
 The grammar for parsing contextual \LF terms in normal form in the legacy parser, denoted using the lexical conventions of section~\ref{section:lexical-convention}.
 The production \synt{clf-substitution} is omitted for brevity.
 The productions \synt{clf-term-application}, \synt{clf-head} and \synt{clf-type-atomic} showcase a dramatic increase in complexity for parsing contextual \LF terms and types.
-This is a consequence of trying to reject all non-normal forms at the level of the parser.
 This presentation also does not effectively demonstrate that left recursions never occur, and what precedence each operator has.
 }
 \label{figure:legacy-clf-parsing}
 \end{figure}
 
-\begin{figure}[!htb]
+\begin{figure}[H]
 \begin{subfigure}{\linewidth}
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
 exp : \verbbf{type}.
@@ -235,6 +232,7 @@ Example \Beluga theorem statement with a syntactically invalid substitution.
 The identity substitution \texttt{[..]} on the application of an \LF type constant in \texttt{(eq M M)[..]} is invalid because only canonical forms of \LF objects are recognized for signature reconstruction.
 }
 \end{subfigure}
+\par\bigskip
 \begin{subfigure}{\linewidth}
 \begin{Verbatim}[baselinestretch=1]
 example.bel, line 5, column 59:
@@ -249,6 +247,7 @@ Given the stricter grammar of \synt{clf-type} in figure~\ref{figure:legacy-clf-p
 However, the reason for this syntax error is not obvious, in part because the user unambiguously wrote a substitution.
 }
 \end{subfigure}
+\par\bigskip
 \begin{subfigure}{\linewidth}
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
 \verbpbf{File "example.bel", line 5, column 52:}
@@ -258,7 +257,7 @@ However, the reason for this syntax error is not obvious, in part because the us
 \end{Verbatim}
 \caption{%
 Improved syntax error message produced during the disambiguation phase instead of during context-free parsing.
-Since the grammar for \LF objects was relaxed to support non-canonical forms, the parser recognizes the invalid substitution, and then disambiguation identifies that it should be rejected.
+Since the grammar for \LF objects was relaxed to support non-canonical forms, the parser accepts the invalid substitution, and then disambiguation identifies that it should be rejected.
 }
 \end{subfigure}
 \caption[Example of improved syntax error reporting]{%
@@ -266,6 +265,13 @@ Example of improved syntax error reporting using less stringent syntactic rules 
 }
 \label{figure:improved-syntax-error-message}
 \end{figure}
+
+The solution we employ to resolve this issue of complexity during context-free parsing is somewhat counter-intuitive.
+We merge syntactic categories having common syntaxes that appear in ambiguous positions into one production.
+We call this blurring the grammar.
+Section~\ref{section:blurred-lf-syntax} provides an example of one such blurred grammar, obtained by merging the productions \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} of section~\ref{section:syntax-lf} into one syntactic category, with corresponding production \synt{lf-object}.
+The context-sensitive disambiguation phase outlined in the next section is then tasked with recovering the original \LF kind, type or term corresponding to a parsed \LF object.
+A similar technique was used in \Twelf since its shift-reduce parser could not perform disambiguation during parsing.
 
 \subsection{Disambiguation}
 
@@ -286,7 +292,7 @@ The priority of operations can be specified using integer precedence values.
 This feature was ported over from \Twelf, and using the new parsing architecture, it was subsequently improved to support shadowing of operators by bound variables.
 As outlined below, the notation pragmas for user-defined operators in \Beluga are more restrictive than that of \Agda because \Beluga does not support mixfix operators~\cite{danielsson2008parsing}.
 
-\begin{figure}[!htb]
+\begin{figure}[H]
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
 \verbbf{LF} p : \verbbf{type} =
 | ⊃ : p → p → p                  \verbcomment{% Logical implication}
@@ -366,7 +372,7 @@ This parser is implemented following the last grammar scheme, and using monadic 
 \newcommand{\infixr}{\mathsf{op}_{\text{infix}}^R}
 \newcommand{\infixn}{\mathsf{op}_{\text{infix}}^N}
 \newcommand{\postfix}{\mathsf{op}_{\text{postfix}}}
-\begin{figure}[!htb]
+\begin{figure}[H]
 \begin{subfigure}{\linewidth}
 \centering
 \begin{tabular}{rrl}
@@ -375,7 +381,8 @@ $ \angled{e} $ & $ \Coloneqq $ & $ \angled{\prefix} \; \angled{e} $\\
 & $ \mid $ & $ \angled{e} \; \angled{\postfix} $\\
 & $ \mid $ & $ \mathbf{a}+ $
 \end{tabular}
-\caption{Ambiguous grammar for parsing user-defined operators. The terminal $ \mathbf{a} $ stands for expressions that were parsed previously at a higher precedence level than any user-defined operator (for instance variables and projections).}
+\caption{Ambiguous grammar for parsing user-defined operators. The terminal $ \mathbf{a} $ stands for expressions that were already parsed at a higher precedence level than any user-defined operator during the context-free parsing phase.
+For instance, $ \mathbf{a} $ can stand for variables and projections.}
 \label{figure:user-defined-operators-initial-grammar}
 \end{subfigure}
 \par\bigskip
@@ -384,8 +391,8 @@ $ \angled{e} $ & $ \Coloneqq $ & $ \angled{\prefix} \; \angled{e} $\\
 \begin{tabular}{rrl}
 $ \angled{e} $ & $ \Coloneqq $ & $ \angled{e}_1 $\\
 $ \angled{e}_p $ & $ \Coloneqq $ & $ \angled{e}_{p + 1} \; \angled{\infixn}_p \; \angled{e}_{p + 1} $\\
-& $ \mid $ & $ (\angled{\prefix}_p \mid \angled{e}_{p + 1} \; \angled{\infixr}_p){+} \; \angled{e}_{p + 1} $\\
-& $ \mid $ & $ \angled{e}_{p + 1} \; (\angled{\postfix}_p \mid \angled{\infixl}_p \; \angled{e}_{p + 1}){+} $\\
+& $ \mid $ & $ \left(\angled{\prefix}_p \mid \angled{e}_{p + 1} \; \angled{\infixr}_p\right){+} \; \angled{e}_{p + 1} $\\
+& $ \mid $ & $ \angled{e}_{p + 1} \; \left(\angled{\postfix}_p \mid \angled{\infixl}_p \; \angled{e}_{p + 1}\right){+} $\\
 & $ \mid $ & $ \angled{e}_{p + 1} $\\
 $ \angled{e}_{P + 1} $ & $ \Coloneqq $ & $ \mathbf{a}+ $
 \end{tabular}
