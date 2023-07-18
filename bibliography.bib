@@ -362,3 +362,46 @@
   journal = {arXiv preprint arXiv:1610.04799},
   year = {2016}
 }
+
+@Inbook{barendregt2003,
+  author = "Barendregt, Henk",
+  editor = "Kamareddine, Fairouz D.",
+  title = "Towards an Interactive Mathematical Proof Mode",
+  bookTitle = "Thirty Five Years of Automating Mathematics",
+  year = "2003",
+  publisher = "Springer Netherlands",
+  address = "Dordrecht",
+  pages = "25--36",
+  abstract = "Formalizing mathematical proofs has as aim to represent arbitrary mathematical notions and proofs on a computer in order to construct a database of certified results useful to learn and develop the subject. At present it is mathematically not appealing to construct formal proofs. To make formalzing more mathematician-friendly one should have a good interface for proofs, definitions and computations. The proof-assistant Mizar does have a good interface for proofs, but not for making computations. Other assistants, like Coq based on type theory, do have a good interface for computations, but not for proofs. This paper sketches ways in which proofs are represented in a mathematical way. Although the underlying formalized statements come from the system Coq, this is not essential Mainly the paper has as aim to convince implementers of mathematical assistants to make systems in such a way that formalizing proofs becomes natural. Much further developed is the work on Isar providing a mathematical proof language for the assistant Isabelle. The approach in this paper is to approximate a proof language by writing proof-sketches, a notion by Wiedijk, with the aim that they should eventually be verifiable by a proof-checker. [Nederpelt, 2002] has a different approach: there the emphasis is on the ease of providing formalizations of mathematical definitions.",
+  isbn = "978-94-017-0253-9",
+  doi = "10.1007/978-94-017-0253-9_2",
+  url = "https://doi.org/10.1007/978-94-017-0253-9_2"
+}
+
+@article{kaiser2018,
+  author = {Kaiser, Jan-Oliver and Ziliani, Beta and Krebbers, Robbert and R\'{e}gis-Gianas, Yann and Dreyer, Derek},
+  title = {Mtac2: Typed Tactics for Backward Reasoning in Coq},
+  year = {2018},
+  issue_date = {September 2018},
+  publisher = {Association for Computing Machinery},
+  address = {New York, NY, USA},
+  volume = {2},
+  number = {ICFP},
+  url = {https://doi.org/10.1145/3236773},
+  doi = {10.1145/3236773},
+  abstract = {Coq supports a range of built-in tactics, which are engineered primarily to support backward reasoning. Starting from a desired goal, the Coq programmer can use these tactics to manipulate the proof state interactively, applying axioms or lemmas to break the goal into subgoals until all subgoals have been solved. Additionally, it provides support for tactic programming via OCaml and Ltac, so that users can roll their own custom proof automation routines. Unfortunately, though, these tactic languages share a significant weakness. They do not offer the tactic programmer any static guarantees about the soundness of their custom tactics, making large tactic developments difficult to maintain. To address this limitation, Ziliani et al. previously proposed Mtac, a new typed approach to custom proof automation in Coq which provides the static guarantees that OCaml and Ltac are missing. However, despite its name, Mtac is really more of a metaprogramming language than it is a full-blown tactic language: it misses an essential feature of tactic programming, namely the ability to directly manipulate Coq’s proof state and perform backward reasoning on it. In this paper, we present Mtac2, a next-generation version of Mtac that combines its support for typed metaprogramming with additional support for the programming of backward-reasoning tactics in the style of Ltac. In so doing, Mtac2 introduces a novel feature in tactic programming languages—what we call typed backward reasoning. With this feature, Mtac2 is capable of statically ruling out several classes of errors that would otherwise remain undetected at tactic definition time. We demonstrate the utility of Mtac2’s typed tactics by porting several tactics from a large Coq development, the Iris Proof Mode, from Ltac to Mtac2.},
+  journal = {Proc. ACM Program. Lang.},
+  month = {jul},
+  articleno = {78},
+  numpages = {31},
+  keywords = {Theorem Proving, Coq, Dependent Types, Metaprogramming, Tactic Languages}
+}
+
+@inproceedings{delahaye2000tactic,
+  title = {A tactic language for the system {Coq}},
+  author = {Delahaye, David},
+  booktitle = {Logic for Programming and Automated Reasoning: 7th International Conference, LPAR 2000 Reunion Island, France, November 6--10, 2000 Proceedings 7},
+  pages = {85--95},
+  year = {2000},
+  organization = {Springer}
+}

@@ -5,7 +5,8 @@ Some aspects of context-sensitive disambiguation of \acp{AST} are showcased, inc
 
 \section{Introduction}
 
-This section provides a conceptual introduction to parsing, a discussion on the concept of ambiguity in parsing and how it depends on the rules the language designer places on syntactic and semantic analysis, and finally an overview of concepts and features of parsers for programming languages in proof assistants.
+This section provides a conceptual introduction to parsing, a discussion on the concept of ambiguity in parsing, and finally an overview of concepts and features of parsers for programming languages in proof assistants.
+Notably, we motivate the introduction of semantic analysis as part of syntactic analysis when it comes to resolving ambiguities in a language such as \Beluga.
 
 % What is parsing?
 
@@ -210,7 +211,7 @@ This is in part evidenced by the grammar in figure~\ref{figure:legacy-clf-parsin
 \alt `(' <clf-type> `)'
 \alt `block' `(' <identifier> `:' <clf-type> (`,' <identifier> `:' <clf-type>)+ `)'
 \end{grammar}
-\caption[The grammar for parsing contextual \LF terms in normal form in the legacy parser.]{%
+\caption[The grammar for parsing contextual \acs{LF} terms in normal form in the legacy parser.]{%
 The grammar for parsing contextual \LF terms in normal form in the legacy parser, denoted using the lexical conventions of section~\ref{section:lexical-convention}.
 The production \synt{clf-substitution} is omitted for brevity.
 The productions \synt{clf-term-application}, \synt{clf-head} and \synt{clf-type-atomic} showcase a dramatic increase in complexity for parsing contextual \LF terms and types.
@@ -281,8 +282,9 @@ Specifically, bindings during this phase are modelled using a stack of scopes, e
 
 We postpone the discussion on how the referencing environment is constructed and updated during the \ac{AST} traversal to section~\ref{section:indexing} because it closely follows the procedure used to compute de Bruijn indices during the indexing phase.
 
-
 % TODO: Figure illustrating the semantic analysis of names during disambiguation
+
+% TODO: Prove the unicity of disambiguation for the pure LF level, using a stepping relation indexed by the precedence level for applications
 
 \section{Parsing User-Defined Operators}
 
@@ -433,6 +435,6 @@ $ \angled{e}_{P + 1} $ & $ \Coloneqq $ & $ \mathbf{a}+ $
 \caption[]{Grammars for parsing user-defined operators in \Beluga (cont.).}
 \end{figure}}
 
-\section{Related Work}
+\section{Discussion}
 
 % TODO: Agda embraces ambiguity, and spreads ambiguities across more syntaxes https://agda.readthedocs.io/en/v2.6.2.2/language/core-language.html#:~:text=The%20syntax%20of%20an%20Agda,Pragmas%20define%20program%20options.
