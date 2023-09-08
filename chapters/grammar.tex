@@ -647,7 +647,7 @@ Hence, the symbol table only keeps track of identifiers in scope and their assoc
 The following sections present alternative production rules used in place of those in the grammar of section~\ref{section:syntax} obtained by merging productions that lead to ambiguities.
 Rewriting the grammar for optimization, left recursion elimination, and stateless ambiguity resolution with recursive descent is outside the scope of this presentation.
 
-\subsection{Resolving Syntactic Ambiguities For \acs{LF}'s Grammar}\label{section:blurred-lf-syntax}
+\subsection{Resolving Syntactic Ambiguities for \acs{LF}'s Grammar}\label{section:blurred-lf-syntax}
 
 The grammar for \LF kinds, types and terms from section~\ref{section:syntax-lf} is data-dependent because \LF term variables, type constants and term constants are syntactically indistinguishable from one another, and likewise for $ \Pi $-kinds and $ \Pi $-types.
 This next grammar blurs together \LF kinds, types and terms with corresponding productions \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} for context-free parsing.

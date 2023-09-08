@@ -1,5 +1,23 @@
-\usepackage[utf8x]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
 \usepackage[french, english]{babel}
+\usepackage{textcomp}
+
+\usepackage{newunicodechar}
+
+\newunicodechar{⊃}{\ensuremath{\supset}}
+\newunicodechar{⊂}{\ensuremath{\subset}}
+\newunicodechar{∧}{\ensuremath{\land}}
+\newunicodechar{∨}{\ensuremath{\lor}}
+\newunicodechar{¬}{\ensuremath{\lnot}}
+\newunicodechar{⊤}{\ensuremath{\top}}
+\newunicodechar{⊥}{\ensuremath{\bot}}
+\newunicodechar{→}{\ensuremath{\to}}
+\newunicodechar{⊢}{\ensuremath{\vdash}}
+\newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+
+\usepackage{tikz}
+\usetikzlibrary{positioning}
 
 \usepackage{inconsolata}
 
@@ -78,3 +96,11 @@
 \DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
 \DeclarePairedDelimiter\angled{\langle}{\rangle}
 \DeclarePairedDelimiter\ucorner{\ulcorner}{\urcorner}
+
+\makeatletter
+\renewcommand\section{\@startsection {section}{1}{\z@}%
+                                   {-3.5ex \@plus -1ex \@minus -.2ex}%
+                                   {2.3ex \@plus.2ex}%
+                                   {\raggedright
+                                    \normalfont\Large\bfseries}}
+\makeatother
