@@ -16,7 +16,7 @@ Otherwise, when parts of the data have been abstracted away, it is instead calle
 
 % What is ambiguity in parsing?
 
-A program's textual representation is ambiguous with respect to a predefined set of parse rules if the program can be parsed into multiple parse trees~\cite{aho2007compilers} (also called a parse forest).
+A program's textual representation is ambiguous with respect to a predefined set of parse rules if the program can be parsed into a parse forest, which is multiple parse trees~\cite{aho2007compilers}.
 By way of analogy, a sentence in a natural language is ambiguous if it can be interpreted in multiple valid ways with respect to its syntactic and grammatical rules.
 Since programming languages are tools for describing computerized systems, it is necessary that each valid written program has exactly one interpretation~\cite{aho2007compilers}.
 In the strictest of cases, this unicity of interpretation may be enforced at the level of the parser, such that all valid programs have exactly one inferable interpretation.
@@ -30,7 +30,7 @@ Additional mechanisms need to be put in place as part of the compiler's implemen
 % What is disambiguation in parsing?
 
 Disambiguation is the process by which a parse forest is filtered down to a single parse tree.
-It refers to the procedures used to resolve ambiguities in the result of parsing.
+It refers to the procedures used to resolve ambiguities in intermediate results of parsing.
 In parsing systems that do not output parse forests, disambiguation typically involves manipulating the \ac{AST} representation of a single parse tree that captures ambiguities, meaning that some of its nodes represent the overlapping of syntactic constructs.
 Functionally, these nodes suspend parsing until more information is available to disambiguate them to the correct node variant.
 
@@ -38,42 +38,49 @@ Functionally, these nodes suspend parsing until more information is available to
 
 Increasing the amount of computation required to disambiguate the textual representation of a program negatively impacts the maintainability and readability of that program for the end user.
 Indeed, some forms of ambiguity in the syntax of a program may prevent the end user from fully understanding it in isolation from the rest of the compilation units.
-As such, one can argue that the programmatic strategies for disambiguating the syntax of a programming language should be intuitive.
-For instance, name resolution is sufficiently intuitive for an end user to perform as they read the program, whereas searching in a parse forest for a parse tree that type-checks is not intuitive.
+As such, one can argue that the programmatic strategies for disambiguating the syntax of a programming language should be intuitive so that external software is not required to read a program.
+For instance, name resolution is sufficiently intuitive for an end user to perform as they read the program, whereas searching in a parse forest for a parse tree that type-checks is not intuitive, especially given the complexity of some type systems.
+
+% What are some examples of syntactic ambiguities?
 
 Different kinds of concrete syntax ambiguities may arise during parsing of a programming language.
-We distinguish three kinds of syntactic ambiguities that come into play in the implementation of \Beluga, listed below in increasing level of computational complexity required to solve them:
+We distinguish three kinds of syntactic ambiguities that come into play in the implementation of \Beluga, listed below in increasing degree of complexity required to solve them:
 \begin{enumerate}
 \item
-Static operator ambiguities: operators and their operands may be interpreted in different orders depending on where they appear in a whitespace-delimited list of terms.
-%For instance, the expression $a + b * c$ is ambiguous with respect to the production rules $e\coloneqq e+e\mid e*e$.
+\textit{Static operator ambiguities}: operators and their operands may be interpreted in different orders depending on where they appear in a whitespace-delimited list of terms.
+For instance, the expression $a + b * c$ is ambiguous with respect to the production rules $e\coloneqq e+e\mid e*e$.
 These ambiguities are typically resolved by assigning a precedence level, a fixity and an associativity to each operator in the language, and parsing them as keywords.
 \item
-Name-based ambiguities: overloaded identifiers may be resolved to different binding sites depending on where they appear in an expression.
-Semantic analysis of the \ac{AST} with respect to a symbol table is usually sufficient in those cases.
-However overloading of identifiers in mixfix operators pose additional challenge since identifiers may not be considered in isolation.
+\textit{Name-based ambiguities}: overloaded identifiers may be resolved to different binding sites depending on where they appear in an expression, and fall under different semantic categories as a consequence.
+For instance, in a dependently-typed language, type-level and term-level variables may be syntactically ambiguous, but they may have distinct syntaxes for binders.
+Semantic analysis of the \ac{AST} with respect to a symbol table is usually sufficient to disambiguate those cases.
+However overloading of identifiers in more advanced features, like user-defined mixfix operators~\cite{danielsson2008parsing}, pose additional challenge since identifiers may not be considered in isolation.
 \item
-Type-based ambiguities: the correct interpretation of an expression may only be determined once a type has been inferred for it.
+\textit{Type-based ambiguities}: the correct interpretation of an expression may only be determined once a type has been inferred for it.
 This does not refer to method overloading in object-oriented programming languages since the syntax for calling a method is not ambiguous.
 Rather, if the expression being parsed is an identifier, then a type-based ambiguity may be that that expression or a surrounding one falls into a different syntactic category based on the identifier's type or kind.
-In those cases, some type information may be provided by a symbol table if the type ascribed to an identifier is known at the declaration site.
-In general it is impossible to disambiguate expressions having type-based ambiguities before type-checking, especially when more intricate type inference algorithms need to be applied to determine the type of an identifier.
+For instance, the syntax $ (g, x : t) $ may denote a pair of terms, with the variable $ x $ being checked against the type $ t $, or it may denote a context, with $ x : t $ being a new variable declaration.
+In this case, what $ (g, x : t) $ denotes depends on the type of $ g $.
+To solve such ambiguities, some type information may be provided by a symbol table if the type ascribed to an identifier is known at the declaration site.
+In general it is not practical to disambiguate expressions having type-based ambiguities before type-checking, especially when more intricate type inference algorithms need to be applied to determine the type of an identifier.
 \end{enumerate}
 
 % TODO: Figure showcasing typical ambiguities
 
+% What do ambiguities have to do with language design?
 % What is the typical workflow for designing syntaxes and implementing parsers? What are parser generators? What are their limitations?
 
-Typically, language designers specify the concrete syntax of their language using a \ac{CFG}, which they denote in \ac{EBNF}.
+The kinds of syntactic ambiguities that arise in the design of a programming language depend on the system used to specify its syntax, which in turn affects the algorithm required to parse it.
+The concrete syntax of programming languages is typically specified with a \ac{CFG}, denoted in \ac{EBNF}.
 If a language can be specified by a \ac{CFG}, then we say that it is a \ac{CFL}.
 \Acp{CFL} have many advantages, including the fact that there is an abundance of battle-tested parser generators for such languages.
-Crucially, \acp{CFL} are easy to parse, both by the parsing algorithm and by the end user.
-As the name suggests, a \ac{CFL} does not require, during parsing, additional data in a context specifically intended for disambiguation.
-This ensures that programs can scale and be readable by the user without having to fully known the context in which the programs appear in order to disambiguate them.
+Crucially, \acp{CFL} are easy to parse, both algorithmically and by the end user.
+As the name suggests, parsing of a \ac{CFL} does not require additional data in a context specifically intended for disambiguation.
+This ensures that programs can scale and be readable by the user without having to fully known the context in which the programs appear.
 That is, other compilation units in a \ac{CFL} do not affect how a given compilation unit is parsed.
 Operator ambiguities as mentioned above can be resolved by rewriting the grammar while keeping it context-free.
 The other two kinds of ambiguities however give rise to context-sensitive, or even strictly Turing-recognizable, languages~\cite{chomsky1956three}.
-As the name suggests, context-sensitive languages necessitate additional data about the context in which parts of the program appears in order to parse it.
+Context-sensitive languages necessitate additional data about the context in which parts of the program appears in order to parse it.
 This typically implies that some semantic analysis needs to be performed during parsing in order to complete the syntactic analysis.
 Consequently, the concrete syntax's design for a programming language is intrinsically linked with the algorithm required to parse it.
 
@@ -262,7 +269,7 @@ However, the reason for this syntax error is not obvious, in part because the us
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
 \verbpbf{File "example.bel", line 5, column 52:}
 5 |rec reflexivity : \{g : ctx\} \{M : [g |- exp]\} [g |- (eq M M)[..]] = ?;
-                                                      \verbrbf{^^^^^^^^^^^^}      
+                                                      \verbrbf{^^^^^^^^^^^^}
 \verbrbf{Error:} Substitution terms may not appear as contextual LF types.
 \end{Verbatim}
 \caption{%
@@ -446,7 +453,8 @@ $ \angled{e_r'}_p $ & $ \Coloneqq $ & $ \angled{\infixr}_p \angled{e_r}_p $\\
 & $ \mid $ & $ \varepsilon $\\
 $ \angled{e}_{P + 1} $ & $ \Coloneqq $ & $ \mathbf{a}+ $
 \end{tabular}
-\caption{Factored grammar scheme derived from figure~\ref{figure:user-defined-operators-initial-grammar-scheme} for parsing user-defined operators. The parser implementation using that grammar may additionally intersperse failure productions to peek at the next token in the input stream and raise an exception if that token is an operator in an ambiguous position.}
+\caption{Factored grammar scheme derived from figure~\ref{figure:user-defined-operators-initial-grammar-scheme} for parsing user-defined operators.
+\Beluga's parser additionally has failure productions interspersed to peek at the next token in the input stream and raise an exception if that token is an operator in an ambiguous position.}
 \label{figure:user-defined-operators-final-grammar-scheme}
 \end{subfigure}
 \caption[]{Grammars for parsing user-defined operators in \Beluga (cont.).}
