@@ -37,7 +37,7 @@ Functionally, these nodes suspend parsing until more information is available to
 % What is the impact of disambiguation on program readability?
 
 Increasing the amount of computation required to disambiguate the textual representation of a program negatively impacts the maintainability and readability of that program for the end user.
-Indeed, some forms of ambiguity in the syntax of a program may prevent the end user from fully understanding it in isolation from the rest of the compilation units.
+Indeed, some forms of ambiguity in the syntax of a program may prevent the end user from fully understanding it in isolation from the rest of the code sections.
 As such, one can argue that the programmatic strategies for disambiguating the syntax of a programming language should be intuitive so that external software is not required to read a program.
 For instance, name resolution is sufficiently intuitive for an end user to perform as they read the program, whereas searching in a parse forest for a parse tree that type-checks is not intuitive, especially given the complexity of some type systems.
 
@@ -72,14 +72,14 @@ In general it is not practical to disambiguate expressions having type-based amb
 
 The kinds of syntactic ambiguities that arise in the design of a programming language depend on the system used to specify its syntax, which in turn affects the algorithm required to parse it.
 The concrete syntax of programming languages is typically specified with a \ac{CFG}, denoted in \ac{EBNF}.
-If a language can be specified by a \ac{CFG}, then we say that it is a \ac{CFL}.
-\Acp{CFL} have many advantages, including the fact that there is an abundance of battle-tested parser generators for such languages.
+If a language can be specified by a \ac{CFG}, then it is a \ac{CFL}.
+\Acp{CFL} have many advantages, including the fact that there is an abundance of well-vetted parser generators for such languages.
 Crucially, \acp{CFL} are easy to parse, both algorithmically and by the end user.
 As the name suggests, parsing of a \ac{CFL} does not require additional data in a context specifically intended for disambiguation.
-This ensures that programs can scale and be readable by the user without having to fully known the context in which the programs appear.
-That is, other compilation units in a \ac{CFL} do not affect how a given compilation unit is parsed.
-Operator ambiguities as mentioned above can be resolved by rewriting the grammar while keeping it context-free.
-The other two kinds of ambiguities however give rise to context-sensitive, or even strictly Turing-recognizable, languages~\cite{chomsky1956three}.
+This ensures that programs can scale and be readable by the user without having to fully known the context in which programs appear.
+That is, other code sections in a \ac{CFL} do not affect how a given code section is parsed.
+Static operator ambiguities as mentioned previously can be resolved by rewriting the grammar while keeping it context-free.
+The other two kinds of ambiguities however give rise to context-sensitive languages, or even strictly Turing-recognizable languages~\cite{chomsky1956three}.
 Context-sensitive languages necessitate additional data about the context in which parts of the program appears in order to parse it.
 This typically implies that some semantic analysis needs to be performed during parsing in order to complete the syntactic analysis.
 Consequently, the concrete syntax's design for a programming language is intrinsically linked with the algorithm required to parse it.
@@ -93,10 +93,11 @@ This is justified by the need for more concise and expressive ways to convey the
 Such syntax extensions also allow users to develop mechanizations with notations that are closer to what appears on pen-and-paper proofs.
 However, that design choice negatively impacts the implementation of external tools for the language.
 Indeed, user-defined syntax extensions complicate the implementation of incremental parsing for efficiently parsing edits in a text editor, as well as indexing for resolving identifiers to their binding site.
+This forces tooling to be tightly coupled with the core implementation of the language.
 %This is notably the case for tooling in \textsc{C++} because of its rich pre-processor that increases the complexity of parsing and name resolution.
 
 Early versions of the \Beluga language were context-free and used \textsc{Camlp4}~\cite{de2003camlp4} as parser generator for implementing its parser.
-\Beluga became context-sensitive when modifications were made to its syntax, specifically for contextual objects and the addition of user-defined operators as in \Twelf for \LF type-level and term-level constants.
+\Beluga became context-sensitive when modifications were made to its syntax, specifically to improve the syntac of contextual objects and to add user-defined operators as in \Twelf for \LF type-level and term-level constants.
 These changes did not pose a problem with the parser's implementation per se, but it did require the introduction of a disambiguation phase, or rather the inclusion of syntactically ambiguous nodes in the signature reconstruction algorithm.
 Specifically, parts of indexing and reconstruction, as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline}, and the elaboration steps in between, had to be implemented with overlapped \ac{AST} node variants.
 
@@ -106,32 +107,24 @@ As the \Beluga language grew, so did the complexity of its grammar, such that th
 Hence, \Beluga version \texttt{1.0.0} featured a new parser implemented using monadic parser combinators, which are higher-order functions for constructing top-down recursive descent parsers~\cite{Burge1975-BURRPT, hutton1996monadic, leijen2001parsec, generalparsercombs}.
 They provide a more declarative way of constructing complex parsers than shift-reduce parsers.
 Indeed, the combination of smaller parsers in \OCaml using operators closely resembles grammar specifications using \acp{CFG}, which allows for fast prototyping and better readability of the implementation.
-The intent of re-implementing \Beluga's parser to use parser combinators was to improve error-reporting for the end user, and to improve the overall maintainability of the implementation for subsequent developers.
+As such, the intent of re-implementing \Beluga's parser to use parser combinators was to improve error-reporting for the end user, and to improve the overall maintainability of the implementation for subsequent developers by making it more modular.
 These objectives were largely met, and as a consequence \Harpoon was also implemented using that parsing framework.
 Nonetheless, there is still room to improve in the way of user-friendly error messages to help newcomers get a better grasp of the language and its features.
 
 % TODO: Note that the parser before Jake's had mix/unmix types.
 % TODO: Read "Resolvable Ambiguity" https://arxiv.org/pdf/1911.05672.pdf
 
-% TODO: Define notation-based ambiguities (precedence, fixity, associativity)
-% TODO: Define scope-based ambiguities (identifier classes, mutual recurrences)
-% TODO: Define type-based ambiguities (identifier classes, extrinsics, type reconstruction)
-
-% TODO: Define stateless and stateful ambiguity resolutions
-
 % TODO: Does Abella support incremental development?
 % TODO: See if Agda breaks with splicing
 % TODO: See if Coq has incremental development as well
 
-% TODO: Literary review of data-dependent parsing, curtailing
-
 \section{\Beluga Lexing, Parsing and Disambiguation Phases}
 
-\Beluga's parser was re-implemented to handle expressions in non-normal form, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
+AS part of this thesis, \Beluga's parser was re-implemented to handle expressions in non-normal form, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
 Particularly, semantic analysis is introduced as part of a new context-sensitive disambiguation phase to the parser in order to produce a fully unambiguous \ac{AST} before signature reconstruction.
 Additionally, support for incremental program development was added using architectural refactoring techniques.
 
-The motivation for these changes to the implementation can be summarized in the following points:
+The motivation for these changes to the implementation of \Beluga can be summarized in the following points:
 \begin{enumerate}
 \item
 Expand the operator pragmas feature to computation-level types and expressions.
@@ -140,8 +133,9 @@ This involved the implementation of a reusable process for disambiguating functi
 Improve syntax error messages.
 By accepting a wider range of programs during parsing, the subsequent disambiguation phase can more precisely identify the cause for syntax errors and report them with better detail.
 \item
-Improve the parser's maintainability.
+Improve the processing pipeline's maintainability.
 By decoupling disambiguation from indexing, both phases now respect the single-responsibility principle, which in turn simplifies the information flow at the early stage of signature reconstruction.
+Dependency injection of mutable states is also introduced to recover referential transparency in the implementation of the disambiguation phase, which enables the development of structured editing procedures.
 \item
 Provide verifiably-correct external \acp{AST} to enable debugging of signature reconstruction.
 Since the disambiguated external \ac{AST} of a program fully captures the meaning of what the user wrote, then the internal \ac{AST} as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} is no longer the only complete data representation of the program.
@@ -159,7 +153,7 @@ Sections~\ref{section:comments-lexical-convention}, \ref{section:keywords-lexica
 Notably, lexing of nested delimited comments (i.e., those comments enclosed in either \verb|%{| and \verb|}%|, or \verb|%{{| and \verb|}}%|) is achieved by parameterizing with respect to the depth of the comment.
 This ensures that extraneous or missing right-delimiters are detected early.
 
-Where the lexing phase diverges from conventional implementations is with regards to the dot operator.
+Where the lexing phase diverges from conventional implementations is with regards to its dot operator.
 Indeed, usual lexical conventions dictate that whitespace may precede or follow a dot without affecting a program's semantics.
 This cannot apply in \Beluga programs, where a dot denotes one the following:
 \begin{enumerate}
@@ -295,9 +289,23 @@ We note that a similar technique was used in \Twelf since its shift-reduce parse
 
 \subsection{Disambiguation}
 
-The disambiguation phase of parsing statefully keeps track of the identifiers in scope at any given point during a traversal of the parser \ac{AST}.
-This is implemented using a mutable state with auxiliary data structures to deal with patterns, modules and pragmas.
-Specifically, bindings during this phase are modelled using a stack of scopes, each of which contains a tree mapping fully qualified identifiers to minimal descriptions of bound variables and constants.
+The disambiguation phase of parsing performs an \ac{AST} transformation from the parser syntax to the external syntax.
+Given \Beluga's features and overloaded syntactic constructs, disambiguation is responsible for recovering the structure specified by the grammars of section~\ref{section:syntax} using the structure obtained by context-free parsing following the blurred grammars of section~\ref{section:resolving-grammar-ambiguities}.
+Specifically, it performs disambiguation of
+\begin{enumerate}
+\item \LF kinds, types and terms,
+\item contextual \LF types and terms,
+\item meta-level contexts and substitutions,
+\item computation-level kinds and types, and
+\item applications throughout the semantic classes (detailed in section~\ref{section:parsing-user-defined-operators}).
+\end{enumerate}
+
+Disambiguation of \Beluga programs requires that identifiers be resolved to their binding sites in order to determine their sort.
+This process statefully keeps track of the identifiers in scope at any given point during a traversal of the parser \ac{AST}.
+This referencing environment is implemented using a mutable state with auxiliary data structures to deal with patterns, modules and pragmas.
+Specifically, bindings during this phase are modelled using a stack of scopes, each of which contains a tree mapping fully qualified identifiers to minimal descriptions of what those identifiers are bound to (namely variables or constants).
+Notably the referencing environment records the user-defined notation to use for any given identifier.
+This allows for fixity pragmas like in figure~\ref{figure:operator-pragmas} to be declared in namespaces, and to later be brought in scope when the namespace is opened.
 
 We postpone the discussion on how the referencing environment is constructed and updated during the \ac{AST} traversal to section~\ref{section:indexing} because it closely follows the procedure used to compute de Bruijn indices during the indexing phase.
 
@@ -305,7 +313,7 @@ We postpone the discussion on how the referencing environment is constructed and
 
 % TODO: Prove the unicity of disambiguation for the pure LF level, using a stepping relation indexed by the precedence level for applications
 
-\section{Parsing User-Defined Operators}
+\section{Parsing User-Defined Operators}\label{section:parsing-user-defined-operators}
 
 In \Beluga, users may specify that identifiers should be used as operators in expression applications, as shown in figure~\ref{figure:operator-pragmas}, using \verb|--prefix|, \verb|--infix| or \verb|--postfix| pragmas.
 Prefix operators are right-associative, postfix operators are left-associative, and infix operators may be either left-associative, right-associative or non-associative.
@@ -314,7 +322,7 @@ This feature was ported over from \Twelf, and using the new parsing architecture
 As outlined below, the notation pragmas for user-defined operators in \Beluga are more restrictive than that of \Agda because \Beluga does not support mixfix operators~\cite{danielsson2008parsing}.
 
 \begin{figure}[H]
-\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
+\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1, numbers=left]
 \verbbf{LF} p : \verbbf{type} =
 | \makebox[1em]{⊃} : p \makebox[1em]{→} p \makebox[1em]{→} p                  \verbcomment{% Logical implication}
 | \makebox[1em]{⊂} : p \makebox[1em]{→} p \makebox[1em]{→} p                  \verbcomment{% Converse implication}
@@ -373,7 +381,7 @@ In \Beluga, at the precedence level of expression applications, there are four s
 \end{enumerate}
 
 During the disambiguation phase of parsing, we only need to determine the syntactic structure of applicands and arguments for parsemes in lists.
-The implementation of this parsing algorithm is inspired by the general purpose expression parser from the \texttt{Parsec} library~\cite{leijen2001parsec}, as well as the parser scheme in figure~\ref{figure:user-defined-operators-grammar}, which is inspired by the one found in~\cite{danielsson2008parsing}.
+The implementation of this parsing algorithm is inspired by the general purpose expression parser from the \texttt{Parsec} library~\cite{leijen2001parsec}, as well as the parser scheme in figure~\ref{figure:user-defined-operators-grammar}, which is adapted from the parser scheme for parsing mixfix operators in~\cite{danielsson2008parsing}.
 This parsing algorithm proceeds in the following steps:
 \begin{enumerate}
 \item Identify the constants with user-defined operator notations in the list of parsemes.
@@ -388,9 +396,11 @@ Figures~\ref{figure:user-defined-operators-initial-grammar}, \ref{figure:user-de
 This parser is implemented following the last grammar scheme, and using monadic parser combinators just like in the context-free parsing phase.
 
 Coincidentally, the grammar scheme of figure~\ref{figure:user-defined-operators-initial-grammar-scheme} was used to reintroduce support for infix left and right arrow operators $\rightarrow$ and $\leftarrow$ in \LF types.
-% TODO: Talk about restrictions on what operators can appear at the same precedence level
-% TODO: Recap table for supported operators
-
+Support for the $\leftarrow$ operator had been dropped during the rewrite of the parser from \textsf{Camlp4} to monadic parser combinators.
+This was due in all likelihood because of the difficulty with amending the grammar of figure~\ref{figure:legacy-clf-parsing} while respecting the precedence and associativity of operators.
+As illustrated in figure~\ref{figure:user-defined-operators-grammar}, the key takeaway from reintroducing that static operator is that at a given precedence level, we can either have the application of a non-associative operator, successive applications of right-associative operators, or applications of left-associative operators.
+Those three categories of operators cannot mix at the same precedence level without introducing an unresolvable ambiguity.
+As such, the recursive descent parselet for $\rightarrow$ and $\leftarrow$ operators only allow one or the other operator to appear.
 
 {\newcommand{\prefix}{\mathsf{op}_{\text{prefix}}}
 \newcommand{\infix}{\mathsf{op}_{\text{infix}}}
@@ -468,5 +478,12 @@ In particular, meta-objects and meta-types for substitutions had to be prefixed 
 For the same reason, parameter meta-types had to be prefixed by \texttt{\#}.
 Those breaking changes to the syntax could have been avoided had further semantic analysis been introduced during the disambiguation phase, namely to perform type-driven disambiguation.
 Should \Beluga be extended to support multiple context variables in contexts, then this may be required.
+
+Additionally, further blurring of the grammars in section~\ref{section:resolving-grammar-ambiguities} would be required to ensure that the context-free parsing phase does not have to perform infinite lookaheads.
+Indeed, there is a pathological case in parsing computation-level kinds and types where we run an unbounded lookahead because of the syntax for meta-types and meta-objects.
+The performance impact of this lookahead has not been measured, but it appears to be negligeable based on the performance of running the entire processing pipeline on the numerous examples that are part of the system test suite.
+Nonetheless, the observation that additional grammar blurring is required to get from an $ \mathsf{LALR}(\infty) $ parser to an $ \mathsf{LALR}(1) $ parser for \Beluga begs the question whether there should only be one encompassing grammar in section~\ref{section:resolving-grammar-ambiguities}.
+Since we need a parselet per precedence level, and most static operators in \Beluga have distinct precedences, the resulting increase in the recursion depth for recursive descent parsing could however deteriorate the runtime performance of the parser.
+Arguably, this design would be easier to extend, and could provide more opportunities for improving error messages in the disambiguation phase.
 
 % TODO: Agda embraces ambiguity, and spreads ambiguities across more syntaxes https://agda.readthedocs.io/en/v2.6.2.2/language/core-language.html#:~:text=The%20syntax%20of%20an%20Agda,Pragmas%20define%20program%20options.
