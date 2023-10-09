@@ -4,7 +4,7 @@
 
 \section{The Implementation of \Beluga} \label{section:beluga-implementation}
 
-This section presents an overview of the implementation of \Beluga before any contribution detailed in this thesis were made\footnote{Revision \href{https://github.com/Beluga-lang/Beluga/tree/3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2}{3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2} on Github.}.
+This section presents an overview of the implementation of \Beluga before any contribution detailed in this thesis were made\footnote{The implementation as of revision \href{https://github.com/Beluga-lang/Beluga/tree/3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2}{3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2} on GitHub.}.
 
 \Beluga is implemented following the pipeline architectural pattern, whereby processing of a \Beluga signature is implemented in distinct phases, and data flows in a feed-forward fashion throughout.
 The compilation of \Beluga programs to machine code is not supported, so the implementation only covers the frontend component of compilation, which is responsible for parsing and semantic analysis of programs.
@@ -27,9 +27,10 @@ Specifically, the application of \LF type-level and term-level constants is repr
 Parsing of signature-level declarations also features mixing/unmixing flags (auxiliary data types for bookkeeping) to postpone some elements of disambiguation to phases after context-free parsing.
 
 Indexing in \Beluga is the process where the concrete syntax is elaborated to an approximate syntax in which most variables are replaced with de Bruijn indices.
-This process is run after parsing, and is also responsible for disambiguating the juxtaposition of \LF parsemes at the precedence level of applications (which may contain user-defined operators), as well as disambiguating \LF types from terms and resolving constants.
+Some de Bruin indices computations are postponed until the abstraction phase.
+Indexing is run after parsing, and is additionally responsible for disambiguating the juxtaposition of \LF parsemes at the precedence level of applications (which may contain user-defined operators), as well as disambiguating \LF types from terms and resolving constants.
 This design is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings to produce the referencing environment.
-Using the centralized store of declarations, some measure of overloading of identifiers is supported using a pre-defined order of lookups in the referencing environment based on the kind of identifier that is expected for a given \ac{AST} node.
+Using the centralized store of declarations, some measure of identifier overloading is supported using a pre-defined order of lookups in the referencing environment based on the kind of identifier that is expected for a given \ac{AST} node.
 For instance, computation-level identifiers are resolved by looking up in order the store of computation-level variables, the store of program constants, and then the store of data type constructors.
 Since names appearing in the \LF level are not part of this name resolution strategy, then an identifier can be overloaded to stand for an \LF term as well as a computation-level expression.
 
@@ -41,21 +42,29 @@ The approximate \ac{AST} provides a disambiguated representation of the overall 
 
 A nearly complete internal \ac{AST} is produced at the end of reconstruction.
 An abstraction phase is run to abstract over free variables, which effectively introduces binders for implicit parameters.
-% TODO: Expand
+This phase completes the desugaring of \Beluga programs since it finishes the computation of de Bruijn indices for variables across all levels.
+The main technical challenge abstraction runs into is determining the order in which introduced binders must appear so that dependencies on terms are preserved in inferred dependent types.
 
 Finally, a semantic checking phase is run to ensure signature reconstruction and abstraction yielded valid programs.
 This includes performing type-checking, coverage-checking and totality-checking.
 These processes guarantee, respectively, that \LF-level and computation-level expressions are well-typed, that case analyses are exhaustive, and that functions annotated with a totality declaration terminate for all inputs.
-% TODO: Expand
+Typing and coverage constraints generated during theses checking processes are statefully shared throughout this phase.
+Leftover and unresolved constraints that are still in the state after having fully processed a program unit are used to signal to the user that that program is unsound within \Beluga's system.
 
+The flow of data in the implementation of \Beluga is complex, like in most software systems.
 Starting with the indexing phase, data is shared between the phases of signature reconstruction using a global mutable store.
 This auxiliary data structure is a set of tables mapping constant identifiers to meta-data like in a relational database.
 Crucially, the referencing environment used during indexing is computed using this store.
-% TODO: Expand
+At any given point during the processing pipeline, the state of the store is valid since program units are processed sequentially.
+New program units may be safely appended afterwards in interactive sessions.
 
-% TODO: Interactive REPL and Harpoon
+The \Beluga system provides two ways to interactively perform queries on an existing \Beluga signature, or to augment it with new theorems.
+These are the legacy \ac{REPL} and the \Harpoon system~\cite{errington2021harpoon}, the latter of which was designed as a replacement for the former.
+Both systems allow the user to input \LF-level terms or computation-level expressions and get their type inferred with respect to an already elaborated \Beluga signature.
+\Harpoon further enables the interactive definition and proving of theorems using sets of tactics aimed at automating proof development.
+Both the \ac{REPL} and \Harpoon depend on the earlier processing phases of \Beluga and the flow of information therein.
 
-% TODO: What the focus of this thesis is
+This thesis focuses on the first few phases of the \Beluga processing pipeline, specifically parsing and indexing, and how re-architected solutions to those phases provide better support for some of \Beluga's and \Harpoon's existing features.
 
 \section{Stateful and Incremental Program Development}
 
@@ -72,13 +81,11 @@ In the context of tooling for a programming language, users benefit from interac
 These actions range widely in functionalities depending on the programming language's features, but typically include automated code formatters, linters, debuggers, type inspectors, code-completion suggestions, as well as edit actions to assist in refactoring existing code.
 These tools are typically implemented separately from the compiler, and hence may only be reliably implemented with respect to a specification of the language.
 
-% TODO: Figure of a DAG
-
 % What are some non-sequential compilation steps that need to be scope safe?
 Non-sequential processes in compiler design refer to compilation steps that occur concurrently, or occur using a subset of the data from previous compilation phases.
 In general programming languages, these processes typically appear in the incremental compilation of programs whose dependency relation on compilation units may be arranged in a lattice.
 To implement this, a \ac{DAG} of the compilation units is constructed where edges denote dependency.
-A topological ordering is then computed for that \ac{DAG}, and used to create a compilation schedule with forked compilation processes for independent compilation units.
+A topological ordering is then computed for that \ac{DAG}, and used to create a compilation schedule, which may feature forked compilation processes for independent compilation units.
 This enables parallelism to be used to reduce compilation time, and potentially the number of compilation units that need to be recompiled after an edit action is performed.
 Implementing these features may require caching of compilation results and restoring processing states from those caches, which naturally raises the concern of cache invalidation.
 Indeed, an incremental compilation process needs to be resumed in the state it originally happened, and changes that occur as a result of this compilation need to be propagated to the rest of the compiler's state.

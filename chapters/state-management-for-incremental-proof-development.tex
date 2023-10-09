@@ -8,6 +8,32 @@
 
 \section{Indexing}\label{section:indexing}
 
+% What is indexing, more precisely?
+
+As outlined in section~\ref{section:beluga-implementation}, the indexing phase of \Beluga's processing pipeline is responsible for converting external syntax trees to corresponding approximate syntax trees.
+Specifically, references to constants are replaced with their corresponding symbolic identifiers as found in the signature reconstruction store, and variables are replaced with their corresponding de Bruijn indices.
+This allows for later phases of semantic analysis (such as type-checking and termination analysis) to efficiently look up constant definitions and resolving variables to their binders without having to keep track of the textual identifiers in scope.
+It is worth noting that not all variables are replaced with de Bruijn indices at this stage of reconstruction because binders for implicit parameters are not present in the \ac{AST}; these are introduced during the abstraction phase.
+
+% What features are required of indexing?
+
+% What was the legacy implementation of indexing? Why did it require re-implementation?
+
+The legacy implementation of indexing was responsible for disambiguating the application of user-defined operators.
+This responsibility was moved to its own disambiguation phase, as presented in section~\ref{section:lexing-parsing-disambiguation}.
+While this could have been sufficient in simplifying the implementation, it uncovered significant technical debt in the way identifiers are handled.
+
+The store illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} contains the constant declarations that are recorded during signature reconstruction.
+These declarations are arranged in tables, where each row has two keys: a plain identifier and a symbolic identifier.
+Each kind of constant has its own table.
+For instance, \LF type-level and term-level constants have their own declaration table, separate from computation-level type constants and constructors.
+This design aimed at ensuring that variables and constants originating from the \LF, meta or computation levels do not end up appearing in terms of a different level.
+Unfortunately, without having a unique table representing an entire referencing environment, name resolution in the presence of shadowing proved obtuse and lead to unexpected results when coupled with overloading of identifiers.
+Indeed, when a constant identifier was resolved during indexing, the declaration tables in the store had to be looked up in a pre-defined order.
+As an example, it was impossible for a computation-level coinductive type constant to shadow an inductive one simply because the table for declarations of the former kind was always looked up after the table for declarations of the latter kind.
+
+% An important implementation challenge in re-implementing this phase of the pipeline was ensuring that the outcome of indexing is the same as it was with the legacy architecture.
+
 % TODO:
 
 % TODO: Present the data structures for name resolution in the implementation (binding tree, binding domains, scope stack, context sizes for de Bruijn indices computations)
@@ -18,22 +44,27 @@
 
 % TODO: Present a model for mechanizing name resolution semantic analysis, using an association list, context sizes and binding sorts (bindings tagged with their domains)
 
+\newcommand{\private}[1]{#1_\downarrow}
+\newcommand{\public}[1]{#1_\uparrow}
+\newcommand{\Private}[1]{#1_\Downarrow}
+\newcommand{\Public}[1]{#1_\Uparrow}
+
 \begin{figure}
 \centering
 \begin{tabular}{lrcl}
 Referencing environment & $\Xi$ & $\Coloneqq$ & $\cdot \mid \Xi; \mathbb{S} \mid \Xi; \mathbb{M} \mid \Xi; \mathbb{P}$\\
 Plain scope & $\mathbb{S}$ & $\Coloneqq$ & $\cdot \mid \mathbb{S}, x : \mathbb{V}$\\
-Module scope & $\mathbb{M}$ & $\Coloneqq$ & $\cdot \mid \mathbb{M}, x_\Downarrow : \mathbb{C} \mid \mathbb{M}, x_\Uparrow : \mathbb{C}$\\
-Pattern scope & $\mathbb{P}$ & $\Coloneqq$ & $\cdot \mid \mathbb{P}, x_\downarrow : \mathbb{V} \mid \mathbb{P}, x_\uparrow : \mathbb{V}$\\
+Module scope & $\mathbb{M}$ & $\Coloneqq$ & $\cdot \mid \mathbb{M}, \Private{x} : \mathbb{C} \mid \mathbb{M}, \Public{x} : \mathbb{C}$\\
+Pattern scope & $\mathbb{P}$ & $\Coloneqq$ & $\cdot \mid \mathbb{P}, \private{x} : \mathbb{V} \mid \mathbb{P}, \public{x} : \mathbb{V}$\\
 Entry & $\mathbb{E}$ & $\Coloneqq$ & $ \mathbb{C} \mid \mathbb{V} $\\
-Constant & $ \mathbb{C} $ & $ \Coloneqq $ & $\mathsf{LF}_{\mathsf{type\ const}} \mid \mathsf{LF}_{\mathsf{term\ const}} \mid \mathsf{Module}\left(\overrightarrow{x_\Uparrow : \mathbb{C}}\right) \mid \cdots$\\
+Constant & $ \mathbb{C} $ & $ \Coloneqq $ & $\mathsf{LF}_{\mathsf{type\ const}} \mid \mathsf{LF}_{\mathsf{term\ const}} \mid \mathsf{Module}\left(\overrightarrow{\Public{x} : \mathbb{C}}\right) \mid \cdots$\\
 Variable & $ \mathbb{V} $ & $ \Coloneqq $ & $ \mathsf{LF}_{\mathsf{term}} \mid \mathsf{Comp}_{\mathsf{term}} \mid \mathsf{Subst} \mid \mathsf{Ctx} \mid \mathsf{Param} $
 \end{tabular}
 \caption[Definition of the structure of referencing environments for indexing \Beluga signatures.]{%
 Definition of the structure of referencing environments for indexing \Beluga signatures.
 Some variants for constant entries have been omitted for brevity.
-Identifiers denoted as $x_\Downarrow$ and $x_\Uparrow$ in a module scope denote private declarations and public declarations respectively.
-Likewise, identifiers denoted as $x_\downarrow$ and $x_\uparrow$ in a pattern scope denote inner-pattern variables and pattern variables respectively.
+Identifiers denoted as $\Private{x}$ and $\Public{x}$ in a module scope denote private declarations and public declarations respectively.
+Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern scope denote inner-pattern variables and pattern variables respectively.
 }
 \end{figure}
 
@@ -46,31 +77,31 @@ Likewise, identifiers denoted as $x_\downarrow$ and $x_\uparrow$ in a pattern sc
 \end{equation}
 
 \begin{equation}
-\infer{x : \mathbb{C} \in \mathbb{M}, x_\Downarrow : \mathbb{C}}{}
+\infer{x : \mathbb{C} \in \mathbb{M}, \Private{x} : \mathbb{C}}{}
 \end{equation}
 
 \begin{equation}
-\infer{x : \mathbb{C} \in \mathbb{M}, x_\Uparrow : \mathbb{C}}{}
+\infer{x : \mathbb{C} \in \mathbb{M}, \Public{x} : \mathbb{C}}{}
 \end{equation}
 
 \begin{equation}
-\infer{x : \mathbb{C} \in \mathbb{M}, y_\Downarrow : \mathbb{C}'}{x : \mathbb{C} \in \mathbb{M} & x \neq y}
+\infer{x : \mathbb{C} \in \mathbb{M}, \Private{y} : \mathbb{C}'}{x : \mathbb{C} \in \mathbb{M} & x \neq y}
 \end{equation}
 
 \begin{equation}
-\infer{x : \mathbb{C} \in \mathbb{M}, y_\Uparrow : \mathbb{C}'}{x : \mathbb{C} \in \mathbb{M} & x \neq y}
+\infer{x : \mathbb{C} \in \mathbb{M}, \Public{y} : \mathbb{C}'}{x : \mathbb{C} \in \mathbb{M} & x \neq y}
 \end{equation}
 
 \begin{equation}
-\infer{x : \mathbb{V} \in \mathbb{P}, x_\downarrow : \mathbb{V}}{}
+\infer{x : \mathbb{V} \in \mathbb{P}, \private{x} : \mathbb{V}}{}
 \end{equation}
 
 \begin{equation}
-\infer{x : \mathbb{V} \in \mathbb{P}, y_\downarrow : \mathbb{V}}{x : \mathbb{V} \in \mathbb{P} & x \neq y}
+\infer{x : \mathbb{V} \in \mathbb{P}, \private{y} : \mathbb{V}}{x : \mathbb{V} \in \mathbb{P} & x \neq y}
 \end{equation}
 
 \begin{equation}
-\infer{x : \mathbb{V} \in \mathbb{P}, y_\uparrow : \mathbb{V}}{x : \mathbb{V} \in \mathbb{P} & x \neq y}
+\infer{x : \mathbb{V} \in \mathbb{P}, \public{y} : \mathbb{V}}{x : \mathbb{V} \in \mathbb{P} & x \neq y}
 \end{equation}
 
 \begin{equation}
@@ -110,19 +141,19 @@ Likewise, identifiers denoted as $x_\downarrow$ and $x_\uparrow$ in a pattern sc
 \end{equation}
 
 \begin{equation}
-\infer{x : \mathbb{C} \in \left(\overrightarrow{x_\Uparrow' : \mathbb{C}'}, x_\Uparrow : \mathbb{C}\right)}{}
+\infer{x : \mathbb{C} \in \left(\overrightarrow{\Public{x}' : \mathbb{C}'}, x_\Uparrow : \mathbb{C}\right)}{}
 \end{equation}
 
 \begin{equation}
-\infer{x : \mathbb{C} \in \left(\overrightarrow{x_\Uparrow' : \mathbb{C}'}, y_\Uparrow : \mathbb{C}\right)}{x : \mathbb{C} \in \overrightarrow{x_\Uparrow' : \mathbb{C}'} & x \neq y}
+\infer{x : \mathbb{C} \in \left(\overrightarrow{\Public{x}' : \mathbb{C}'}, \Public{y} : \mathbb{C}\right)}{x : \mathbb{C} \in \overrightarrow{\Public{x}' : \mathbb{C}'} & x \neq y}
 \end{equation}
 
 \begin{equation}
-\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{x_\Uparrow : \mathbb{C}'}}{x_1 : \mathsf{Module}\left(\overrightarrow{x_\Uparrow' : \mathbb{C}''}\right) \in \overrightarrow{x_\Uparrow : \mathbb{C}'} & x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{x_\Uparrow' : \mathbb{C}''}}
+\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{\Public{x} : \mathbb{C}'}}{x_1 : \mathsf{Module}\left(\overrightarrow{\Public{x}' : \mathbb{C}''}\right) \in \overrightarrow{\Public{x} : \mathbb{C}'} & x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{\Public{x}' : \mathbb{C}''}}
 \end{equation}
 
 \begin{equation}
-\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi; \mathbb{M}, x_1 : \mathsf{Module}\left(\overrightarrow{x_\Uparrow : \mathbb{C}'}\right)}{x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{x_\Uparrow : \mathbb{C}'}}
+\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi; \mathbb{M}, x_1 : \mathsf{Module}\left(\overrightarrow{\Public{x} : \mathbb{C}'}\right)}{x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{\Public{x} : \mathbb{C}'}}
 \end{equation}
 
 \section{Pretty-Printing}

@@ -3,7 +3,7 @@
 This chapter presents an overview of parsing and explains the motivation behind the contributions made to \Beluga's and \Harpoon's parsing algorithms.
 Some aspects of context-sensitive disambiguation of \acp{AST} are showcased, including grammars for parsing user-defined prefix, infix and postfix operators.
 
-\section{Introduction}
+\section{Introduction}\label{section:parser-introduction}
 
 This section provides a conceptual introduction to parsing, a discussion on the concept of ambiguity in parsing, and finally an overview of concepts and features of parsers for programming languages in proof assistants.
 Notably, we motivate the introduction of semantic analysis as part of syntactic analysis when it comes to resolving ambiguities in a language such as \Beluga.
@@ -118,7 +118,7 @@ Nonetheless, there is still room to improve in the way of user-friendly error me
 % TODO: See if Agda breaks with splicing
 % TODO: See if Coq has incremental development as well
 
-\section{\Beluga Lexing, Parsing and Disambiguation Phases}
+\section{\Beluga Lexing, Parsing and Disambiguation Phases}\label{section:lexing-parsing-disambiguation}
 
 AS part of this thesis, \Beluga's parser was re-implemented to handle expressions in non-normal form, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
 Particularly, semantic analysis is introduced as part of a new context-sensitive disambiguation phase to the parser in order to produce a fully unambiguous \ac{AST} before signature reconstruction.
