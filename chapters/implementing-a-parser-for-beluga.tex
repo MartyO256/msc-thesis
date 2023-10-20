@@ -484,6 +484,6 @@ Indeed, there is a pathological case in parsing computation-level kinds and type
 The performance impact of this lookahead has not been measured, but it appears to be negligeable based on the performance of running the entire processing pipeline on the numerous examples that are part of the system test suite.
 Nonetheless, the observation that additional grammar blurring is required to get from an $ \mathsf{LALR}(\infty) $ parser to an $ \mathsf{LALR}(1) $ parser for \Beluga begs the question whether there should only be one encompassing grammar in section~\ref{section:resolving-grammar-ambiguities}.
 Since we need a parselet per precedence level, and most static operators in \Beluga have distinct precedences, the resulting increase in the recursion depth for recursive descent parsing could however deteriorate the runtime performance of the parser.
-Arguably, this design would be easier to extend, and could provide more opportunities for improving error messages in the disambiguation phase.
+Arguably, this design would be easier to extend, and could provide more opportunities to improve the precision of error messages in the disambiguation phase.
 
 % TODO: Agda embraces ambiguity, and spreads ambiguities across more syntaxes https://agda.readthedocs.io/en/v2.6.2.2/language/core-language.html#:~:text=The%20syntax%20of%20an%20Agda,Pragmas%20define%20program%20options.
