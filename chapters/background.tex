@@ -2,12 +2,14 @@
 
 \section{The \Beluga Language}
 
-\section{The Implementation of \Beluga} \label{section:beluga-implementation}
+% TODO:
+
+\section{The Legacy Implementation of \Beluga} \label{section:beluga-implementation}
 
 This section presents an overview of the implementation of \Beluga before any contribution detailed in this thesis were made\footnote{The implementation as of revision \href{https://github.com/Beluga-lang/Beluga/tree/3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2}{3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2} on GitHub.}.
 
 \Beluga is implemented following the pipeline architectural pattern, whereby processing of a \Beluga signature is implemented in distinct phases, and data flows in a feed-forward fashion throughout.
-The compilation of \Beluga programs to machine code is not supported, so the implementation only covers the frontend component of compilation, which is responsible for parsing and semantic analysis of programs.
+The compilation of \Beluga programs to machine code is not supported, so the implementation only covers the frontend component of compilation, which is responsible for syntactic and semantic analysis of programs.
 Since \Beluga is a dependently-typed language featuring code coverage analysis and termination checking, this semantic analysis process is complex.
 
 \begin{figure}
@@ -66,13 +68,14 @@ Both the \ac{REPL} and \Harpoon depend on the earlier processing phases of \Belu
 
 This thesis focuses on the first few phases of the \Beluga processing pipeline, specifically parsing and indexing, and how re-architected solutions to those phases provide better support for some of \Beluga's and \Harpoon's existing features.
 
-\section{Stateful and Incremental Program Development}
+\section{States and Incremental Program Development}
 
-Incremental program development in compiler design is the problem of applying edit actions to programs in \ac{AST} or representation while only re-processing a minimal portion of the program under edit.
+Incremental program development in programming language tooling is the problem of applying edit actions to the representation of programs while only re-processing a minimal portion of the program under edit.
+The analogous problem in compiler design is incremental compilation.
 
 % What is the key problem in incremental program development?
 One of the main challenges in implementing incremental program development is that a compilation unit may only be revisited with the processing state it was defined in.
-This means, for instance, that a process performing name lookups or mutations on the \ac{AST} at a given node may only do so using the variables and declarations in scope at that \ac{AST} node, just as the user does when editing the textual representation of that \ac{AST} node.
+This means, for instance, that a procedure performing name lookups or mutations on the \ac{AST} at a given node may only do so using the variables and declarations in scope at that \ac{AST} node, just as the user does when editing the textual representation of that \ac{AST} node.
 As such, edit actions on an \ac{AST} must preserve its semantic correctness properties so that serializing and subsequently deserializing it produces the same \ac{AST}.
 This problem arises when a compiler is extended to support user interactions or non-sequential compilation steps.
 

@@ -75,13 +75,33 @@ This issue of locality in references has further been shown to deteriorate the p
 
 % What is the proposed approach to supporting edit actions in Beluga and Harpoon?
 
+%In particular, we present an explicitly stateful algorithm for the parsing, disambiguation and indexing of \Beluga programs to ensure correct name resolutions across editing states.
+%This fixed the soundness issue for \Harpoon proof sessions whereby constants declared after the proof hole would be in scope and shadow earlier declarations.
+%The revised approach to name resolution allowed for consistent namespacing of constants to be implemented.
+%Additionally, the \Beluga feature of fixity pragmas for defining prefix, infix or postfix notations for \LF-level constants was expanded upon to also work with computation-level constants.
+%Using the proposed specification for \Beluga and \Harpoon's grammars, the generation of \textsc{HTML} pages corresponding to signatures was restored, with a new and improved pretty-printing algorithm of the concrete syntax.
+%Overall, the changes have improved the maintainability, resiliency and stability of the affected modules, and have proposed better architectural design patterns that may be applied to the rest of the implementation.
+
 This thesis reports on improvements made to the implementation \Beluga and \Harpoon to address some of the soundness issues in interactive proof development in these two systems.
-In particular, we present an explicitly stateful algorithm for the parsing, disambiguation and indexing of \Beluga programs to ensure correct name resolutions across editing states.
-This fixed the soundness issue for \Harpoon proof sessions whereby constants declared after the proof hole would be in scope and shadow earlier declarations.
-The revised approach to name resolution allowed for consistent namespacing of constants to be implemented.
-Additionally, the \Beluga feature of fixity pragmas for defining prefix, infix or postfix notations for \LF-level constants was expanded upon to also work with computation-level constants.
-Using the proposed specification for \Beluga and \Harpoon's grammars, the generation of \textsc{HTML} pages corresponding to signatures was restored, with a new and improved pretty-printing algorithm of the concrete syntax.
-Overall, the changes have improved the maintainability, resiliency and stability of the affected modules, and have proposed better architectural design patterns that may be applied to the rest of the implementation.
+Overall, the changes listed below have improved the maintainability, resiliency and stability of the affected modules.
+Better architectural software design patterns have been put in place, and these may be expanded upon in future iterations on the later phases of semantic analysis.
+The specific contributions of this thesis are:
+\begin{enumerate}
+\item
+A complete and formal specification of \Beluga and \Harpoon's grammars for parsing.
+% TODO:
+\item
+A robust implementation of a context-free parser for \Beluga and \Harpoon, along with a new context-sensitive disambiguation phase to rectify and expand existing features.
+Most notably, the \Beluga feature of fixity pragmas for defining prefix, infix or postfix notations for \LF-level constants is reworked to also support computation-level constants.
+% TODO:
+\item
+A unified name resolution algorithm to improve the clarity of \Beluga programs, implement namespaces, and to support sound incremental proof development.
+This fixed the soundness issue for \Harpoon proof sessions whereby constants declared after a proof hole would be in scope and shadow earlier declarations.
+% TODO:
+\item
+Improved pretty-printing algorithms for formatting \Beluga programs in external \ac{AST} representation, and for generating corresponding \textsc{HTML} pages.
+% TODO:
+\end{enumerate}
 
 % TODO: List research questions
 
