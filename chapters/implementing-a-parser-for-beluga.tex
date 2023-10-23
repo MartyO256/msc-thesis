@@ -261,9 +261,9 @@ Unexpected token in stream
   Got token `['
 \end{Verbatim}
 \caption{%
-Syntax error raised during context-free parsing in the previous parser implementation.
+The syntax error raised during context-free parsing in the legacy parser implementation.
 Given the stricter grammar of \synt{clf-type} in figure~\ref{figure:legacy-clf-parsing}, it is true that the token \texttt{[} introducing the identity substitution is unexpected.
-However, the reason for this syntax error is not obvious, in part because the user unambiguously wrote a substitution.
+However, the reason for this syntax error is not obvious given the error message, in part because the user unambiguously wrote a substitution.
 }
 \end{subfigure}
 \par\bigskip
@@ -291,6 +291,7 @@ Unrestricted backtracking and infinite lookaheads are not suitable solutions to 
 The solution we employ to resolve this issue of complexity during context-free parsing is somewhat counter-intuitive.
 We merge syntactic categories having common syntaxes that appear in ambiguous positions into a single production.
 We call this blurring the grammar since we effectively lose the distinction between syntactic categories during context-free parsing.
+This results in a grammar that is less restrictive than the initial ones, and so subsequent processing is required to recover a parser for the initial grammars.
 Section~\ref{section:blurred-lf-syntax} provides an example of one such blurred grammar, obtained by merging the productions \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} of section~\ref{section:syntax-lf} into one syntactic category, with corresponding production \synt{lf-object}.
 The context-sensitive disambiguation phase outlined in the next section is then tasked with recovering the original \LF kind, type or term corresponding to a parsed \LF object.
 We note that a similar technique was used in \Twelf since its shift-reduce parser could not perform disambiguation during parsing.
