@@ -291,7 +291,7 @@ Unrestricted backtracking and infinite lookaheads are not suitable solutions to 
 The solution we employ to resolve this issue of complexity during context-free parsing is somewhat counter-intuitive.
 We merge syntactic categories having common syntaxes that appear in ambiguous positions into a single production.
 We call this blurring the grammar since we effectively lose the distinction between syntactic categories during context-free parsing.
-This results in a grammar that is less restrictive than the initial ones, and so subsequent processing is required to recover a parser for the initial grammars.
+This results in a grammar that is less restrictive than the initial ones, and so an additional phase of processing is required to recover a parser for the initial grammars.
 Section~\ref{section:blurred-lf-syntax} provides an example of one such blurred grammar, obtained by merging the productions \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} of section~\ref{section:syntax-lf} into one syntactic category, with corresponding production \synt{lf-object}.
 The context-sensitive disambiguation phase outlined in the next section is then tasked with recovering the original \LF kind, type or term corresponding to a parsed \LF object.
 We note that a similar technique was used in \Twelf since its shift-reduce parser could not perform disambiguation during parsing.
@@ -300,7 +300,7 @@ We note that a similar technique was used in \Twelf since its shift-reduce parse
 
 The disambiguation phase of parsing performs an \ac{AST} transformation from the parser syntax to the external syntax.
 Given \Beluga's features and overloaded syntactic constructs, disambiguation is responsible for recovering the structure specified by the grammars of section~\ref{section:syntax} using the structure obtained by context-free parsing following the blurred grammars of section~\ref{section:resolving-grammar-ambiguities}.
-Specifically, it performs disambiguation of
+Specifically, it performs disambiguation of:
 \begin{enumerate}
 \item \LF kinds, types and terms,
 \item contextual \LF types and terms,
@@ -492,7 +492,7 @@ Likewise, since mixfix notations typically require the reuse of names across dif
 
 Additionally, further blurring of the grammars in section~\ref{section:resolving-grammar-ambiguities} would be required to ensure that the context-free parsing phase does not have to perform infinite lookaheads.
 Indeed, there is a pathological case in parsing computation-level kinds and types where we run an unbounded lookahead because of the syntax for meta-types and meta-objects.
-The performance impact of this lookahead has not been measured, but it appears to be negligeable based on the performance of running the entire processing pipeline on the numerous examples that are part of the system's test suite.
+The performance impact of this lookahead has not been measured, but it appears to be negligible based on the performance of running the entire processing pipeline on the numerous examples that are part of the system's test suite.
 Nonetheless, the observation that additional grammar blurring is required to get from an $ \mathsf{LALR}(\infty) $ parser to an $ \mathsf{LALR}(1) $ parser for \Beluga begs the question whether there should only be one encompassing grammar in section~\ref{section:resolving-grammar-ambiguities}.
 Since we need one parselet per precedence level, and most static operators in \Beluga have distinct precedences, the resulting increase in the recursion depth for recursive descent parsing could however deteriorate the runtime performance of the parser.
 Arguably, this design would be easier to extend, and could provide more opportunities to improve the precision of error messages in the disambiguation phase.

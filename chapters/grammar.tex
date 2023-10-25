@@ -382,7 +382,7 @@ Atomic patterns are computation-level patterns that may appear as whitespace-del
 `=' <comp-expression> `in' <comp-expression>
 \alt <meta-object>
 \alt `impossible' <comp-expression>
-\alt `case' <comp-expression> [`--not'] `of' [`|']\\
+\alt `case' <comp-expression> [`----not'] `of' [`|']\\
 <comp-case-branch> (`|' <comp-case-branch>)*
 \alt `(' <comp-expression> (`,' <comp-expression>)+ `)'
 \alt `?' [<identifier>]
@@ -505,22 +505,24 @@ The following is the grammar for pragmas that adjust parameters for parsing, ela
 In particular, pragmas allow the user to choose a notation for operators.
 
 \begin{grammar}
-<pragma> ::= `--prefix' <qualified-identifier> [<precedence>] `.'
-\alt `--infix' <qualified-identifier> [<precedence>] [<associativity>] `.'
-\alt `--postfix' <qualified-identifier> [<precedence>] `.'
-\alt `--name' <qualified-identifier> <identifier> [<identifier>] `.'
-\alt `--not'
-\alt `--assoc <associativity> `.'
-\alt `--open <qualified-identifier> `.'
-\alt `--abbrev <qualified-identifier> <identifier> `.'
-\alt `--query' (`*' | <integer>) (`*' | <integer>) [<identifier>] `:' <clf-term> `.'
+<pragma> ::= `----prefix' <qualified-identifier> [<precedence>] `.'
+\alt `----infix' <qualified-identifier> [<precedence>] [<associativity>] `.'
+\alt `----postfix' <qualified-identifier> [<precedence>] `.'
+\alt `----name' <qualified-identifier> <identifier> [<identifier>] `.'
+\alt `----not'
+\alt `----assoc <associativity> `.'
+\alt `----open <qualified-identifier> `.'
+\alt `----abbrev <qualified-identifier> <identifier> `.'
+\alt `----query' (`*' | <integer>) (`*' | <integer>) [<identifier>] `:' <clf-term> `.'
 
-<global-pragma> ::= `--nostrenghten' | `--coverage' | `--warncoverage'
+<global-pragma> ::= `----nostrenghten' | `----coverage' | `----warncoverage'
 \end{grammar}
 
 \subsection{Grammar for \Beluga Signatures}\label{section:syntax-signature}
 
-The following is the grammar for the toplevel code sections in \Beluga.
+The following is the grammar for toplevel code sections in \Beluga.
+Constant declarations are arranged as lists, and may appear in modules for namespacing.
+This includes the declaration of \LF type-level and term-level constants, computation-level type
 That is, type constants, term constants, programs and proofs are arranged as lists of declarations, and may appear in modules.
 
 \begin{grammar}

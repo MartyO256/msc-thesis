@@ -6,7 +6,7 @@
 
 \section{The Legacy Implementation of \Beluga} \label{section:beluga-implementation}
 
-This section presents an overview of the implementation of \Beluga before any contribution detailed in this thesis were made\footnote{The implementation as of revision \href{https://github.com/Beluga-lang/Beluga/tree/3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2}{3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2} on GitHub.}.
+This section presents an overview of the implementation of \Beluga before any contribution detailed in this thesis were made\footnote{The implementation of \Beluga at revision hash \href{https://github.com/Beluga-lang/Beluga/tree/3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2}{3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2, available on GitHub.}}.
 This initial description serves as the basis for all performance and design comparisons made with respect to \Beluga version~\texttt{1.1}.
 
 \Beluga is implemented following the pipeline architectural pattern, whereby processing of a \Beluga signature is implemented in distinct phases, and data flows in a feed-forward fashion throughout.
@@ -44,9 +44,10 @@ Type-driven unmixing of overloaded syntactic forms occurs at the meta-level, whe
 The approximate \ac{AST} provides a disambiguated representation of the overall \Beluga signatures, which helps in keeping track of the various changes made during this complicated phase.
 
 A nearly complete internal \ac{AST} is produced at the end of reconstruction.
-An abstraction phase is run to abstract over free variables, which effectively introduces binders for implicit parameters.
+An abstraction phase~\cite{germain2010implementation} is run to abstract over free variables, which effectively introduces binders for implicit parameters.
 This phase completes the desugaring of \Beluga programs since it finishes the computation of de Bruijn indices for variables across all levels.
 The main technical challenge abstraction runs into is determining the order in which introduced binders must appear so that dependencies on terms are preserved in inferred dependent types.
+This includes identifying and handling circular dependencies in abstracted parameters.
 
 Finally, a semantic checking phase is run to ensure signature reconstruction and abstraction yielded valid programs.
 This includes performing type-checking, coverage-checking and totality-checking.

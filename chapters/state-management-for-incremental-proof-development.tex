@@ -1,19 +1,25 @@
 \chapter{State Management for Incremental Proof Development}
 
+This chapter presents implementation concerns with supporting incremental program development in \Beluga and \Harpoon.
+Some technical debt in those systems is highlighted to justify the reimplementation of the indexing phase.
+A formalism of identifier resolution in \Beluga is presented to showcase how to efficiently and correctly support de Bruijn indices with multiple indexing contexts.
+
+\section{Introduction}
+
+% What are aspects of state management that are required to support incremental proof development?
+
+% TODO: Provide a somewhat more fine-grained presentation of \Beluga's semantic analysis phase, with an emphasis on explicit state management and talk about transactions (not ACID though, since no fault tolerance)
+
 % TODO:
 
-\section{Signature Reconstruction Pipeline}
-
-% TODO: Provide a more fine-grained presentation of \Beluga's semantic analysis phase, with an emphasis on explicit state management and ACID transactions
-
-\section{Indexing}\label{section:indexing}
+\section{The Legacy Indexing Phase}
 
 % What is indexing, more precisely?
 
 As outlined in section~\ref{section:beluga-implementation}, the indexing phase of \Beluga's processing pipeline is responsible for converting external syntax trees to corresponding approximate syntax trees.
 Specifically, references to constants are replaced with their corresponding symbolic identifiers as found in the signature reconstruction store, and variables are replaced with their corresponding de Bruijn indices.
 This allows for later phases of semantic analysis (such as type-checking and termination analysis) to efficiently look up constant definitions and resolve variables to their binders without having to keep track of the referencing environment.
-It is worth noting that not all variables are replaced with de Bruijn indices at this stage of reconstruction because binders for implicit parameters are not present in the \ac{AST}; these are introduced during the abstraction phase.
+In the implementation, not all variables are replaced with de Bruijn indices during indexing because binders for implicit parameters are not present in the \ac{AST}; these are introduced during the abstraction phase~\cite{germain2010implementation}.
 
 % What features are required of indexing?
 
@@ -21,16 +27,27 @@ It is worth noting that not all variables are replaced with de Bruijn indices at
 
 The legacy implementation of indexing was responsible for disambiguating the application of user-defined operators.
 This responsibility was moved to its own disambiguation phase, as presented in section~\ref{section:lexing-parsing-disambiguation}.
-While this could have been sufficient in simplifying the existing implementation, it uncovered significant technical debt in the way identifiers are handled by it.
+While this refactoring could have been sufficient in simplifying the legacy implementation, it uncovered significant technical debt in the way identifiers are handled during indexing.
 
-The store illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} contains the constant declarations that are recorded during signature reconstruction.
-These declarations are arranged in tables, where each row has two keys: a plain identifier and a symbolic identifier.
-Each kind of constant has its own table.
+The overarching store illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} records the constant declarations encountered during signature reconstruction.
+These declarations are arranged in tables, with each kind of constant having its own table.
+This means that there is no overlap between identifiers belonging to different kinds since they are not looked up in the same table, which effectively creates distinct namespaces for them.
 For instance, \LF type-level and term-level constants have their own declaration table, separate from computation-level type constants and constructors.
-This design aimed at ensuring that variables and constants originating from the \LF, meta or computation levels do not end up appearing in terms of a different level.
+This design aimed at ensuring that variables and constants originating from the \LF, meta or computation levels do not end up appearing in terms of a different level~\cite{germain2010implementation}.
 Unfortunately, without having a unique table representing an entire referencing environment, name resolution in the presence of shadowing proved obtuse and lead to unexpected results when coupled with overloading of identifiers.
 Indeed, when a constant identifier was resolved during indexing, the declaration tables in the store had to be looked up in a pre-defined order.
+As a consequence, during identifier lookups, parts of the referencing environment would not exist depending on the expected kind of variable or constant encountered in the \ac{AST}.
 As an example, it was impossible for a computation-level coinductive type constant to shadow an inductive one simply because the table for declarations of the former kind was always looked up after the table for declarations of the latter kind.
+Counterintuitively, one could introduce a meta-level variable with an \verb|mlam|-binder and a computation-level variable with an \verb|fn|-binder using the same identifier and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively.
+
+The aforementioned incongruities in name resolution motivated the reimplementation of the indexing phase to use one unified namespace while ensuring that identifiers with different levels cannot be mixed.
+Without having types available at this stage of processing, the accidental feature of identifier overloading had to be discarded.
+
+%\section{Signature Reconstruction Pipeline}
+
+% TODO: Provide a more fine-grained presentation of \Beluga's semantic analysis phase, with an emphasis on explicit state management and ACID transactions
+
+\section{Unified Indexing}\label{section:indexing}
 
 % An important implementation challenge in re-implementing this phase of the pipeline was ensuring that the outcome of indexing is the same as it was with the legacy architecture.
 
@@ -48,168 +65,180 @@ As an example, it was impossible for a computation-level coinductive type consta
 \newcommand{\public}[1]{#1_\uparrow}
 \newcommand{\Private}[1]{#1_\Downarrow}
 \newcommand{\Public}[1]{#1_\Uparrow}
+\newcommand{\Env}{\Xi}
+\newcommand{\Scope}{\mathbb{S}}
+\newcommand{\Module}{\mathbb{M}}
+\newcommand{\Pattern}{\mathbb{P}}
+\newcommand{\Entry}{\mathbb{E}}
+\newcommand{\Var}{\mathbb{V}}
 
 \begin{figure}
 \centering
 \begin{tabular}{lrcl}
-Referencing environment & $\Xi$ & $\Coloneqq$ & $\cdot \mid \Xi; \mathbb{S} \mid \Xi; \mathbb{M} \mid \Xi; \mathbb{P}$\\
-Plain scope & $\mathbb{S}$ & $\Coloneqq$ & $\cdot \mid \mathbb{S}, x : \mathbb{V}$\\
-Module scope & $\mathbb{M}$ & $\Coloneqq$ & $\cdot \mid \mathbb{M}, \Private{x} : \mathbb{C} \mid \mathbb{M}, \Public{x} : \mathbb{C}$\\
-Pattern scope & $\mathbb{P}$ & $\Coloneqq$ & $\cdot \mid \mathbb{P}, \private{x} : \mathbb{V} \mid \mathbb{P}, \public{x} : \mathbb{V}$\\
-Entry & $\mathbb{E}$ & $\Coloneqq$ & $ \mathbb{C} \mid \mathbb{V} $\\
+Referencing environment & $\Env$ & $\Coloneqq$ & $\cdot \mid \Env; \Scope \mid \Env; \Module \mid \Env; \Pattern$\\
+Plain scope & $\Scope$ & $\Coloneqq$ & $\cdot \mid \Scope, x : \Var$\\
+Module scope & $\Module$ & $\Coloneqq$ & $\cdot \mid \Module, \Private{x} : \mathbb{C} \mid \Module, \Public{x} : \mathbb{C}$\\
+Pattern scope & $\Pattern$ & $\Coloneqq$ & $\cdot \mid \Pattern, \private{x} : \Var \mid \Pattern, \public{x} : \Var$\\
+Entry & $\Entry$ & $\Coloneqq$ & $ \mathbb{C} \mid \Var $\\
 Constant & $ \mathbb{C} $ & $ \Coloneqq $ & $\mathsf{LF}_{\mathsf{type\ const}} \mid \mathsf{LF}_{\mathsf{term\ const}} \mid \mathsf{Module}\left(\overrightarrow{\Public{x} : \mathbb{C}}\right) \mid \cdots$\\
-Variable & $ \mathbb{V} $ & $ \Coloneqq $ & $ \mathsf{LF}_{\mathsf{term}} \mid \mathsf{Comp}_{\mathsf{term}} \mid \mathsf{Subst} \mid \mathsf{Ctx} \mid \mathsf{Param} $
+Variable & $ \Var $ & $ \Coloneqq $ & $ \mathsf{LF}_{\mathsf{term}} \mid \mathsf{Comp}_{\mathsf{term}} \mid \mathsf{Ctx} \mid \cdots $
 \end{tabular}
 \caption[Definition of the structure of referencing environments for indexing \Beluga signatures.]{%
 Definition of the structure of referencing environments for indexing \Beluga signatures.
-Some variants for constant entries have been omitted for brevity.
+Some variants for constants and variables have been omitted for brevity.
 Identifiers denoted as $\Private{x}$ and $\Public{x}$ in a module scope denote private declarations and public declarations respectively.
 Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern scope denote inner-pattern variables and pattern variables respectively.
 }
 \end{figure}
 
-\begin{equation}
-\infer{x : \mathbb{V} \in \mathbb{S}, x : \mathbb{V}}{}
-\end{equation}
+% TODO: Wrong formalism, use equality
 
-\begin{equation}
-\infer{x : \mathbb{V} \in \mathbb{S}, y : \mathbb{E}'}{x : \mathbb{V} \in \mathbb{S} & x \neq y}
-\end{equation}
+%\begin{equation}
+%(\Scope, x : \Var)(x) = (x : \Var)
+%\end{equation}
+%
+%\begin{equation}
+%\infer{(x : \Var) \in (\Scope, x : \Var)}{}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \Var \in \Scope, y : \Entry'}{x : \Var \in \Scope & x \neq y}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \mathbb{C} \in \Module, \Private{x} : \mathbb{C}}{}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \mathbb{C} \in \Module, \Public{x} : \mathbb{C}}{}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \mathbb{C} \in \Module, \Private{y} : \mathbb{C}'}{x : \mathbb{C} \in \Module & x \neq y}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \mathbb{C} \in \Module, \Public{y} : \mathbb{C}'}{x : \mathbb{C} \in \Module & x \neq y}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \Var \in \Pattern, \private{x} : \Var}{}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \Var \in \Pattern, \private{y} : \Var}{x : \Var \in \Pattern & x \neq y}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \Var \in \Pattern, \public{y} : \Var}{x : \Var \in \Pattern & x \neq y}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \Var \in \Env; \Scope}{x : \Var \in \Scope}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \Entry \in \Env; \Scope}{x \notin \Scope & x : \Entry \in \Env}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \mathbb{C} \in \Env; \Module}{x : \mathbb{C} \in \Module}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \Entry \in \Env; \Module}{x \notin \Module & x : \Entry \in \Env}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \Var \in \Env; \Pattern}{x : \Var \in \Pattern}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \mathbb{C} \in \Env; \Pattern}{x \notin \Pattern & x : \mathbb{C} \in \Env}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Env; \Scope}{x_1 \notin \Scope & x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Env}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Env; \Module}{x_1 \notin \Module & x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Env}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Env; \Pattern}{x_1 \notin \Pattern & x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Env}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \mathbb{C} \in \left(\overrightarrow{\Public{x}' : \mathbb{C}'}, x_\Uparrow : \mathbb{C}\right)}{}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x : \mathbb{C} \in \left(\overrightarrow{\Public{x}' : \mathbb{C}'}, \Public{y} : \mathbb{C}\right)}{x : \mathbb{C} \in \overrightarrow{\Public{x}' : \mathbb{C}'} & x \neq y}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{\Public{x} : \mathbb{C}'}}{x_1 : \mathsf{Module}\left(\overrightarrow{\Public{x}' : \mathbb{C}''}\right) \in \overrightarrow{\Public{x} : \mathbb{C}'} & x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{\Public{x}' : \mathbb{C}''}}
+%\end{equation}
+%
+%\begin{equation}
+%\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Env; \Module, x_1 : \mathsf{Module}\left(\overrightarrow{\Public{x} : \mathbb{C}'}\right)}{x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{\Public{x} : \mathbb{C}'}}
+%\end{equation}
 
-\begin{equation}
-\infer{x : \mathbb{C} \in \mathbb{M}, \Private{x} : \mathbb{C}}{}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{C} \in \mathbb{M}, \Public{x} : \mathbb{C}}{}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{C} \in \mathbb{M}, \Private{y} : \mathbb{C}'}{x : \mathbb{C} \in \mathbb{M} & x \neq y}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{C} \in \mathbb{M}, \Public{y} : \mathbb{C}'}{x : \mathbb{C} \in \mathbb{M} & x \neq y}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{V} \in \mathbb{P}, \private{x} : \mathbb{V}}{}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{V} \in \mathbb{P}, \private{y} : \mathbb{V}}{x : \mathbb{V} \in \mathbb{P} & x \neq y}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{V} \in \mathbb{P}, \public{y} : \mathbb{V}}{x : \mathbb{V} \in \mathbb{P} & x \neq y}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{V} \in \Xi; \mathbb{S}}{x : \mathbb{V} \in \mathbb{S}}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{E} \in \Xi; \mathbb{S}}{x \notin \mathbb{S} & x : \mathbb{E} \in \Xi}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{C} \in \Xi; \mathbb{M}}{x : \mathbb{C} \in \mathbb{M}}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{E} \in \Xi; \mathbb{M}}{x \notin \mathbb{M} & x : \mathbb{E} \in \Xi}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{V} \in \Xi; \mathbb{P}}{x : \mathbb{V} \in \mathbb{P}}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{C} \in \Xi; \mathbb{P}}{x \notin \mathbb{P} & x : \mathbb{C} \in \Xi}
-\end{equation}
-
-\begin{equation}
-\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi; \mathbb{S}}{x_1 \notin \mathbb{S} & x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi}
-\end{equation}
-
-\begin{equation}
-\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi; \mathbb{M}}{x_1 \notin \mathbb{M} & x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi}
-\end{equation}
-
-\begin{equation}
-\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi; \mathbb{P}}{x_1 \notin \mathbb{P} & x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{C} \in \left(\overrightarrow{\Public{x}' : \mathbb{C}'}, x_\Uparrow : \mathbb{C}\right)}{}
-\end{equation}
-
-\begin{equation}
-\infer{x : \mathbb{C} \in \left(\overrightarrow{\Public{x}' : \mathbb{C}'}, \Public{y} : \mathbb{C}\right)}{x : \mathbb{C} \in \overrightarrow{\Public{x}' : \mathbb{C}'} & x \neq y}
-\end{equation}
-
-\begin{equation}
-\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{\Public{x} : \mathbb{C}'}}{x_1 : \mathsf{Module}\left(\overrightarrow{\Public{x}' : \mathbb{C}''}\right) \in \overrightarrow{\Public{x} : \mathbb{C}'} & x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{\Public{x}' : \mathbb{C}''}}
-\end{equation}
-
-\begin{equation}
-\infer{x_1 . x_2 . \cdots . x_n : \mathbb{C} \in \Xi; \mathbb{M}, x_1 : \mathsf{Module}\left(\overrightarrow{\Public{x} : \mathbb{C}'}\right)}{x_2 . \cdots . x_n : \mathbb{C} \in \overrightarrow{\Public{x} : \mathbb{C}'}}
-\end{equation}
-
-\section{Pretty-Printing}
-
-% What is pretty-printing?
-
-Pretty-printing is the process that transforms an \ac{AST} back into its textual representation.
-This feature of programming languages is often used to implement automated formatting software as part of tooling.
-As it pertains to \Beluga and \Harpoon, pretty-printing is used by the developers during debugging to trace the execution of signature reconstruction, and it is used by the user when programmatically generated programs need to be displayed in interactive sessions.
-
-% What are considerations to make when it comes to implementing pretty-printing?
-
-Depending on the lexical conventions used during parsing, a pretty-printed \ac{AST} may not exactly correspond to its initial textual representation.
-Indeed, the program's layout may change, inline comments may be printed in different locations, and extraneous parentheses may be removed.
-
-Handling of the printed program's layout can be implemented using the algorithm described in~\cite{oppen1980prettyprinting}, whereby layout boxes and break hints are output during printing, and then actual break point locations are later computed to satisfy the layout and margin constraints.
-The \OCaml standard library provides an implementation of this algorithm in its \mintinline{ocaml}|Format| module~\cite{leroy2022ocaml}.
-
-The usual lexical convention is to treat comments as white spaces.
-This simplifies the \ac{AST} representation of programs by effectively discarding all the comments.
-However, during pretty-printing for formatting a program, those comments need to be restored.
-A separate interval map data structure may be created during the lexing stage in order to keep track of inline comments with respect to their location.
-Provided the program \ac{AST} is annotated with locations, then it is possible during printing to determine where a comment should be spliced in.
-
-Handling of parentheses is less straightforward.
-Indeed, a node in the program's \ac{AST} needs to be mapped back to the parser production that created it in order to determine its precedence.
-Additionally, the associativity of operators appearing at the same precedence level must be taken into consideration to avoid producing ambiguous textual representations.
-
-% How can pretty-printing be implemented in Beluga?
-
-Pretty-printing of \Beluga's internal syntax requires the generation of fresh identifiers to replace de Bruijn indices.
-Hence, not only is printing stateful, it also needs an auxiliary data structure containing the set of identifiers that are used by sub-expressions.
-Indeed, one needs to know what identifiers are used in the term under a $\lambda$-abstraction before generating an identifier for the $\lambda$-abstraction's parameter.
-Otherwise, the generated identifier may shadow a referenced identifier.
-The data structure to support this feature may be implemented in many ways, but in general this problem reduces to annotating a tree with additional data~\cite{najd2016trees}:
-
-\begin{enumerate}
-\item
-Parallel data types equipped with extra fields may be defined for each kind of node in the \ac{AST}.
-During pretty-printing, the \ac{AST} and this auxiliary data structure then must be traversed at the same time.
-\item
-Each node in the \ac{AST} may be equipped with a unique identifier to be used as key in a map data structure.
-Then, lookups can be made on that map during printing to fetch the necessary data.
-\item
-The auxiliary data may be embedded type-safely into the \ac{AST} using recursion schemes.
-\end{enumerate}
-
-The approach with the least impact on the rest of the implementation is to construct printing closures using a top-down traversal of the \ac{AST}.
-At any given node, this traversal recursively computes the set of used de Bruijn offsets, and then constructs a closure accepting the referencing environment to determine the identifiers corresponding to those offsets.
+%\section{Pretty-Printing}
+%
+%% What is pretty-printing?
+%
+%Pretty-printing is the process that transforms an \ac{AST} back into its textual representation.
+%This feature of programming languages is often used to implement automated formatting software as part of tooling.
+%As it pertains to \Beluga and \Harpoon, pretty-printing is used by the developers during debugging to trace the execution of signature reconstruction, and it is used by the user when programmatically generated programs need to be displayed in interactive sessions.
+%
+%% What are considerations to make when it comes to implementing pretty-printing?
+%
+%Depending on the lexical conventions used during parsing, a pretty-printed \ac{AST} may not exactly correspond to its initial textual representation.
+%Indeed, the program's layout may change, inline comments may be printed in different locations, and extraneous parentheses may be removed.
+%
+%Handling of the printed program's layout can be implemented using the algorithm described in~\cite{oppen1980prettyprinting}, whereby layout boxes and break hints are output during printing, and then actual break point locations are later computed to satisfy the layout and margin constraints.
+%The \OCaml standard library provides an implementation of this algorithm in its \mintinline{ocaml}|Format| module~\cite{leroy2022ocaml}.
+%
+%The usual lexical convention is to treat comments as white spaces.
+%This simplifies the \ac{AST} representation of programs by effectively discarding all the comments.
+%However, during pretty-printing for formatting a program, those comments need to be restored.
+%A separate interval map data structure may be created during the lexing stage in order to keep track of inline comments with respect to their location.
+%Provided the program \ac{AST} is annotated with locations, then it is possible during printing to determine where a comment should be spliced in.
+%
+%Handling of parentheses is less straightforward.
+%Indeed, a node in the program's \ac{AST} needs to be mapped back to the parser production that created it in order to determine its precedence.
+%Additionally, the associativity of operators appearing at the same precedence level must be taken into consideration to avoid producing ambiguous textual representations.
+%
+%% How can pretty-printing be implemented in Beluga?
+%
+%Pretty-printing of \Beluga's internal syntax requires the generation of fresh identifiers to replace de Bruijn indices.
+%Hence, not only is printing stateful, it also needs an auxiliary data structure containing the set of identifiers that are used by sub-expressions.
+%Indeed, one needs to know what identifiers are used in the term under a $\lambda$-abstraction before generating an identifier for the $\lambda$-abstraction's parameter.
+%Otherwise, the generated identifier may shadow a referenced identifier.
+%The data structure to support this feature may be implemented in many ways, but in general this problem reduces to annotating a tree with additional data~\cite{najd2016trees}:
+%
+%\begin{enumerate}
+%\item
+%Parallel data types equipped with extra fields may be defined for each kind of node in the \ac{AST}.
+%During pretty-printing, the \ac{AST} and this auxiliary data structure then must be traversed at the same time.
+%\item
+%Each node in the \ac{AST} may be equipped with a unique identifier to be used as key in a map data structure.
+%Then, lookups can be made on that map during printing to fetch the necessary data.
+%\item
+%The auxiliary data may be embedded type-safely into the \ac{AST} using recursion schemes.
+%\end{enumerate}
+%
+%The approach with the least impact on the rest of the implementation is to construct printing closures using a top-down traversal of the \ac{AST}.
+%At any given node, this traversal recursively computes the set of used de Bruijn offsets, and then constructs a closure accepting the referencing environment to determine the identifiers corresponding to those offsets.
 
 % TODO:
 
-\section{Testing}
+%\section{Testing}
 
 % TODO: Present data-driven testing
 % TODO: Present the micro-tests and benefits of having an unambiguous AST to inspect
 % TODO: Present the parser test using pretty-printing
 
-\section{Related Work}
+%\section{Related Work}
