@@ -189,7 +189,7 @@ Unlimited backtracking of the parser state is enabled only in select cases, or i
 The main contribution made to the context-free parsing phase of \Beluga is the simplification of its grammar.
 Indeed, the legacy parser was designed following the grammars developed along signature reconstruction and type-checking algorithms, which introduced syntactic classes that ensure some properties always hold.
 Specifically, the index level \LF of \Beluga is strongly-normalizing, and since reconstruction for \LF terms and types operates best with objects in canonical form, then it was decided that the user should only be able to write \LF terms and types in canonical form.
-This required that parser productions be introduced for normal and neutral terms separately.
+This required that parser productions be introduced for normal and neutral terms separately to mirror the syntax of figure~\ref{figure:internal-syntax}.
 Additionally, since \Beluga's type-checking algorithm is bidirectional, computation-level expressions were split into two syntactic classes, namely type-synthesizing expressions and type-checkable expressions, and this change was also reflected in the parser.
 Implementation efforts revealed however that these syntactic constraints are too stringent to be imposed during parsing.
 Indeed, they increased the complexity of the parser, made operator precedence rules opaque, and yielded poor syntax error messages to the user.

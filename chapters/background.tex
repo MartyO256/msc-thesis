@@ -4,6 +4,47 @@
 
 % TODO:
 
+\begin{figure}
+\begin{subfigure}{\linewidth}
+\begin{tabular}{lrrl}
+\LF kinds & $K$ & $\Coloneqq$ & $A \to K \mid \Pi x{:}A. K \mid \mathbf{type}$\\
+\LF types & $A, B$ & $\Coloneqq$ & $A\to B \mid \Pi x{:}A. B \mid P$\\
+Atomic \LF types & $P$ & $\Coloneqq$ & $a \cdot S$\\
+\LF normal terms & $M$ & $\Coloneqq$ & $R \mid \lambda x. M$\\
+\LF neutral terms & $R$ & $\Coloneqq$ & $H \cdot S \mid u[\sigma]$\\
+\LF heads & $H$ & $\Coloneqq$ & $x \mid c \mid p[\sigma]$\\
+\LF spines & $S$ & $\Coloneqq$ & $\cdot \mid M\ S$\\
+Substitutions & $\sigma$ & $\Coloneqq$ & $\cdot \mid \mathsf{id}_\psi \mid \sigma, M \mid \mathsf{id}_\psi[\rho]$\\
+Substitution closures & $\rho$ & $\Coloneqq$ & $s[\sigma]$\\
+Contexts & $\Psi$ & $\Coloneqq$ & $\cdot \mid \psi \mid \Psi, x : A$\\
+\end{tabular}
+\caption{Internal syntax of contextual \LF in \Beluga.}
+\end{subfigure}
+\par\bigskip
+\begin{subfigure}{\linewidth}
+\begin{tabular}{lrrl}
+Meta-types & $U$ & $\Coloneqq$ & $\psi \mid [\Psi \vdash A] \mid \#[\Psi \vdash A] \mid \$[\Psi \vdash \Psi]$\\
+Meta-objects & $C$ & $\Coloneqq$ & $[\Psi] \mid [\Psi \vdash M] \mid \$[\Psi \vdash \sigma]$
+\end{tabular}
+\caption{Internal syntax of \Beluga's meta level (excerpt).}
+\end{subfigure}
+\par\bigskip
+\begin{subfigure}{\linewidth}
+\begin{tabular}{lrrl}
+Computation-level kinds & $\kappa$ & $\Coloneqq$ & $U \to \kappa \mid \Pi X{:}U. \kappa \mid \mathbf{ctype}$\\
+Computation-level types & $\tau$ & $\Coloneqq$ & $c \mid \tau_1 \to \tau_2 \mid \Pi X{:}U. \tau \mid \tau\ C$\\
+Type-checkable expressions & $\mathbf{e}$ & $\Coloneqq$ & $\mathbf{i} \mid C \mid \mathbf{fn}\ x \Rightarrow \mathbf{e} \mid \mathbf{mlam}\ X \Rightarrow \mathbf{e}$ \\
+& & $|$ & $\mathbf{let}\ x = \mathbf{i}\ \mathbf{in}\ \mathbf{e} \mid \mathbf{case}\ \mathbf{i}\ \mathbf{of}\ \overrightarrow{\mathbf{p} \Rightarrow \mathbf{e}}$\\
+Type-synthesizing expressions & $\mathbf{i}$ & $\Coloneqq$ & $x \mid c \mid \mathbf{i} \ \mathbf{e} \mid \mathbf{e} : \tau$
+\end{tabular}
+\caption{Internal syntax of \Beluga's computation level (excerpt).}
+\end{subfigure}
+\caption[Excerpt of \Beluga's internal syntax.]{%
+Excerpt of \Beluga's internal syntax~\cite{nanevski2008contextual, germain2010implementation, cave2013first, ferreira2013compiling} used in discussions about its theory.
+}
+\label{figure:internal-syntax}
+\end{figure}
+
 \section{The Legacy Implementation of \Beluga} \label{section:beluga-implementation}
 
 This section presents an overview of the implementation of \Beluga before any contribution detailed in this thesis were made\footnote{The implementation of \Beluga at revision hash \href{https://github.com/Beluga-lang/Beluga/tree/3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2}{3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2, available on GitHub.}}.
