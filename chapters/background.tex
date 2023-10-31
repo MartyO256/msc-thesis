@@ -4,9 +4,12 @@
 
 % TODO:
 
+Let $x$ range over identifiers, $c$ over constants, $X$ over contextual objects, $\psi$ over contexts and $g$ over context schemas.
+Figure~\ref{figure:internal-syntax} then provides a brief overview of \Beluga from a theoretical standpoint.
+
 \begin{figure}
 \begin{subfigure}{\linewidth}
-\begin{tabular}{lrrl}
+\begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
 \LF kinds & $K$ & $\Coloneqq$ & $A \to K \mid \Pi x{:}A. K \mid \mathbf{type}$\\
 \LF types & $A, B$ & $\Coloneqq$ & $A\to B \mid \Pi x{:}A. B \mid P$\\
 Atomic \LF types & $P$ & $\Coloneqq$ & $a \cdot S$\\
@@ -22,24 +25,24 @@ Contexts & $\Psi$ & $\Coloneqq$ & $\cdot \mid \psi \mid \Psi, x : A$\\
 \end{subfigure}
 \par\bigskip
 \begin{subfigure}{\linewidth}
-\begin{tabular}{lrrl}
-Meta-types & $U$ & $\Coloneqq$ & $\psi \mid [\Psi \vdash A] \mid \#[\Psi \vdash A] \mid \$[\Psi \vdash \Psi]$\\
-Meta-objects & $C$ & $\Coloneqq$ & $[\Psi] \mid [\Psi \vdash M] \mid \$[\Psi \vdash \sigma]$
+\begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
+Meta-types & $U$ & $\Coloneqq$ & $g \mid \Psi \vdash A \mid \Psi \vdash \Psi \mid \cdots$\\
+Meta-objects & $C$ & $\Coloneqq$ & $\Psi \mid \Psi \vdash M \mid \Psi \vdash \sigma \mid \cdots$
 \end{tabular}
 \caption{Internal syntax of \Beluga's meta level (excerpt).}
 \end{subfigure}
 \par\bigskip
 \begin{subfigure}{\linewidth}
-\begin{tabular}{lrrl}
-Computation-level kinds & $\kappa$ & $\Coloneqq$ & $U \to \kappa \mid \Pi X{:}U. \kappa \mid \mathbf{ctype}$\\
-Computation-level types & $\tau$ & $\Coloneqq$ & $c \mid \tau_1 \to \tau_2 \mid \Pi X{:}U. \tau \mid \tau\ C$\\
-Type-checkable expressions & $\mathbf{e}$ & $\Coloneqq$ & $\mathbf{i} \mid C \mid \mathbf{fn}\ x \Rightarrow \mathbf{e} \mid \mathbf{mlam}\ X \Rightarrow \mathbf{e}$ \\
-& & $|$ & $\mathbf{let}\ x = \mathbf{i}\ \mathbf{in}\ \mathbf{e} \mid \mathbf{case}\ \mathbf{i}\ \mathbf{of}\ \overrightarrow{\mathbf{p} \Rightarrow \mathbf{e}}$\\
-Type-synthesizing expressions & $\mathbf{i}$ & $\Coloneqq$ & $x \mid c \mid \mathbf{i} \ \mathbf{e} \mid \mathbf{e} : \tau$
+\begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
+Computation-level kinds & $\kappa$ & $\Coloneqq$ & $[U] \to \kappa \mid \Pi X{:}U. \kappa \mid \mathbf{ctype}$\\
+Computation-level types & $\tau$ & $\Coloneqq$ & $c \mid \tau_1 \to \tau_2 \mid \Pi X{:}U. \tau \mid [U] \mid \tau\ [C] \mid \cdots$\\
+Type-checkable expressions & $e$ & $\Coloneqq$ & $i \mid [C] \mid \mathbf{fn}\ x \Rightarrow e \mid \mathbf{mlam}\ X \Rightarrow e$ \\
+& & $|$ & $\mathbf{let}\ x = i\ \mathbf{in}\ e \mid \mathbf{case}\ i\ \mathbf{of}\ \overrightarrow{p \Rightarrow e} \mid \cdots$\\
+Type-synthesizing expressions & $i$ & $\Coloneqq$ & $x \mid c \mid i \ e \mid e : \tau \mid \cdots$
 \end{tabular}
 \caption{Internal syntax of \Beluga's computation level (excerpt).}
 \end{subfigure}
-\caption[Excerpt of \Beluga's internal syntax.]{%
+\caption[Excerpt of \Beluga's internal syntax]{%
 Excerpt of \Beluga's internal syntax~\cite{nanevski2008contextual, germain2010implementation, cave2013first, ferreira2013compiling} used in discussions about its theory.
 }
 \label{figure:internal-syntax}
@@ -57,8 +60,8 @@ Since \Beluga is a dependently-typed language featuring code coverage analysis a
 \begin{figure}
 \centering
 \includegraphics{figures/legacy-beluga-processing-pipeline.eps}
-\caption[Overview of the implementation of \Beluga version \texttt{1.0.0}'s processing pipeline.]{%
-Overview of the implementation of \Beluga version \texttt{1.0.0}'s processing pipeline.
+\caption[Overview of the implementation of \Beluga version \texttt{1.0}'s processing pipeline]{%
+Overview of the implementation of \Beluga version \texttt{1.0}'s processing pipeline.
 The syntax analysis process converts the textual representation of \Beluga programs into an initial \acs{AST}.
 The semantic analysis process refines this \acs{AST} by performing type-directed signature reconstruction, using global mutable data structures that include a store of signature entries.
 }
@@ -140,13 +143,13 @@ As such, edit actions on an \ac{AST} must preserve its semantic correctness prop
 %This in turn triggers additional compilation steps for units that have explicit or transitive dependencies on the newly compiled unit.
 
 % What is the general solution to the name resolution problem in incremental program development?
-A preliminary step to supporting incremental program development is to parameterize the processing routines with respect to a visiting state.
+A preliminary step to supporting incremental program development is to parameterize the processing routines with respect to a visitor state.
 As such, those routines can be used in an out-of-order fashion as opposed to when the program is processed during compilation tasks.
 This is because the routine can be visited with a different state than the one that is naturally constructed when sequentially processing program units.
 For instance, a routine like conflict-avoiding variable renaming can be dependent on a referencing environment to perform variable and constant lookups.
 If such a routine is invoked during an interactive program development session, then a separate routine can be implemented to rebuild the referencing environment without having to re-process the entire program and its dependencies.
-In this case, the edit action requires visiting a selected \ac{AST} node with the referencing environment as visiting state.
-The issue then becomes how to efficiently construct and preserve the correctness of such visiting states.
+In this case, the edit action requires visiting a selected \ac{AST} node with the referencing environment as visitor state.
+The issue then becomes how to efficiently construct and preserve the correctness of such visitor states.
 As it pertains to \Beluga and \Harpoon, this specifically affects \ac{REPL} sessions instantiated at program holes.
 
 % An open stateful function is a function parameterized over some state, and the lifecycle of the mutable state is extrinsinc.

@@ -17,7 +17,7 @@ A formalism of identifier resolution in \Beluga is presented to showcase how to 
 % What is indexing, more precisely?
 
 As outlined in section~\ref{section:beluga-implementation}, the indexing phase of \Beluga's processing pipeline is responsible for converting external syntax trees to corresponding approximate syntax trees.
-Specifically, references to constants are replaced with their corresponding symbolic identifiers as found in the signature reconstruction store, and variables are replaced with their corresponding de Bruijn indices.
+Specifically, references to constants are replaced with their corresponding symbolic identifiers as defined in the signature reconstruction store, and variables are replaced with their corresponding de Bruijn indices.
 This allows for later phases of semantic analysis (such as type-checking and termination analysis) to efficiently look up constant definitions and resolve variables to their binders without having to keep track of the referencing environment.
 In the implementation, not all variables are replaced with de Bruijn indices during indexing because binders for implicit parameters are not present in the \ac{AST}; these are introduced during the abstraction phase~\cite{germain2010implementation}.
 
@@ -51,6 +51,21 @@ Without having types available at this stage of processing, the accidental featu
 
 % An important implementation challenge in re-implementing this phase of the pipeline was ensuring that the outcome of indexing is the same as it was with the legacy architecture.
 
+The unified lexing phase is designed as a single sequential traversal of the \ac{AST}, with the referencing environment as visitor state.
+As \ac{AST} nodes are traversed, the referencing environment is updated by adding or removing identifiers in scope so that identifier resolutions are consistent with the language's specification.
+This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across distinct identifier worlds~\cite{ferreira2012compiler}.
+This includes name resolution under pattern lambda-expressions in contextual \LF patterns, and distinguishing between pattern variables and bound identifiers.
+All the while, indexing has to feature backtracking mechanisms to support incremental proof development in \Harpoon sessions.
+
+
+
+% TODO: Move to the end?
+
+Given \Beluga's design for signature-level declaration of constants, the indexing phase can be parallelized.
+This is because the body of a signature-level declaration is guaranteed not to export non-constant identifiers, which means that most of the \ac{AST} can be disregarded when we need to construct the referencing environment right before a signature-level declaration.
+As such, the declarations in a signature can first be traversed to preallocate symbolic identifiers for toplevel constants and store them in a queue.
+Concurrent threads can then given non-overlapping ranges of declarations to process, and the initial referencing environment for each can be constructed using only that queue.
+
 % TODO:
 
 % TODO: Present the data structures for name resolution in the implementation (binding tree, binding domains, scope stack, context sizes for de Bruijn indices computations)
@@ -83,7 +98,7 @@ Entry & $\Entry$ & $\Coloneqq$ & $ \mathbb{C} \mid \Var $\\
 Constant & $ \mathbb{C} $ & $ \Coloneqq $ & $\mathsf{LF}_{\mathsf{type\ const}} \mid \mathsf{LF}_{\mathsf{term\ const}} \mid \mathsf{Module}\left(\overrightarrow{\Public{x} : \mathbb{C}}\right) \mid \cdots$\\
 Variable & $ \Var $ & $ \Coloneqq $ & $ \mathsf{LF}_{\mathsf{term}} \mid \mathsf{Comp}_{\mathsf{term}} \mid \mathsf{Ctx} \mid \cdots $
 \end{tabular}
-\caption[Definition of the structure of referencing environments for indexing \Beluga signatures.]{%
+\caption[Definition of the structure of referencing environments for indexing \Beluga signatures]{%
 Definition of the structure of referencing environments for indexing \Beluga signatures.
 Some variants for constants and variables have been omitted for brevity.
 Identifiers denoted as $\Private{x}$ and $\Public{x}$ in a module scope denote private declarations and public declarations respectively.
@@ -91,7 +106,7 @@ Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern sco
 }
 \end{figure}
 
-% TODO: Wrong formalism, use equality
+% TODO: Wrong formalism, use equality for lookup(\Xi, \P)...
 
 %\begin{equation}
 %(\Scope, x : \Var)(x) = (x : \Var)
