@@ -106,6 +106,71 @@ Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern sco
 }
 \end{figure}
 
+\newcommand{\Fail}{\lightning}
+\newcommand{\Lookup}[2]{\operatorname{lookup}\left[#1\right]\left(#2\right)}
+\newcommand{\Domain}{\operatorname{domain}}
+% TODO: Define \Env \setminus \Var(\Env) \mid \Env', punch holes in the environment for variables
+\begin{equation*}
+\begin{aligned}
+\Domain(\cdot) &= \{\}\\
+\Domain(\Scope, x : \Var) &= \{x\} \cup \Domain(\Scope)\\
+\Domain(\Module, \Private{x} : \Var) &= \{x\} \cup \Domain(\Module)\\
+\Domain(\Module, \Public{x} : \Var) &= \{x\} \cup \Domain(\Module)\\
+\Domain(\Pattern, \private{x} : \Var) &= \{x\} \cup \Domain(\Pattern)\\
+\Domain(\Pattern, \public{x} : \Var) &= \Domain(\Pattern)
+\end{aligned}
+\end{equation*}
+\begin{equation*}
+\begin{aligned}
+\Lookup{x}{\cdot} &= \Fail\\
+\Lookup{x}{\Env; \cdot} &= \Lookup{x}{\Env}\\
+\Lookup{x}{\Env; \Scope, x : \Var} &= (x : \Var)\\
+\Lookup{x}{\Env; \Scope, y : \Var} &= \Lookup{x}{\Env; \Scope} & x \neq y\\
+\Lookup{x}{\Env; \Module, \Private{x} : \Constant} &= (x : \Constant)\\
+\Lookup{x}{\Env; \Module, \Private{y} : \Constant} &= \Lookup{x}{\Env; \Module} & x \neq y\\
+\Lookup{x}{\Env; \Module, \Public{x} : \Constant} &= (x : \Constant)\\
+\Lookup{x}{\Env; \Module, \Public{y} : \Constant} &= \Lookup{x}{\Env; \Module} & x \neq y\\
+\Lookup{x}{\Env; \Pattern, \private{x} : \Var} &= (x : \Var)\\
+\Lookup{x}{\Env; \Pattern, \private{y} : \Var} &= \Lookup{x}{\Env \setminus \Var(\Env); \Pattern} & x \neq y\\
+\Lookup{x}{\overrightarrow{\cdot}} &= \Fail\\
+\Lookup{x}{\overrightarrow{\Public{y} : \Constant}, x : \Constant} &= (x : \Constant)\\
+\Lookup{x}{\overrightarrow{\Public{x} : \Constant}, y : \Constant} &= \Lookup{x}{\overrightarrow{\Public{x} : \Constant}} & x \neq y
+\end{aligned}
+\end{equation*}
+\begin{equation*}
+\begin{aligned}
+\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Scope} &= \Lookup{x_1.x_2.\cdots.x_n}{\Env} & x_1 \notin \Domain(\Scope)\\
+\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Scope} &= \Fail & x_1 \in \Domain(\Scope)
+\end{aligned}
+\end{equation*}
+\begin{equation*}
+\begin{aligned}
+\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Module, x_1 : \mathsf{Module}\left(\overrightarrow{\Public{x}:\Constant}\right)} &= \Lookup{x_2.\cdots.x_n}{\overrightarrow{\Public{x}:\Constant}}\\
+\Lookup{x_1.x_2.\cdots.x_n}{\overrightarrow{\cdot}} &= \Fail\\
+\Lookup{x_1.x_2.\cdots.x_n}{\overrightarrow{\Public{x}:\Constant}, y : \Constant} &= \Lookup{x_1.x_2.\cdots.x_n}{\overrightarrow{\Public{x}:\Constant}} & x_1 \neq y\\
+\Lookup{x_1.x_2.\cdots.x_n}{\overrightarrow{\Public{y}:\Constant}, x_1: \mathsf{Module}\left(\overrightarrow{\Public{x}:\Constant}\right)} &= \Lookup{x_2.\cdots.x_n}{\overrightarrow{\Public{x}:\Constant}}
+\end{aligned}
+\end{equation*}
+\begin{equation*}
+\begin{aligned}
+\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Pattern} &= \Lookup{x_1.x_2.\cdots.x_n}{\Env} & x_1 \notin \Domain(\Pattern)\\
+\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Pattern} &= \Fail & x_1 \in \Domain(\Scope)
+\end{aligned}
+\end{equation*}
+\begin{equation*}
+\begin{aligned}
+\Psi(\cdot) &= ()\\
+\Psi(\Env; \cdot_\Scope) &= \Psi(\Env)\\
+\Psi(\Env; \Scope, x : \mathsf{LF}_{\mathsf{term}}) &= \Psi(\Env; \Scope) \oplus (x : \mathsf{LF}_{\mathsf{term}})\\
+\Psi(\Env; \Scope, x : \Var) &= \Psi(\Env; \Scope) & \Var \neq \mathsf{LF}_{\mathsf{term}}\\
+\Psi(\Env; \cdot_\Module) &= \Psi(\Env)\\
+\Psi(\Env; \Module) &= \Psi(\Env)\\
+\Psi(\Env; \cdot_\Pattern) &= ()\\
+\Psi(\Env; \Pattern, \private{x} : \mathsf{LF}_{\mathsf{term}}) &= \Psi(\Pattern) \oplus (x : \mathsf{LF}_{\mathsf{term}})\\
+\Psi(\Env; \Pattern, \private{x} : \Var) &= \Psi(\Pattern) & \Var \neq \mathsf{LF}_{\mathsf{term}}
+\end{aligned}
+\end{equation*}
+
 % TODO: Wrong formalism, use equality for lookup(\Xi, \P)...
 
 %\begin{equation}
