@@ -328,10 +328,10 @@ We postpone the discussion on how the referencing environment is constructed and
 In \Beluga, users may specify that identifiers should be used as operators in expression applications, as shown in figure~\ref{figure:operator-pragmas}, using \verb|--prefix|, \verb|--infix| or \verb|--postfix| pragmas.
 Prefix operators are right-associative, postfix operators are left-associative, and infix operators may be either left-associative, right-associative or non-associative.
 The priority of operations can be specified using integer precedence values.
-This feature was ported over from \Twelf, and using the new parsing architecture, it was subsequently improved to support shadowing of operators by bound variables.
+This feature was ported over from \Twelf, and using the new parsing architecture, it was subsequently improved to support shadowing of operators by bound variables and other constants.
 As outlined below, the notation pragmas for user-defined operators in \Beluga are more restrictive than that of \Agda because \Beluga does not support mixfix operators~\cite{danielsson2008parsing}.
 
-\begin{figure}[H]
+\begin{figure}[htb]
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1, numbers=left]
 \verbbf{LF} p : \verbbf{type} =
 | \makebox[1em]{⊃} : p \makebox[1em]{→} p \makebox[1em]{→} p                  \verbcomment{% Logical implication}
@@ -360,7 +360,7 @@ The subsequent meta-objects \texttt{a}, \texttt{b}, \texttt{c} and \texttt{d} us
 \label{figure:operator-pragmas}
 \end{figure}
 
-\begin{figure}
+\begin{figure}[htb]
 \includegraphics[width=\textwidth]{figures/operator-table.eps}
 \caption[Example operator table for parsing user-defined operators]{%
 Example operator table for parsing user-defined operators for applications containing the operators $\lnot$, $\land$, $\lor$ and $\subset$ from figure~\ref{figure:operator-pragmas}.
@@ -373,6 +373,10 @@ The legacy \Beluga system only supported user-defined operators for \LF type-lev
 As such, only constants in \LF could be defined as operators.
 The proposed revisions allow for user-defined operators to be used in all applications, meaning that computation-level types and expressions may also benefit from prefix, infix and postfix notations.
 Specifically, all typed constants can now be annotated with a notation pragma.
+Type annotations are required in this case since disambiguation does not perform type inference.
+This in turn allows for early error detection for mismatches between the arity expected by the notation pragma and the actual arity of the constant.
+Using a lookahead mechanism during disambiguation, notation pragmas can be declared before their targets are in scope.
+As such, their application is postponed until the constants they affect are introduced in scope.
 
 The new implementation for parsing user-defined operators relies on the disambiguation phase for resolving identifiers to constants and their notations.
 As such, the initial parser suspends parsing of applications, meaning that it represents the juxtaposition of parsemes as lists.
@@ -402,8 +406,8 @@ This parsing algorithm proceeds in the following steps:
 This is effectively the same principle as recursive descent parsing for a set of operators statically defined by the language's grammar, but instead implemented over a dynamic set of operators.
 This set is constructed using only those constants found in the \ac{AST} node for application.
 As such, this parsing algorithm for user-defined operators has $ O(n^3) $ runtime complexity, where $ n $ is the length of the list of parsemes.
-Figures~\ref{figure:user-defined-operators-initial-grammar}, \ref{figure:user-defined-operators-initial-grammar-scheme} and \ref{figure:user-defined-operators-final-grammar-scheme} progressively show how to obtain a grammar scheme for implementing parsing of user-defined operators.
-This parser is implemented following the last grammar scheme, and using monadic parser combinators just like in the context-free parsing phase.
+Figures~\ref{figure:user-defined-operators-initial-grammar}, \ref{figure:user-defined-operators-initial-grammar-scheme} and \ref{figure:user-defined-operators-final-grammar-scheme} progressively show how to obtain a grammar scheme to parse user-defined operators.
+In \Beluga \texttt{v1.1}, the parser is implemented following this last grammar scheme, and using monadic parser combinators just like in the context-free parsing phase.
 
 Coincidentally, the grammar scheme of figure~\ref{figure:user-defined-operators-initial-grammar-scheme} was used to reintroduce support for infix left and right arrow operators $\rightarrow$ and $\leftarrow$ in \LF types.
 Support for the $\leftarrow$ operator had been dropped during the rewrite of the parser from \textsf{Camlp4} to monadic parser combinators.
