@@ -31,16 +31,17 @@ While this refactoring could have been sufficient in simplifying the legacy impl
 
 The overarching store illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} records the constant declarations encountered during signature reconstruction.
 These declarations are arranged in tables, with each kind of constant having its own table.
-This means that there is no overlap between identifiers belonging to different kinds since they are not looked up in the same table, which effectively creates distinct namespaces for them.
+Variables, on the other hand, are arranged in separate association lists.
+This means that there is no overlap between identifiers belonging to different kinds since they are not looked up in the same table or association list, which effectively creates distinct namespaces for them.
 For instance, \LF type-level and term-level constants have their own declaration table, separate from computation-level type constants and constructors.
 This design aimed at ensuring that variables and constants originating from the \LF, meta or computation levels do not end up appearing in terms of a different level~\cite{germain2010implementation}.
 Unfortunately, without having a unique table representing an entire referencing environment, name resolution in the presence of shadowing proved obtuse and lead to unexpected results when coupled with overloading of identifiers.
 Indeed, when a constant identifier was resolved during indexing, the declaration tables in the store had to be looked up in a pre-defined order.
-As a consequence, during identifier lookups, parts of the referencing environment would not exist depending on the expected kind of variable or constant encountered in the \ac{AST}.
+Consequently, during identifier lookups, parts of the referencing environment would not exist depending on the expected kind of variable or constant encountered in the \ac{AST}.
 As an example, it was impossible for a computation-level coinductive type constant to shadow an inductive one simply because the table for declarations of the former kind was always looked up after the table for declarations of the latter kind.
-Counterintuitively, one could introduce a meta-level variable with an \verb|mlam|-binder and a computation-level variable with an \verb|fn|-binder using the same identifier and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively.
+Counterintuitively, one could introduce a meta-level variable with an \verb|mlam|-binder and a computation-level variable with an \verb|fn|-binder, both using the same identifier, and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively.
 
-The aforementioned incongruities in name resolution motivated the reimplementation of the indexing phase to use one unified namespace while ensuring that identifiers with different levels cannot be mixed.
+The aforementioned incongruities in name resolution motivate the reimplementation of the indexing phase to use one unified namespace while ensuring that identifiers with different levels cannot be mixed.
 Without having types available at this stage of processing, the accidental feature of identifier overloading had to be discarded.
 
 %\section{Signature Reconstruction Pipeline}
@@ -56,11 +57,14 @@ As \ac{AST} nodes are traversed, the referencing environment is updated by addin
 This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across distinct identifier worlds~\cite{ferreira2012compiler}.
 This includes name resolution under pattern lambda-expressions in contextual \LF patterns, and distinguishing between pattern variables and bound identifiers.
 All the while, indexing has to feature backtracking mechanisms to support incremental proof development in \Harpoon sessions.
+In the disambiguation phase, where a similar mapping occurs from the parser \ac{AST} to the external \ac{AST}, the visitor state has to additionally keep track of user-defined notations.
 
 We define a referencing environment for \Beluga as illustrated in figure~\ref{figure:referencing-environment-definition} as a stack of scopes.
-In the implementation, a scope is a tree of bindings backed by hash tables that map plain identifiers to their definition.
-This tree structure allows scopes to uniformly support namespacing.
-A lookup for the definition bound to a qualified identifier in a referencing environment searches for the topmost scope whose tree of bindings contains a prefix of that qualified identifier.
+In the implementation, a scope is a tree of bindings, which is defined as a dictionary of stacks where entries are may optionally point to a subtree of bindings.
+The tree structure allows bindings to uniformly support namespacing.
+On the other hand, the stack structure of each binding allows for identifier shadowing, and the efficient addition and removal of bindings.
+A lookup for the definition bound to a qualified identifier in a referencing environment searches for the topmost scope whose tree of bindings contains the leading identifier in the qualified identifier.
+Once that scope is found, then the tree of bindings is traversed following the list of identifiers that form the qualified identifier.
 
 % TODO: Introduce modules and patterns in two separate paragraphs
 

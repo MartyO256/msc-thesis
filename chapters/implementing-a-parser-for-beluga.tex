@@ -348,10 +348,10 @@ As outlined below, the notation pragmas for user-defined operators in \Beluga ar
 \verbprag{--infix \makebox[1em]{∨} 4 right.}
 \verbprag{--prefix \makebox[1em]{¬} 10.}
 
-\verbbf{let} a = [x : p ⊢ ¬ ¬ ¬ x];
-\verbbf{let} b = [x : p, y : p ⊢ ¬ x ⊂ y ⊂ ⊥];
-\verbbf{let} c = [x : p, y : p, z : p ⊢ ⊤ ∨ x ∧ ¬ y ⊃ ¬ z];
-\verbbf{let} d = [f : p \makebox[1em]{→} p, x : p ⊢ ¬ f x ∨ f ⊥];
+\verbbf{let} a = [x : p \makebox[1em]{⊢} ¬ ¬ ¬ x];
+\verbbf{let} b = [x : p, y : p \makebox[1em]{⊢} ¬ x ⊂ y ⊂ ⊥];
+\verbbf{let} c = [x : p, y : p, z : p \makebox[1em]{⊢} ⊤ ∨ x ∧ ¬ y ⊃ ¬ z];
+\verbbf{let} d = [f : p \makebox[1em]{→} p, x : p \makebox[1em]{⊢} ¬ f x ∨ f ⊥];
 \end{Verbatim}
 \caption[Example of user-defined operator definitions in \Beluga using pragmas]{%
 Example of user-defined operator definitions in \Beluga using pragmas.
