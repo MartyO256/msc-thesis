@@ -59,12 +59,49 @@ This includes name resolution under pattern lambda-expressions in contextual \LF
 All the while, indexing has to feature backtracking mechanisms to support incremental proof development in \Harpoon sessions.
 In the disambiguation phase, where a similar mapping occurs from the parser \ac{AST} to the external \ac{AST}, the visitor state has to additionally keep track of user-defined notations.
 
-We define a referencing environment for \Beluga as illustrated in figure~\ref{figure:referencing-environment-definition} as a stack of scopes.
-In the implementation, a scope is a tree of bindings, which is defined as a dictionary of stacks where entries are may optionally point to a subtree of bindings.
-The tree structure allows bindings to uniformly support namespacing.
-On the other hand, the stack structure of each binding allows for identifier shadowing, and the efficient addition and removal of bindings.
-A lookup for the definition bound to a qualified identifier in a referencing environment searches for the topmost scope whose tree of bindings contains the leading identifier in the qualified identifier.
-Once that scope is found, then the tree of bindings is traversed following the list of identifiers that form the qualified identifier.
+A fully qualified identifier is a list of plain identifiers separated by dots denoting projection.
+A referencing environment in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
+There are two ways to define this structure.
+The first definition is used in the implementation as it is computationally more efficient, whereas the second is suitable for mechanized proofs.
+We present both for the sake of completeness, but we focus afterward on the second.
+
+In the implementation, a referencing environment is a stack of scopes.
+Each scope holds a tree of bindings, where each node is a stack of entries.
+Concretely, this tree is supported by dictionaries associating identifiers to stacks of entries, each of which may optionally point to a subtree of bindings.
+A lookup for the definition bound to a fully qualified identifier in a referencing environment searches for the topmost scope whose tree of bindings contains the leading identifier in the fully qualified identifier.
+Once that scope is found, then its tree of bindings is traversed following the list of identifiers that forms the fully qualified identifier.
+The topmost entry in the stack associated with the trailing identifier is the one that's returned.
+If the traversal of the stack of scopes fails or if no node in the tree of bindings can be found to match the fully qualified identifier, then the lookup fails.
+The stack structures at the level of scopes and entries allows for identifier shadowing.
+On the other hand, the dictionaries speed up identifier lookups.
+
+% TODO: Illustrate this structure
+
+In the theory, a referencing environment is an association list with delimiters for scopes.
+Each entry in the list may itself point to a separate association list to support namespacing.
+Shadowing is also supported since those association lists can function as stacks.
+Lookups in this environment then proceed by simultaneously traversing the fully qualified identifier and the association list, much like in the previous lookup procedure.
+
+% TODO: Illustrate this structure
+
+\begin{figure}[htb]
+\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1, numbers=left]
+\verbbf{module} Nat = \verbbf{struct}
+  \verbbf{LF} nat : \verbbf{type} =
+  | z : nat
+  | s : nat \makebox[1em]{→} nat;
+  \verbbf{rec} plus : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h1};
+\verbbf{end}
+\verbbf{rec} f : [ \makebox[1em]{⊢} Nat.nat] \makebox[1em]{→} [ \makebox[1em]{⊢} Nat.nat] = \verbhole{?h2};
+\verbprag{--open Nat.}
+\verbbf{rec} g : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h3};
+\end{Verbatim}
+\caption[]{%
+% TODO:
+}
+\label{figure:referencing-environment-example}
+% TODO: Subfigures with the referencing environment at h1, h2, h3
+\end{figure}
 
 % TODO: Introduce modules and patterns in two separate paragraphs
 
@@ -82,7 +119,7 @@ Public constant declarations on the other hand are brought back in scope when th
 \textit{Pattern scopes}: variables added to this kind of scope are inner pattern-bound or pattern variables.
 Inner pattern-bound variables are introduced by binders in the pattern.
 Pattern variables on the other hand are free variables in the pattern, which become bound variables in the body of the match case.
-Because of \Beluga's feature of automatic reconstruction of meta-level abstractions, free meta-variables in patterns are both inner pattern-bound and pattern variables.
+Because of automatic reconstruction of meta-level abstractions in \Beluga, free meta-variables in patterns are both inner pattern-bound and pattern variables.
 \end{enumerate}
 
 % TODO:

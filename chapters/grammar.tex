@@ -627,7 +627,7 @@ That is, type constants, term constants, programs and proofs are arranged as lis
 This section highlights some syntactic ambiguities in the syntax for \Beluga as presented in section~\ref{section:syntax}, and presents strategies for resolving them.
 Ambiguities in the syntax include:
 \begin{itemize}
-\item Qualified identifiers, projections, $\lambda$-terms, old-style \LF declarations and destructors use the same dot operator.
+\item Fully qualified identifiers, projections, $\lambda$-terms, old-style \LF declarations and destructors use the same dot operator.
 \item \LF kinds, types and terms share syntactic constructs for arrows, $ \Pi $'s and applications.
 \item Contextual \LF types, terms and patterns share syntactic constructs for arrows and applications.
 \item Computation kinds and types share syntactic constructs for arrows, $ \Pi $'s and applications.
@@ -770,7 +770,7 @@ Disambiguation of a meta-thing as presented below requires:
 \alt <meta-object-identifier> `:' <meta-thing> (`,' <meta-object-identifier> `:' <meta-thing>)*
 \end{grammar}
 
-Additionally, in a meta-thing, a qualified identifier referring to a context schema constant is ambiguous with a context variable.
+Additionally, in a meta-thing, a fully qualified identifier referring to a context schema constant is ambiguous with a context variable.
 Such context schema constants are disambiguated from the parsed context object.
 
 \subsection{Resolving Syntactic Ambiguities in Computations}
