@@ -3,6 +3,9 @@
 \section{The \Beluga Language}
 
 In \Beluga, theorems are encoded using contextual \LF, its index language, and proofs are encoded as programs.
+Logic propositions are represented as \LF type families with term-level constants parameterized by $\beta$-normal $\eta$-long \LF terms to construct witnesses for these propositions~\cite{nanevski2008contextual, foundation2008pientka, DBLP:journals/corr/abs-1009-2789}.
+To facilitate the implementation of semantic checkers, \LF terms are required to be encoded in normal form by the user.
+The extension to \LF to support explicit contexts and substitutions, on the other hand, enables mechanized proofs in \Beluga to elegantly mimic proofs on paper~\cite{pientka2010programming}.
 
 % TODO:
 
@@ -65,7 +68,7 @@ Since \Beluga is a dependently-typed language featuring code coverage analysis a
 \caption[Overview of the implementation of \Beluga version \texttt{1.0}'s processing pipeline]{%
 Overview of the implementation of \Beluga version \texttt{1.0}'s processing pipeline.
 The syntax analysis process converts the textual representation of \Beluga programs into an initial \acs{AST}.
-The semantic analysis process refines this \acs{AST} by performing type-directed signature reconstruction, using global mutable data structures that include a store of signature entries.
+The semantic analysis process refines this \acs{AST} by performing type-directed signature reconstruction, using global mutable data structures that include a store of constant declarations in the signature.
 }
 \label{figure:legacy-beluga-processing-pipeline}
 \end{figure}
@@ -124,27 +127,16 @@ The kinds of edit actions that can be implemented vary from one programming lang
 Typically, edit actions include software refactoring commands such as variable renaming, reordering functions in a file, selecting a list of statements from one function and extracting them to a separate function, pretty-printing and formatting the textual representation of code, etc.
 Sound and efficient handling of these edit actions is instrumental to the productivity of users working on large scale software systems.
 This problem of incremental program development arises in \Beluga and \Harpoon because of the interactive tooling they provide for editing proofs, which are represented as programs.
-%In compiler design, the problem analogous to incremental program development is incremental compilation.
 
 % What is the key problem in incremental program development?
+
 Throughout syntactic and semantic analyses pipelines, data is accumulated during the processing of any given program unit.
-%This data typically includes lookup tables for resolving identifiers to their declaration site, auxiliary data structures to speed up algorithms, sets of constraints on types used during type-checking and type inference, etc.
 This data raises one of the main challenges in implementing incremental program development in that a program unit may only be revisited with the processing state it was defined in.
 This means, for instance, that a procedure performing name lookups or mutations on an \ac{AST} at a given node may only do so using the variables and declarations in scope at that \ac{AST} node, just as the user does when editing the textual representation of that \ac{AST} node.
 As such, edit actions on an \ac{AST} must preserve its semantic correctness properties so that serializing and subsequently deserializing it produces the same \ac{AST} and processing state.
-%This problem arises when a compiler is extended to support user interactions or non-sequential compilation steps.
 
-% What are some non-sequential compilation steps that need to be scope safe?
-%Non-sequential processes in compiler design refer to compilation steps that occur concurrently, or occur using a subset of the data from previous compilation phases.
-%In general programming languages, these processes typically appear in the incremental compilation of programs whose dependency relation on compilation units may be arranged in a lattice.
-%To implement this, a \ac{DAG} of the compilation units is constructed where edges denote dependency.
-%A topological ordering is then computed for that \ac{DAG}, and used to create a compilation schedule, which may feature forked compilation processes for independent compilation units.
-%This enables parallelism to be used to reduce compilation time, and potentially the number of compilation units that need to be recompiled after an edit action is performed.
-%Implementing these features may require caching of compilation results and restoring processing states from those caches, which naturally raises the concern of cache invalidation.
-%Indeed, an incremental compilation process needs to be resumed in the state it originally happened, and changes that occur as a result of this compilation need to be propagated to the rest of the compiler's state.
-%This in turn triggers additional compilation steps for units that have explicit or transitive dependencies on the newly compiled unit.
+% What is the preliminary step to supporting incremental program development?
 
-% What is the general solution to the name resolution problem in incremental program development?
 A preliminary step to supporting incremental program development is to parameterize the processing routines with respect to a visitor state.
 As such, those routines can be used in an out-of-order fashion as opposed to when the program is processed during compilation tasks.
 This is because the routine can be visited with a different state than the one that is naturally constructed when sequentially processing program units.
@@ -153,6 +145,3 @@ If such a routine is invoked during an interactive program development session, 
 In this case, the edit action requires visiting a selected \ac{AST} node with the referencing environment as visitor state.
 The issue then becomes how to efficiently construct and preserve the correctness of such visitor states.
 As it pertains to \Beluga and \Harpoon, this specifically affects \ac{REPL} sessions instantiated at program holes.
-
-% An open stateful function is a function parameterized over some state, and the lifecycle of the mutable state is extrinsinc.
-% A closed stateful function is a function that internally uses mutable states, whose lifecycle is intrinsically maintained.

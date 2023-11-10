@@ -6,9 +6,17 @@ A formalism of identifier resolution in \Beluga is presented to showcase how to 
 
 \section{Introduction}
 
-% What are aspects of state management that are required to support incremental proof development?
+% What are the features desired for Harpoon and Beluga?
+% Why do those features help in incremental proof development?
 
-% TODO: Provide a somewhat more fine-grained presentation of \Beluga's semantic analysis phase, with an emphasis on explicit state management and talk about transactions (not ACID though, since no fault tolerance)
+% How do other systems supporting interactive proof sessions handle state management?
+
+% TODO: Does Abella support incremental development?
+% TODO: See if Agda breaks with splicing
+% TODO: See if Coq has incremental development as well
+
+% What are aspects of state management that are required to support incremental proof development?
+% In what way are state management and exception handling closely linked with respect to interactive proof sessions?
 
 % TODO:
 
@@ -51,14 +59,12 @@ In order to support sound incremental proof development with multiple holes, exp
 The aforementioned incongruities in name resolution and tight coupling with the signature reconstruction store motivate the reimplementation of the indexing phase to use one unified namespace while ensuring that identifiers with different levels cannot be mixed.
 Without having types available at this stage of processing, the accidental feature of identifier overloading had to be discarded.
 
-%\section{Signature Reconstruction Pipeline}
-
-% TODO: Provide a more fine-grained presentation of \Beluga's semantic analysis phase, with an emphasis on explicit state management and ACID transactions
-
 \section{Unified Indexing}\label{section:indexing}
 
 % An important implementation challenge in re-implementing this phase of the pipeline was ensuring that the outcome of indexing is the same as it was with the legacy architecture.
 
+A fully qualified identifier is a list of plain identifiers separated by dots denoting projection.
+A referencing environment in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
 The unified indexing phase is designed as a single sequential traversal of the external \ac{AST} to map it to the approximate \ac{AST}, using the referencing environment as visitor state.
 As \ac{AST} nodes are traversed, the referencing environment is updated by adding or removing identifiers in scope so that the resolution of identifiers is consistent with the language's specification.
 This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across distinct identifier worlds~\cite{ferreira2012compiler}.
@@ -66,23 +72,28 @@ This includes name resolution under pattern lambda-expressions in contextual \LF
 All the while, indexing has to feature backtracking mechanisms to support incremental proof development in \Harpoon sessions.
 In the disambiguation phase, where a similar mapping occurs from the parser \ac{AST} to the external \ac{AST}, the visitor state has to additionally keep track of user-defined notations.
 
-A fully qualified identifier is a list of plain identifiers separated by dots denoting projection.
-A referencing environment in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
-There are two ways to define this structure.
-The first definition is used in the implementation as it is computationally more efficient, whereas the second is suitable for mechanized proofs.
-We present both for the sake of completeness, but we focus afterward on the second.
+Since \Beluga supports defining constants in modules and pattern-matching, we distinguish between three kinds of scopes which operate differently in the way bindings are added to them:
+\begin{enumerate}
+\item
+\textit{Plain scopes}: this kind of scope does not have additional mechanisms.
+Plain scopes are suitable for introducing multiple identifiers in such a way that they can be efficiently removed by discarding the scope entirely.
+\item
+\textit{Module scopes}: constants added to this kind of scope are either private or public.
+Private constant declarations refer to constants that are not exported from the module when it is opened.
+This ensures that constants and notations imported from external modules are not re-exported when the module is opened elsewhere.
+Public constant declarations on the other hand are brought back in scope when the module is opened.
+\item
+\textit{Pattern scopes}: variables added to this kind of scope are inner pattern-bound or pattern variables.
+Inner pattern-bound variables are introduced by binders in the pattern.
+Pattern variables on the other hand are free variables in the pattern, which become bound variables in the body of the match case.
+Because of automatic reconstruction of meta-level abstractions in \Beluga, free meta-variables in patterns are both inner pattern-bound and pattern variables.
+\end{enumerate}
 
-In the implementation, a referencing environment is a stack of scopes.
-Each scope holds a tree of bindings, where each node is a stack of entries.
-Concretely, this tree is supported by dictionaries associating identifiers to stacks of entries, each of which may optionally point to a subtree of bindings.
-A lookup for the definition bound to a fully qualified identifier in a referencing environment searches for the topmost scope whose tree of bindings contains the leading identifier in the fully qualified identifier.
-Once that scope is found, then its tree of bindings is traversed following the list of identifiers that forms the fully qualified identifier.
-The topmost entry in the stack associated with the trailing identifier is the one that's returned.
-If the traversal of the stack of scopes fails or if no node in the tree of bindings can be found to match the fully qualified identifier, then the lookup fails.
-The stack structures at the level of scopes and entries allows for identifier shadowing.
-On the other hand, the dictionaries speed up identifier lookups.
+The next subsections present two different ways of realising a referencing environment for \Beluga that supports unified lexing.
+The first definition is suitable for mechanized proofs, whereas the second is used in the implementation as it is computationally more efficient.
+Both are presented here for the sake of completeness.
 
-% TODO: Illustrate this structure
+\subsection{Formalising Unified Indexing}
 
 In the theory, a referencing environment is an association list with delimiters for scopes.
 Each entry in the list may itself point to a separate association list to support namespacing.
@@ -112,30 +123,7 @@ Lookups in this environment then proceed by simultaneously traversing the fully 
 
 % TODO: Introduce modules and patterns in two separate paragraphs
 
-Since \Beluga supports defining constants in modules and pattern-matching, we distinguish between three kinds of scopes which operate differently in the way bindings are added to them:
-\begin{enumerate}
-\item
-\textit{Plain scopes}: this kind of scope does not have additional mechanisms.
-Plain scopes are suitable for introducing multiple identifiers in such a way that they can be efficiently removed by discarding the scope entirely.
-\item
-\textit{Module scopes}: constants added to this kind of scope are either private or public.
-Private constant declarations refer to constants that are not exported from the module when it is opened.
-This ensures that constants and notations imported from external modules are not re-exported when the module is opened elsewhere.
-Public constant declarations on the other hand are brought back in scope when the module is opened.
-\item
-\textit{Pattern scopes}: variables added to this kind of scope are inner pattern-bound or pattern variables.
-Inner pattern-bound variables are introduced by binders in the pattern.
-Pattern variables on the other hand are free variables in the pattern, which become bound variables in the body of the match case.
-Because of automatic reconstruction of meta-level abstractions in \Beluga, free meta-variables in patterns are both inner pattern-bound and pattern variables.
-\end{enumerate}
-
 % TODO:
-
-% TODO: Present the data structures for name resolution in the implementation (binding tree, binding domains, scope stack, context sizes for de Bruijn indices computations)
-
-% TODO: Purpot that we can have a unification algorithm in a named setting if we compute de Bruijn indices on the fly
-
-% TODO: Purpot that this implementation is scalable to multi-modal logics and multi-level contextual modal logic
 
 % TODO: Present a model for mechanizing name resolution semantic analysis, using an association list, context sizes and binding sorts (bindings tagged with their domains)
 
@@ -170,11 +158,6 @@ Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern sco
 }
 \label{figure:referencing-environment-definition}
 \end{figure}
-
-Given \Beluga's design for signature-level declaration of constants, the indexing phase can be parallelized.
-This is because the body of a signature-level declaration is guaranteed not to export non-constant identifiers, which means that most of the \ac{AST} can be disregarded when we need to construct the referencing environment right before a signature-level declaration.
-As such, the declarations in a signature can first be traversed to preallocate symbolic identifiers for toplevel constants and store them in a queue.
-Concurrent threads can then be assigned non-overlapping ranges of declarations to process, and the initial referencing environment for each can be constructed using only that queue.
 
 \newcommand{\Fail}{\lightning}
 \newcommand{\Lookup}[2]{\operatorname{lookup}\left[#1\right]\left(#2\right)}
@@ -241,154 +224,27 @@ Concurrent threads can then be assigned non-overlapping ranges of declarations t
 \end{aligned}
 \end{equation*}
 
-% TODO: Wrong formalism, use equality for lookup(\Xi, \P)...
+\subsection{Implementing Unified Indexing}
 
-%\begin{equation}
-%(\Scope, x : \Var)(x) = (x : \Var)
-%\end{equation}
-%
-%\begin{equation}
-%\infer{(x : \Var) \in (\Scope, x : \Var)}{}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Var \in \Scope, y : \Entry'}{x : \Var \in \Scope & x \neq y}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Constant \in \Module, \Private{x} : \Constant}{}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Constant \in \Module, \Public{x} : \Constant}{}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Constant \in \Module, \Private{y} : \Constant'}{x : \Constant \in \Module & x \neq y}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Constant \in \Module, \Public{y} : \Constant'}{x : \Constant \in \Module & x \neq y}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Var \in \Pattern, \private{x} : \Var}{}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Var \in \Pattern, \private{y} : \Var}{x : \Var \in \Pattern & x \neq y}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Var \in \Pattern, \public{y} : \Var}{x : \Var \in \Pattern & x \neq y}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Var \in \Env; \Scope}{x : \Var \in \Scope}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Entry \in \Env; \Scope}{x \notin \Scope & x : \Entry \in \Env}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Constant \in \Env; \Module}{x : \Constant \in \Module}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Entry \in \Env; \Module}{x \notin \Module & x : \Entry \in \Env}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Var \in \Env; \Pattern}{x : \Var \in \Pattern}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Constant \in \Env; \Pattern}{x \notin \Pattern & x : \Constant \in \Env}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x_1 . x_2 . \cdots . x_n : \Constant \in \Env; \Scope}{x_1 \notin \Scope & x_1 . x_2 . \cdots . x_n : \Constant \in \Env}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x_1 . x_2 . \cdots . x_n : \Constant \in \Env; \Module}{x_1 \notin \Module & x_1 . x_2 . \cdots . x_n : \Constant \in \Env}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x_1 . x_2 . \cdots . x_n : \Constant \in \Env; \Pattern}{x_1 \notin \Pattern & x_1 . x_2 . \cdots . x_n : \Constant \in \Env}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Constant \in \left(\overrightarrow{\Public{x}' : \Constant'}, x_\Uparrow : \Constant\right)}{}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x : \Constant \in \left(\overrightarrow{\Public{x}' : \Constant'}, \Public{y} : \Constant\right)}{x : \Constant \in \overrightarrow{\Public{x}' : \Constant'} & x \neq y}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x_1 . x_2 . \cdots . x_n : \Constant \in \overrightarrow{\Public{x} : \Constant'}}{x_1 : \mathsf{Module}\left(\overrightarrow{\Public{x}' : \Constant''}\right) \in \overrightarrow{\Public{x} : \Constant'} & x_2 . \cdots . x_n : \Constant \in \overrightarrow{\Public{x}' : \Constant''}}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{x_1 . x_2 . \cdots . x_n : \Constant \in \Env; \Module, x_1 : \mathsf{Module}\left(\overrightarrow{\Public{x} : \Constant'}\right)}{x_2 . \cdots . x_n : \Constant \in \overrightarrow{\Public{x} : \Constant'}}
-%\end{equation}
+In the implementation, a referencing environment is a stack of scopes.
+Each scope holds a tree of bindings, where each node is a stack of entries.
+Concretely, this tree is supported by dictionaries associating identifiers to stacks of entries, each of which may optionally point to a subtree of bindings.
+A lookup for the definition bound to a fully qualified identifier in a referencing environment searches for the topmost scope whose tree of bindings contains the leading identifier in the fully qualified identifier.
+Once that scope is found, then its tree of bindings is traversed following the list of identifiers that forms the fully qualified identifier.
+The topmost entry in the stack associated with the trailing identifier is the one that's returned.
+If the traversal of the stack of scopes fails or if no node in the tree of bindings can be found to match the fully qualified identifier, then the lookup fails.
+The stack structures at the level of scopes and entries allows for identifier shadowing.
+On the other hand, the dictionaries speed up identifier lookups.
 
-%\section{Pretty-Printing}
-%
-%% What is pretty-printing?
-%
-%Pretty-printing is the process that transforms an \ac{AST} back into its textual representation.
-%This feature of programming languages is often used to implement automated formatting software as part of tooling.
-%As it pertains to \Beluga and \Harpoon, pretty-printing is used by the developers during debugging to trace the execution of signature reconstruction, and it is used by the user when programmatically generated programs need to be displayed in interactive sessions.
-%
-%% What are considerations to make when it comes to implementing pretty-printing?
-%
-%Depending on the lexical conventions used during parsing, a pretty-printed \ac{AST} may not exactly correspond to its initial textual representation.
-%Indeed, the program's layout may change, inline comments may be printed in different locations, and extraneous parentheses may be removed.
-%
-%Handling of the printed program's layout can be implemented using the algorithm described in~\cite{oppen1980prettyprinting}, whereby layout boxes and break hints are output during printing, and then actual break point locations are later computed to satisfy the layout and margin constraints.
-%The \OCaml standard library provides an implementation of this algorithm in its \mintinline{ocaml}|Format| module~\cite{leroy2022ocaml}.
-%
-%The usual lexical convention is to treat comments as white spaces.
-%This simplifies the \ac{AST} representation of programs by effectively discarding all the comments.
-%However, during pretty-printing for formatting a program, those comments need to be restored.
-%A separate interval map data structure may be created during the lexing stage in order to keep track of inline comments with respect to their location.
-%Provided the program \ac{AST} is annotated with locations, then it is possible during printing to determine where a comment should be spliced in.
-%
-%Handling of parentheses is less straightforward.
-%Indeed, a node in the program's \ac{AST} needs to be mapped back to the parser production that created it in order to determine its precedence.
-%Additionally, the associativity of operators appearing at the same precedence level must be taken into consideration to avoid producing ambiguous textual representations.
-%
-%% How can pretty-printing be implemented in Beluga?
-%
-%Pretty-printing of \Beluga's internal syntax requires the generation of fresh identifiers to replace de Bruijn indices.
-%Hence, not only is printing stateful, it also needs an auxiliary data structure containing the set of identifiers that are used by sub-expressions.
-%Indeed, one needs to know what identifiers are used in the term under a $\lambda$-abstraction before generating an identifier for the $\lambda$-abstraction's parameter.
-%Otherwise, the generated identifier may shadow a referenced identifier.
-%The data structure to support this feature may be implemented in many ways, but in general this problem reduces to annotating a tree with additional data~\cite{najd2016trees}:
-%
-%\begin{enumerate}
-%\item
-%Parallel data types equipped with extra fields may be defined for each kind of node in the \ac{AST}.
-%During pretty-printing, the \ac{AST} and this auxiliary data structure then must be traversed at the same time.
-%\item
-%Each node in the \ac{AST} may be equipped with a unique identifier to be used as key in a map data structure.
-%Then, lookups can be made on that map during printing to fetch the necessary data.
-%\item
-%The auxiliary data may be embedded type-safely into the \ac{AST} using recursion schemes.
-%\end{enumerate}
-%
-%The approach with the least impact on the rest of the implementation is to construct printing closures using a top-down traversal of the \ac{AST}.
-%At any given node, this traversal recursively computes the set of used de Bruijn offsets, and then constructs a closure accepting the referencing environment to determine the identifiers corresponding to those offsets.
+% TODO: Illustrate this structure
 
-% TODO:
+% TODO: Present the data structures for name resolution in the implementation (binding tree, binding domains, scope stack, context sizes for de Bruijn indices computations)
 
-%\section{Testing}
+% TODO: Purpot that we can have a unification algorithm in a named setting if we compute de Bruijn indices on the fly
 
-% TODO: Present data-driven testing
-% TODO: Present the micro-tests and benefits of having an unambiguous AST to inspect
-% TODO: Present the parser test using pretty-printing
+% TODO: Purpot that this implementation is scalable to multi-modal logics and multi-level contextual modal logic
 
-%\section{Related Work}
+Given \Beluga's design for signature-level declaration of constants, the indexing phase can be parallelized.
+This is because the body of a signature-level declaration is guaranteed not to export non-constant identifiers, which means that most of the \ac{AST} can be disregarded when we need to construct the referencing environment right before a signature-level declaration.
+As such, the declarations in a signature can first be traversed to preallocate symbolic identifiers for toplevel constants and store them in a queue.
+Concurrent threads can then be assigned non-overlapping ranges of declarations to process, and the initial referencing environment for each can be constructed using only that queue.

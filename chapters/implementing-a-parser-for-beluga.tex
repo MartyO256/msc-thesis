@@ -24,7 +24,7 @@ This is typically achieved using rules and syntactic conventions that prevent am
 
 Certain kinds of syntactic ambiguities are unavoidable in programming languages, and are frequently useful to the end user.
 Indeed, programming languages often reuse or overload syntactic constructs to reduce both the number and the complexity of rules that users have to learn in order to read and write programs.
-Ambiguous syntax can also make programs more terse, which may improve some workflows.
+Ambiguous syntax can also make programs more terse, which may improve some workflows~\cite{resolveAmbiguity}.
 Additional mechanisms need to be put in place as part of the compiler's implementation to detect syntactic ambiguities, and either signal them as errors, or resolve them using additional interpretation rules.
 
 % What is disambiguation in parsing?
@@ -113,13 +113,6 @@ As such, the intent of re-implementing \Beluga's parser to use parser combinator
 These objectives were largely met, and as a consequence \Harpoon was also implemented using that parsing framework.
 Nonetheless, there is still room to improve in the way of user-friendly error messages to help newcomers get a better grasp of the language and its features.
 
-% TODO: Note that the parser before Jake's had mix/unmix types.
-% TODO: Read "Resolvable Ambiguity" https://arxiv.org/pdf/1911.05672.pdf
-
-% TODO: Does Abella support incremental development?
-% TODO: See if Agda breaks with splicing
-% TODO: See if Coq has incremental development as well
-
 \section{\Beluga Lexing, Parsing and Disambiguation Phases}\label{section:lexing-parsing-disambiguation}
 
 As part of this thesis, \Beluga's parser was re-implemented to handle expressions in non-normal form, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
@@ -194,12 +187,12 @@ This required that parser productions be introduced for normal and neutral terms
 Additionally, since \Beluga's type-checking algorithm is bidirectional, computation-level expressions were split into two syntactic classes, namely type-synthesizing expressions and type-checkable expressions, and this change was also reflected in the parser.
 Implementation efforts revealed however that these syntactic constraints are too stringent to be imposed during parsing.
 Indeed, they increased the complexity of the parser, made operator precedence rules opaque, and yielded poor syntax error messages to the user.
-This is because the pre-terms of \Beluga cannot be elegantly partitioned all at once by order of precedence, by whether they are neutral or normal, and whether they synthesize a type or check against one.
+This is because the pre-terms of \Beluga cannot be elegantly partitioned all at once by order of precedence, by whether they are neutral or normal, and by whether they synthesize a type or check against one.
 Those rules for parsing are too complex to be explained to newcomers to the language, and are also error-prone for developers.
 The additional constraints further restrict the language recognized by the parser, which in turn prevents some syntactically invalid programs from being reported with more precision than simply identifying unexpected tokens.
 This is in part evidenced by the grammar in figure~\ref{figure:legacy-clf-parsing} and the example syntax error message in figure~\ref{figure:improved-syntax-error-message}.
 As such, the revised parser's grammar does not distinguish between neutral and normal terms, nor type-synthesizing and type-checkable expressions.
-This greatly broadens the scope of programs accepted by the parser, which in turn allows for later phases of processing to reject non-canonical terms.
+This greatly broadens the scope of programs accepted by the parser, which in turn allows for later phases of processing to report and reject non-canonical terms.
 
 \begin{figure}[H]
 \begin{grammar}
@@ -289,7 +282,7 @@ Example of improved syntax error reporting using less stringent syntactic rules 
 Besides the aforementioned simplifications to the grammar, the revised parser still had to support the syntax of \LF kinds, types and terms, which overloads operators.
 In fact, an \LF kind is syntactically indistinguishable from an \LF type in \Beluga until the very last operand to the arrow operator.
 Unrestricted backtracking and infinite lookaheads are not suitable solutions to this disambiguation issue given that those expressions are the most frequent ones in \Beluga signatures.
-The solution we employ to resolve this issue of complexity during context-free parsing is somewhat counter-intuitive.
+The solution we employ to resolve this issue of complexity during context-free parsing is somewhat counterintuitive.
 We merge syntactic categories having common syntaxes that appear in ambiguous positions into a single production.
 We call this blurring the grammar since we effectively lose the distinction between syntactic categories during context-free parsing.
 This results in a grammar that is less restrictive than the initial ones, and so an additional phase of processing is required to recover a parser for the initial grammars.
@@ -318,10 +311,6 @@ Notably the referencing environment records the user-defined notation to use for
 This allows for fixity pragmas like in figure~\ref{figure:operator-pragmas} to be declared in namespaces, and to later be brought in scope when the namespace is opened.
 
 We postpone the discussion on how the referencing environment is constructed and updated during the \ac{AST} traversal to section~\ref{section:indexing} because it closely follows the procedure used to compute de Bruijn indices during the indexing phase.
-
-% TODO: Figure illustrating the semantic analysis of names during disambiguation
-
-% TODO: Prove the unicity of disambiguation for the pure LF level, using a stepping relation indexed by the precedence level for applications
 
 \section{Parsing User-Defined Operators}\label{section:parsing-user-defined-operators}
 
@@ -501,5 +490,3 @@ The performance impact of this lookahead has not been measured, but it appears t
 Nonetheless, the observation that additional grammar blurring is required to get from an $ \mathsf{LALR}(\infty) $ parser to an $ \mathsf{LALR}(1) $ parser for \Beluga begs the question whether there should only be one encompassing grammar in section~\ref{section:resolving-grammar-ambiguities}.
 Since we need one parselet per precedence level, and most static operators in \Beluga have distinct precedences, the resulting increase in the recursion depth for recursive descent parsing could however deteriorate the runtime performance of the parser.
 Arguably, this design would be easier to extend, and could provide more opportunities to improve the precision of error messages in the disambiguation phase.
-
-% TODO: Agda embraces ambiguity, and spreads ambiguities across more syntaxes https://agda.readthedocs.io/en/v2.6.2.2/language/core-language.html#:~:text=The%20syntax%20of%20an%20Agda,Pragmas%20define%20program%20options.
