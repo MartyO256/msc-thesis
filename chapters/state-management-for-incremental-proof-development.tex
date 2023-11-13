@@ -46,20 +46,26 @@ For instance, \LF type-level and term-level constants have their own declaration
 This design aimed at ensuring that variables and constants originating from the \LF, meta or computation levels do not end up appearing in terms of a different level~\cite{germain2010implementation}.
 Unfortunately, without having a unique table representing an entire referencing environment, name resolution in the presence of shadowing proved obtuse and lead to unexpected results when coupled with overloading of identifiers.
 Indeed, when a constant identifier was resolved during indexing, the declaration tables in the store had to be looked up in a pre-defined order.
+That is, identifiers would not be looked up with respect to the global order in which they are declared, but rather first with respect to the order of identifier kinds, and then the declaration order.
 Consequently, during identifier lookups, parts of the referencing environment would not exist depending on the expected kind of variable or constant encountered in the \ac{AST}.
 As an example, it was impossible for a computation-level coinductive type constant to shadow an inductive one simply because the table for declarations of the former kind was always looked up after the table for declarations of the latter kind.
 Counterintuitively, one could introduce a meta-level variable with an \verb|mlam|-binder and a computation-level variable with an \verb|fn|-binder, both using the same identifier, and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively.
+This overloading would not translate well in proofs on paper since an identifier could be used to refer to two distinct objects at once.
 
 Additionally, the legacy indexing algorithm is tightly coupled and implicitly dependent on the store of constants depicted in figure~\ref{figure:legacy-beluga-processing-pipeline}.
 This means that external mutations to that store affect the output of functions responsible for identifier resolution.
 As outlined in section~\ref{section:intro-state-management}, this design is only suitable for a single pass through the processing pipeline since the store's state is consistent with how the \ac{AST} is traversed.
-To allow \acp{REPL} instantiated at the very end of a \Beluga signature to be consistent with identifier resolution during signature reconstruction, indexing was explicitly parameterized with respect to a store of variables.
-In order to support sound incremental proof development with multiple holes, explicit parameterization of indexing with respect to the store of constants had to be implemented.
+However, indexing was explicitly parameterized with respect to a store of variables to allow \acp{REPL} instantiated at the very end of a \Beluga signature to be consistent with identifier resolution during signature reconstruction.
+Incremental proof development sessions instantiated on holes anywhere else but the end of a \Beluga signature could potentially result in invalid programs.
+Indeed, since the store is stuck at its state at the very end of the \Beluga signature, constants declared later would be incorrectly brought into scope, even shadowing the actual constants required for the proof development.
+In order to ensure soundness of incremental proof development with multiple holes, it became necessary for indexing to be implemented with an explicit parameterization over the entire referencing environment as opposed to just the stores of variables.
 
 The aforementioned incongruities in name resolution and tight coupling with the signature reconstruction store motivate the reimplementation of the indexing phase to use one unified namespace while ensuring that identifiers with different levels cannot be mixed.
 Without having types available at this stage of processing, the accidental feature of identifier overloading had to be discarded.
 
 \section{Unified Indexing}\label{section:indexing}
+
+% TODO: What is unified indexing?
 
 % An important implementation challenge in re-implementing this phase of the pipeline was ensuring that the outcome of indexing is the same as it was with the legacy architecture.
 
@@ -236,9 +242,21 @@ If the traversal of the stack of scopes fails or if no node in the tree of bindi
 The stack structures at the level of scopes and entries allows for identifier shadowing.
 On the other hand, the dictionaries speed up identifier lookups.
 
+\begin{figure}[htb]
+\includegraphics[width=\textwidth]{figures/referencing-environment-implementation.eps}
+\caption[Example referencing environment in the implementation]{%
+Diagram of the referencing environment at hole \texttt{\verbhole{?h3}} from figure~\ref{figure:referencing-environment-example} as it is implemented in \Beluga~\texttt{v1.1}.
+The identifiers on the left are part of the global scope, and are each associated with a stack of bindings to support shadowing.
+The numbering \texttt{\#1}, \texttt{\#2}, ..., \texttt{\#7} denotes the symbolic identifiers from the signature reconstruction store that are associated with the constants.
+The aliases introduced by opening module \texttt{Nat} are properly handled, such that constant \texttt{\#3} can be referenced either as \texttt{Nat.z} or \texttt{z}.
+}
+\end{figure}
+
 % TODO: Illustrate this structure
 
 % TODO: Present the data structures for name resolution in the implementation (binding tree, binding domains, scope stack, context sizes for de Bruijn indices computations)
+
+\section{Discussion}
 
 % TODO: Purpot that we can have a unification algorithm in a named setting if we compute de Bruijn indices on the fly
 
