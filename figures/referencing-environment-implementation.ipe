@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!DOCTYPE ipe SYSTEM "ipe.dtd">
 <ipe version="70218" creator="Ipe 7.2.28">
-<info created="D:20231113155121" modified="D:20231113164243"/>
+<info created="D:20231113155121" modified="D:20231114150657"/>
 <preamble>\usepackage{inconsolata}</preamble>
 <ipestyle name="basic">
 <symbol name="arrow/arc(spx)">
@@ -327,9 +327,9 @@ h
 <text matrix="1 0 0 1 260 -74.447" transformations="translations" pos="64 800" stroke="black" type="label" width="19.925" height="6.564" depth="1.67" valign="baseline" style="math">\texttt{plus}</text>
 <text matrix="1 0 0 1 11 20" transformations="translations" pos="64 800" stroke="black" type="label" width="2.767" height="14.999" depth="0" valign="baseline" style="math">\vdots</text>
 <text matrix="1 0 0 1 11 -174" transformations="translations" pos="64 800" stroke="black" type="label" width="2.767" height="14.999" depth="0" valign="baseline" style="math">\vdots</text>
-<text matrix="1 0 0 1 146.065 53.502" transformations="translations" pos="224 672" stroke="black" type="label" width="19.87" height="6.926" depth="1.93" valign="baseline" style="math">\mathsf{Prog}</text>
-<text matrix="1 0 0 1 133.194 101.284" transformations="translations" pos="224 672" stroke="black" type="label" width="45.613" height="6.923" depth="1.49" valign="baseline" style="math">\mathsf{LF}_{\mathsf{term\ const}}</text>
-<text matrix="1 0 0 1 133.194 77.2835" transformations="translations" pos="224 672" stroke="black" type="label" width="45.613" height="6.923" depth="1.49" valign="baseline" style="math">\mathsf{LF}_{\mathsf{term\ const}}</text>
+<text matrix="1 0 0 1 133.781 53.502" transformations="translations" pos="224 672" stroke="black" type="label" width="19.87" height="6.926" depth="1.93" valign="baseline" style="math">\mathsf{Prog}</text>
+<text matrix="1 0 0 1 133.781 101.284" transformations="translations" pos="224 672" stroke="black" type="label" width="45.613" height="6.923" depth="1.49" valign="baseline" style="math">\mathsf{LF}_{\mathsf{term\ const}}</text>
+<text matrix="1 0 0 1 133.781 77.2835" transformations="translations" pos="224 672" stroke="black" type="label" width="45.613" height="6.923" depth="1.49" valign="baseline" style="math">\mathsf{LF}_{\mathsf{term\ const}}</text>
 <text matrix="1 0 0 1 133.781 125.966" transformations="translations" pos="224 672" stroke="black" type="label" width="44.438" height="6.919" depth="2.85" valign="baseline" style="math">\mathsf{LF}_{\mathsf{type\ const}}</text>
 <text matrix="1 0 0 1 189.358 -2.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#2</text>
 <path matrix="1 0 0 1 196 -24" stroke="black">
@@ -421,60 +421,6 @@ h
 h
 </path>
 </group>
-<group matrix="1 0 0 1 40 0">
-<text matrix="1 0 0 1 -55.539 124.541" transformations="translations" pos="224 672" stroke="black" type="label" width="31.078" height="6.918" depth="0" valign="baseline" style="math">\mathsf{Module}</text>
-<text matrix="1 0 0 1 -6.642 -2.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#1</text>
-<group>
-<path stroke="black">
-160 808 m
-160 792 l
-208 792 l
-208 808 l
-h
-</path>
-<path stroke="black">
-208 808 m
-208 792 l
-224 792 l
-224 808 l
-h
-</path>
-<path stroke="black">
-224 808 m
-224 792 l
-240 792 l
-240 808 l
-h
-</path>
-</group>
-</group>
-<group matrix="1 0 0 1 40 0">
-<text matrix="1 0 0 1 -49.935 -18.498" transformations="translations" pos="224 672" stroke="black" type="label" width="19.87" height="6.926" depth="1.93" valign="baseline" style="math">\mathsf{Prog}</text>
-<text matrix="1 0 0 1 -6.642 -146.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#7</text>
-<group>
-<path matrix="1 0 0 1 0 -144" stroke="black">
-160 808 m
-160 792 l
-208 792 l
-208 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -144" stroke="black">
-208 808 m
-208 792 l
-224 792 l
-224 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -144" stroke="black">
-224 808 m
-224 792 l
-240 792 l
-240 808 l
-h
-</path>
-</group>
-</group>
 <group matrix="1 0 0 1 68 0">
 <path matrix="1 0 0 1 128 0" stroke="black">
 160 808 m
@@ -497,141 +443,6 @@ h
 240 808 l
 h
 </path>
-</group>
-<group matrix="1 0 0 1 40 0">
-<text matrix="1 0 0 1 -49.935 101.502" transformations="translations" pos="224 672" stroke="black" type="label" width="19.87" height="6.926" depth="1.93" valign="baseline" style="math">\mathsf{Prog}</text>
-<text matrix="1 0 0 1 -6.642 -26.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#6</text>
-<group>
-<path matrix="1 0 0 1 0 -24" stroke="black">
-160 808 m
-160 792 l
-208 792 l
-208 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -24" stroke="black">
-208 808 m
-208 792 l
-224 792 l
-224 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -24" stroke="black">
-224 808 m
-224 792 l
-240 792 l
-240 808 l
-h
-</path>
-</group>
-</group>
-<group matrix="1 0 0 1 40 0">
-<text matrix="1 0 0 1 -62.219 77.9655" transformations="translations" pos="224 672" stroke="black" type="label" width="44.438" height="6.919" depth="2.85" valign="baseline" style="math">\mathsf{LF}_{\mathsf{type\ const}}</text>
-<text matrix="1 0 0 1 -6.642 -50.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#2</text>
-<group>
-<path matrix="1 0 0 1 0 -48" stroke="black">
-160 808 m
-160 792 l
-208 792 l
-208 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -48" stroke="black">
-208 808 m
-208 792 l
-224 792 l
-224 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -48" stroke="black">
-224 808 m
-224 792 l
-240 792 l
-240 808 l
-h
-</path>
-</group>
-</group>
-<group matrix="1 0 0 1 40 0">
-<group>
-<path matrix="1 0 0 1 0 -72" stroke="black">
-160 808 m
-160 792 l
-208 792 l
-208 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -72" stroke="black">
-208 808 m
-208 792 l
-224 792 l
-224 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -72" stroke="black">
-224 808 m
-224 792 l
-240 792 l
-240 808 l
-h
-</path>
-</group>
-<text matrix="1 0 0 1 -62.8065 53.2835" transformations="translations" pos="224 672" stroke="black" type="label" width="45.613" height="6.923" depth="1.49" valign="baseline" style="math">\mathsf{LF}_{\mathsf{term\ const}}</text>
-<text matrix="1 0 0 1 -6.642 -74.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#3</text>
-</group>
-<group matrix="1 0 0 1 40 0">
-<text matrix="1 0 0 1 -62.8065 29.2835" transformations="translations" pos="224 672" stroke="black" type="label" width="45.613" height="6.923" depth="1.49" valign="baseline" style="math">\mathsf{LF}_{\mathsf{term\ const}}</text>
-<text matrix="1 0 0 1 -6.642 -98.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#4</text>
-<group>
-<path matrix="1 0 0 1 0 -96" stroke="black">
-160 808 m
-160 792 l
-208 792 l
-208 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -96" stroke="black">
-208 808 m
-208 792 l
-224 792 l
-224 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -96" stroke="black">
-224 808 m
-224 792 l
-240 792 l
-240 808 l
-h
-</path>
-</group>
-</group>
-<group matrix="1 0 0 1 40 0">
-<text matrix="1 0 0 1 -49.935 5.502" transformations="translations" pos="224 672" stroke="black" type="label" width="19.87" height="6.926" depth="1.93" valign="baseline" style="math">\mathsf{Prog}</text>
-<text matrix="1 0 0 1 -6.642 -122.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#5</text>
-<group>
-<path matrix="1 0 0 1 0 -120" stroke="black">
-160 808 m
-160 792 l
-208 792 l
-208 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -120" stroke="black">
-208 808 m
-208 792 l
-224 792 l
-224 808 l
-h
-</path>
-<path matrix="1 0 0 1 0 -120" stroke="black">
-224 808 m
-224 792 l
-240 792 l
-240 808 l
-h
-</path>
-</group>
 </group>
 <path matrix="1 0 0 1 -56 0" stroke="gray">
 168 808 m
@@ -849,5 +660,180 @@ h
 <text matrix="1 0 0 1 264 -22.1445" transformations="translations" pos="84 796" stroke="black" type="label" width="2.767" height="4.289" depth="0" valign="baseline" style="math">:</text>
 <text matrix="1 0 0 1 264 -46.1445" transformations="translations" pos="84 796" stroke="black" type="label" width="2.767" height="4.289" depth="0" valign="baseline" style="math">:</text>
 <text matrix="1 0 0 1 264 -70.1445" transformations="translations" pos="84 796" stroke="black" type="label" width="2.767" height="4.289" depth="0" valign="baseline" style="math">:</text>
+<text matrix="1 0 0 1 -22.8065 124.541" transformations="translations" pos="224 672" stroke="black" type="label" width="31.078" height="6.918" depth="0" valign="baseline" style="math">\mathsf{Module}</text>
+<text matrix="1 0 0 1 33.358 -2.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#1</text>
+<group matrix="1 0 0 1 40 0">
+<path stroke="black">
+160 808 m
+160 792 l
+208 792 l
+208 808 l
+h
+</path>
+<path stroke="black">
+208 808 m
+208 792 l
+224 792 l
+224 808 l
+h
+</path>
+<path stroke="black">
+224 808 m
+224 792 l
+240 792 l
+240 808 l
+h
+</path>
+</group>
+<text matrix="1 0 0 1 -22.8065 101.502" transformations="translations" pos="224 672" stroke="black" type="label" width="19.87" height="6.926" depth="1.93" valign="baseline" style="math">\mathsf{Prog}</text>
+<text matrix="1 0 0 1 33.358 -26.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#6</text>
+<group matrix="1 0 0 1 40 0">
+<path matrix="1 0 0 1 0 -24" stroke="black">
+160 808 m
+160 792 l
+208 792 l
+208 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -24" stroke="black">
+208 808 m
+208 792 l
+224 792 l
+224 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -24" stroke="black">
+224 808 m
+224 792 l
+240 792 l
+240 808 l
+h
+</path>
+</group>
+<text matrix="1 0 0 1 -22.8065 77.9655" transformations="translations" pos="224 672" stroke="black" type="label" width="44.438" height="6.919" depth="2.85" valign="baseline" style="math">\mathsf{LF}_{\mathsf{type\ const}}</text>
+<text matrix="1 0 0 1 33.358 -50.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#2</text>
+<group matrix="1 0 0 1 40 0">
+<path matrix="1 0 0 1 0 -48" stroke="black">
+160 808 m
+160 792 l
+208 792 l
+208 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -48" stroke="black">
+208 808 m
+208 792 l
+224 792 l
+224 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -48" stroke="black">
+224 808 m
+224 792 l
+240 792 l
+240 808 l
+h
+</path>
+</group>
+<group matrix="1 0 0 1 40 0">
+<path matrix="1 0 0 1 0 -72" stroke="black">
+160 808 m
+160 792 l
+208 792 l
+208 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -72" stroke="black">
+208 808 m
+208 792 l
+224 792 l
+224 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -72" stroke="black">
+224 808 m
+224 792 l
+240 792 l
+240 808 l
+h
+</path>
+</group>
+<text matrix="1 0 0 1 -22.8065 53.2835" transformations="translations" pos="224 672" stroke="black" type="label" width="45.613" height="6.923" depth="1.49" valign="baseline" style="math">\mathsf{LF}_{\mathsf{term\ const}}</text>
+<text matrix="1 0 0 1 33.358 -74.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#3</text>
+<text matrix="1 0 0 1 -22.8065 29.2835" transformations="translations" pos="224 672" stroke="black" type="label" width="45.613" height="6.923" depth="1.49" valign="baseline" style="math">\mathsf{LF}_{\mathsf{term\ const}}</text>
+<text matrix="1 0 0 1 33.358 -98.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#4</text>
+<group matrix="1 0 0 1 40 0">
+<path matrix="1 0 0 1 0 -96" stroke="black">
+160 808 m
+160 792 l
+208 792 l
+208 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -96" stroke="black">
+208 808 m
+208 792 l
+224 792 l
+224 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -96" stroke="black">
+224 808 m
+224 792 l
+240 792 l
+240 808 l
+h
+</path>
+</group>
+<text matrix="1 0 0 1 -22.8065 5.502" transformations="translations" pos="224 672" stroke="black" type="label" width="19.87" height="6.926" depth="1.93" valign="baseline" style="math">\mathsf{Prog}</text>
+<text matrix="1 0 0 1 33.358 -122.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#5</text>
+<group matrix="1 0 0 1 40 0">
+<path matrix="1 0 0 1 0 -120" stroke="black">
+160 808 m
+160 792 l
+208 792 l
+208 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -120" stroke="black">
+208 808 m
+208 792 l
+224 792 l
+224 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -120" stroke="black">
+224 808 m
+224 792 l
+240 792 l
+240 808 l
+h
+</path>
+</group>
+<text matrix="1 0 0 1 -22.8065 -18.498" transformations="translations" pos="224 672" stroke="black" type="label" width="19.87" height="6.926" depth="1.93" valign="baseline" style="math">\mathsf{Prog}</text>
+<text matrix="1 0 0 1 33.358 -146.498" transformations="translations" pos="216 800" stroke="black" type="label" width="13.284" height="6.926" depth="1.93" valign="baseline" style="math">\#7</text>
+<group matrix="1 0 0 1 40 0">
+<path matrix="1 0 0 1 0 -144" stroke="black">
+160 808 m
+160 792 l
+208 792 l
+208 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -144" stroke="black">
+208 808 m
+208 792 l
+224 792 l
+224 808 l
+h
+</path>
+<path matrix="1 0 0 1 0 -144" stroke="black">
+224 808 m
+224 792 l
+240 792 l
+240 808 l
+h
+</path>
+</group>
 </page>
 </ipe>

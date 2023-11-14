@@ -99,7 +99,7 @@ The next subsections present two different ways of realising a referencing envir
 The first definition is suitable for mechanized proofs, whereas the second is used in the implementation as it is computationally more efficient.
 Both are presented here for the sake of completeness.
 
-\subsection{Formalising Unified Indexing}
+\subsection{Formalising Unified Indexing}\label{section:formalising-unified-lexing}
 
 In the theory, a referencing environment is an association list with delimiters for scopes.
 Each entry in the list may itself point to a separate association list to support namespacing.
@@ -235,21 +235,49 @@ Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern sco
 In the implementation, a referencing environment is a stack of scopes.
 Each scope holds a tree of bindings, where each node is a stack of entries.
 Concretely, this tree is supported by dictionaries associating identifiers to stacks of entries, each of which may optionally point to a subtree of bindings.
+An example of this structure is illustrated in figure~\ref{figure:referencing-environment-implementation}.
+
 A lookup for the definition bound to a fully qualified identifier in a referencing environment searches for the topmost scope whose tree of bindings contains the leading identifier in the fully qualified identifier.
 Once that scope is found, then its tree of bindings is traversed following the list of identifiers that forms the fully qualified identifier.
 The topmost entry in the stack associated with the trailing identifier is the one that's returned.
 If the traversal of the stack of scopes fails or if no node in the tree of bindings can be found to match the fully qualified identifier, then the lookup fails.
-The stack structures at the level of scopes and entries allows for identifier shadowing.
+The stack structures at the level of scopes and entries allow for identifier shadowing.
 On the other hand, the dictionaries speed up identifier lookups.
 
 \begin{figure}[htb]
-\includegraphics[width=\textwidth]{figures/referencing-environment-implementation.eps}
+\centering
+\includegraphics{figures/referencing-environment-implementation.eps}
 \caption[Example referencing environment in the implementation]{%
 Diagram of the referencing environment at hole \texttt{\verbhole{?h3}} from figure~\ref{figure:referencing-environment-example} as it is implemented in \Beluga~\texttt{v1.1}.
-The identifiers on the left are part of the global scope, and are each associated with a stack of bindings to support shadowing.
-The numbering \texttt{\#1}, \texttt{\#2}, ..., \texttt{\#7} denotes the symbolic identifiers from the signature reconstruction store that are associated with the constants.
-The aliases introduced by opening module \texttt{Nat} are properly handled, such that constant \texttt{\#3} can be referenced either as \texttt{Nat.z} or \texttt{z}.
+The identifiers on the left are part of the toplevel module scope, and are each associated with a stack of bindings, with the most recent bindings on the right end of the stack.
+The numbers \texttt{\#1}, \texttt{\#2}, ..., \texttt{\#7} denote the symbolic identifiers associated with the constants in the signature reconstruction store.
+The aliases introduced by opening module \texttt{Nat} are properly handled, such that constant \texttt{\#3} can be referenced either as \texttt{Nat.z} or \texttt{z} at that point in the signature.
 }
+\label{figure:referencing-environment-implementation}
+\end{figure}
+
+The actual data bound to identifiers in referencing environments depends on the kind of binding and the intended usage of that data structure.
+As mentioned earlier, the disambiguation phase keeps track of user-defined notations in its referencing environment by attaching their associated parameters to the constants themselves.
+This is also replicated during pretty-printing to recover a textual representation of the \ac{AST} that respects user-defined notations.
+Pretty-printing to \texttt{HTML} further assigns IDs to constants so that references to them can be printed as hyperlinks.
+
+For indexing, data is required in the referencing environment to compute valid de Bruijn indices when variables are looked up.
+Traversing of the dictionaries and stacks in order of addition like is done in the formalism of section~\ref{section:formalising-unified-lexing} to count up to the correct de Bruijn index defeats the purpose of using dictionaries to speed up lookups.
+Instead, as variables are added to the referencing environment, they are annotated with the previous size of their indexing context.
+This is achieved using a separate counter that keeps track of the indexing context size.
+The de Bruijn index for a variable can then later be recovered simply by subtracting the current indexing context size with the size that was recorded at the binder for that variable, as illustrated in figure~\ref{figure:lf-indexing}.
+This approach is scalable to arbitrarily many indexing contexts, provided that the context to use for a variable is known at its binding site.
+This is the case in \Beluga, wherein $\Psi$, $\Delta$ and $\Gamma$, the \LF context, the meta-level context and the computation-level context respectively, are indexed separately.
+
+\begin{figure}[htb]
+\centering
+\includegraphics{figures/lf-indexing.eps}
+\caption[Example of de Bruijn indices computation with respect to a lookup table]{%
+Computation of de Bruijn indices for the $\mathbf{S}$-combinator using indexing context sizes stored in the lookup table.
+The expression $x\ z\ (y\ z)$ is indexed with respect to the context $\Psi'$ having $|\Psi| + 3$ entries.
+Variables in $\Psi'$ are annotated with the size of the context before each of them were added.
+}
+\label{figure:lf-indexing}
 \end{figure}
 
 % TODO: Illustrate this structure
