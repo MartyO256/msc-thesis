@@ -13,7 +13,7 @@
 \Beluga~\cite{pientka2010beluga} is a dependently-typed programming language for specifying and proving properties about formal systems using contextual modal type theory~\cite{nanevski2008contextual}.
 It leverages the \acf{LF}~\cite{harper1993framework}, extended with explicit contexts, contextual objects and substitutions~\cite{DBLP:journals/corr/abs-1009-2789, cave2013first}, which allow for logic reasoning involving open terms.
 Using \ac{HOAS}~\cite{pfenning1988higher}, elegant and succinct datatype definitions can be made in \LF to subsequently prove theorems pertaining to programming languages and $ \lambda $-calculi.
-\Beluga has notably been successfully used to mechanically verify proofs for type safety of \textsc{System F}, cut-admissibility in the intuitionistic sequent calculus, or termination of weak-head normalization for the simply-typed lambda calculus.
+\Beluga has notably been successfully used to mechanically verify proofs for the type safety of \textsc{System F}, cut-admissibility in the intuitionistic sequent calculus, and termination of weak-head normalization for the simply-typed lambda calculus.
 Extensions to \Beluga have facilitated the development of proofs by providing interactive tools for manipulating and constructing proof terms.
 
 % How does one specify a formal system using Beluga?
@@ -37,8 +37,8 @@ Crucially, \Harpoon is a system integrated into \Beluga's core functionalities i
 
 Structural (or projectional) editing in programming language tooling is the functionality of a software editor that allows the user to manipulate \acp{AST} directly.
 This is in contrast with plain text editors in which users may only edit textual representations of their programs, that then require parsing to be interpreted.
-The \textsc{Hazel}~\cite{omar2017hazelnut, omar2019live} functional programming environment is a notable example of a structural editor in the functional programming community for its ability to dynamically provide useful information as the user writes programs with holes.
-As for theorem provers, the \textsc{CoqIDE} leverages the \textsc{Coq} \texttt{XML} protocol to interact with the proof system's kernel, much like is done with the language server protocol for conventional programming languages.
+The \textsc{Hazel}~\cite{omar2017hazelnut, omar2019live} functional programming environment is a notable example of a structural editor in the functional programming community for its ability to dynamically provide type information as the user writes programs with holes.
+As for theorem provers, the \textsc{CoqIDE} leverages the \textsc{Coq} \texttt{XML} protocol to interact with the proof system's kernel, much like is done with implementations of the language server protocol to provide advanced editing functionalities for programming languages.
 
 % What are typical edit actions in programming languages?
 

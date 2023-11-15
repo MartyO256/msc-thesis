@@ -46,9 +46,10 @@ For instance, \LF type-level and term-level constants have their own declaration
 This design aimed at ensuring that variables and constants originating from the \LF, meta or computation levels do not end up appearing in terms of a different level~\cite{germain2010implementation}.
 Unfortunately, without having a unique table representing an entire referencing environment, name resolution in the presence of shadowing proved obtuse and lead to unexpected results when coupled with overloading of identifiers.
 Indeed, when a constant identifier was resolved during indexing, the declaration tables in the store had to be looked up in a pre-defined order.
-That is, identifiers would not be looked up with respect to the global order in which they are declared, but rather first with respect to the order of identifier kinds, and then the declaration order.
+That is, identifiers would not be looked up with respect to the global order in which they are declared.
+Instead, they are looked up first with respect to the order of identifier kinds, and then by the declaration order within the table for that identifier kind.
 Consequently, during identifier lookups, parts of the referencing environment would not exist depending on the expected kind of variable or constant encountered in the \ac{AST}.
-As an example, it was impossible for a computation-level coinductive type constant to shadow an inductive one simply because the table for declarations of the former kind was always looked up after the table for declarations of the latter kind.
+As an example, it is impossible in \Beluga~\texttt{v1.0} for a computation-level coinductive type constant to shadow an inductive one simply because the table for declarations of the former kind was always looked up after the table for declarations of the latter kind.
 Counterintuitively, one could introduce a meta-level variable with an \verb|mlam|-binder and a computation-level variable with an \verb|fn|-binder, both using the same identifier, and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively.
 This overloading would not translate well in proofs on paper since an identifier could be used to refer to two distinct objects at once.
 
@@ -65,7 +66,12 @@ Without having types available at this stage of processing, the accidental featu
 
 \section{Unified Indexing}\label{section:indexing}
 
-% TODO: What is unified indexing?
+% What is unified indexing?
+
+Unified indexing is the conversion from a named \ac{AST} to a nameless \ac{AST} in a single pass and using a single lookup structure for all identifier kinds.
+For \Beluga, this entails having a merged view of the lookup tables for constants and variables so as to uniformly know what identifiers are in scope at any given \ac{AST} node.
+In particular, variables identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were design to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together.
+To approach this problem, some definitions are in order.
 
 % An important implementation challenge in re-implementing this phase of the pipeline was ensuring that the outcome of indexing is the same as it was with the legacy architecture.
 
@@ -73,7 +79,7 @@ A fully qualified identifier is a list of plain identifiers separated by dots de
 A referencing environment in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
 The unified indexing phase is designed as a single sequential traversal of the external \ac{AST} to map it to the approximate \ac{AST}, using the referencing environment as visitor state.
 As \ac{AST} nodes are traversed, the referencing environment is updated by adding or removing identifiers in scope so that the resolution of identifiers is consistent with the language's specification.
-This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across distinct identifier worlds~\cite{ferreira2012compiler}.
+This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across different indexing contexts ($\Psi$, $\Delta$ and $\Gamma$).
 This includes name resolution under pattern lambda-expressions in contextual \LF patterns, and distinguishing between pattern variables and bound identifiers.
 All the while, indexing has to feature backtracking mechanisms to support incremental proof development in \Harpoon sessions.
 In the disambiguation phase, where a similar mapping occurs from the parser \ac{AST} to the external \ac{AST}, the visitor state has to additionally keep track of user-defined notations.
@@ -87,26 +93,17 @@ Plain scopes are suitable for introducing multiple identifiers in such a way tha
 \textit{Module scopes}: constants added to this kind of scope are either private or public.
 Private constant declarations refer to constants that are not exported from the module when it is opened.
 This ensures that constants and notations imported from external modules are not re-exported when the module is opened elsewhere.
-Public constant declarations on the other hand are brought back in scope when the module is opened.
+Public constant declarations on the other hand are brought in scope when the module is opened.
 \item
 \textit{Pattern scopes}: variables added to this kind of scope are inner pattern-bound or pattern variables.
 Inner pattern-bound variables are introduced by binders in the pattern.
 Pattern variables on the other hand are free variables in the pattern, which become bound variables in the body of the match case.
-Because of automatic reconstruction of meta-level abstractions in \Beluga, free meta-variables in patterns are both inner pattern-bound and pattern variables.
+Because of automated reconstruction of meta-level abstractions in \Beluga, free meta-variables in patterns are both inner pattern-bound and pattern variables.
 \end{enumerate}
 
-The next subsections present two different ways of realising a referencing environment for \Beluga that supports unified lexing.
+The next subsections present two different ways of realising a referencing environment for \Beluga that supports unified indexing.
 The first definition is suitable for mechanized proofs, whereas the second is used in the implementation as it is computationally more efficient.
 Both are presented here for the sake of completeness.
-
-\subsection{Formalising Unified Indexing}\label{section:formalising-unified-lexing}
-
-In the theory, a referencing environment is an association list with delimiters for scopes.
-Each entry in the list may itself point to a separate association list to support namespacing.
-Shadowing is also supported since those association lists can function as stacks.
-Lookups in this environment then proceed by simultaneously traversing the fully qualified identifier and the association list, much like in the previous lookup procedure.
-
-% TODO: Illustrate this structure
 
 \begin{figure}[htb]
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1, numbers=left]
@@ -120,12 +117,20 @@ Lookups in this environment then proceed by simultaneously traversing the fully 
 \verbprag{--open Nat.}
 \verbbf{rec} g : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h3};
 \end{Verbatim}
-\caption[]{%
-% TODO:
+\caption[Example \Beluga signature with holes]{%
+Example of a \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} and \texttt{\verbhole{?h3}}, used to showcase how a unified referencing environment is updated when dealing with namespaces.
 }
 \label{figure:referencing-environment-example}
-% TODO: Subfigures with the referencing environment at h1, h2, h3
 \end{figure}
+
+\subsection{Formalising Unified Indexing}\label{section:formalising-unified-indexing}
+
+In the theory, a referencing environment is an association list with delimiters for scopes.
+Each entry in the list may itself point to a separate association list to support namespacing.
+Shadowing is also supported since those association lists can function as stacks.
+Lookups in this environment then proceed by simultaneously traversing the fully qualified identifier and the association list.
+
+% TODO: Illustrate this structure
 
 % TODO: Introduce modules and patterns in two separate paragraphs
 
@@ -262,12 +267,18 @@ This is also replicated during pretty-printing to recover a textual representati
 Pretty-printing to \texttt{HTML} further assigns IDs to constants so that references to them can be printed as hyperlinks.
 
 For indexing, data is required in the referencing environment to compute valid de Bruijn indices when variables are looked up.
-Traversing of the dictionaries and stacks in order of addition like is done in the formalism of section~\ref{section:formalising-unified-lexing} to count up to the correct de Bruijn index defeats the purpose of using dictionaries to speed up lookups.
+Traversing of the dictionaries and stacks in order of addition like is done in the formalism of section~\ref{section:formalising-unified-indexing} to count up to the correct de Bruijn index defeats the purpose of using dictionaries to speed up lookups.
 Instead, as variables are added to the referencing environment, they are annotated with the previous size of their indexing context.
 This is achieved using a separate counter that keeps track of the indexing context size.
-The de Bruijn index for a variable can then later be recovered simply by subtracting the current indexing context size with the size that was recorded at the binder for that variable, as illustrated in figure~\ref{figure:lf-indexing}.
+The de Bruijn index for a variable can then later be recovered simply by subtracting the current indexing context size with the size that was recorded at the binder for that variable.
+In other words, as illustrated in figure~\ref{figure:lf-indexing}, if $\Psi'$ is an indexing context with $x \in \operatorname{domain}(\Psi')$, and $\Psi$ is the indexing context immediately before that $x$ was added, then $|\Psi'| > |\Psi|$ and the de Bruijn index of $x$ with respect to $\Psi'$ is
+\begin{equation*}
+\mathsf{index}_{\Psi'}(x) = |\Psi'| - |\Psi|.
+\end{equation*}
 This approach is scalable to arbitrarily many indexing contexts, provided that the context to use for a variable is known at its binding site.
-This is the case in \Beluga, wherein $\Psi$, $\Delta$ and $\Gamma$, the \LF context, the meta-level context and the computation-level context respectively, are indexed separately.
+This is the case in \Beluga, where variables in $\Psi$, $\Delta$ and $\Gamma$ are indexed separately and have distinct binders.
+Additionally, this approach simplifies shifting contexts in cases like $\mathsf{const} = \lambda x.\lambda\_.\ x$ wherein the identifier introduced by a binder is omitted since it is unused in the abstraction's body.
+Indeed, it suffices to increase the indexing context's size to shift it, so there is no need to add an empty binding in the referencing environment.
 
 \begin{figure}[htb]
 \centering
@@ -275,14 +286,10 @@ This is the case in \Beluga, wherein $\Psi$, $\Delta$ and $\Gamma$, the \LF cont
 \caption[Example of de Bruijn indices computation with respect to a lookup table]{%
 Computation of de Bruijn indices for the $\mathbf{S}$-combinator using indexing context sizes stored in the lookup table.
 The expression $x\ z\ (y\ z)$ is indexed with respect to the context $\Psi'$ having $|\Psi| + 3$ entries.
-Variables in $\Psi'$ are annotated with the size of the context before each of them were added.
+Variables in $\Psi'$ are annotated with the size of the context before each of them was added.
 }
 \label{figure:lf-indexing}
 \end{figure}
-
-% TODO: Illustrate this structure
-
-% TODO: Present the data structures for name resolution in the implementation (binding tree, binding domains, scope stack, context sizes for de Bruijn indices computations)
 
 \section{Discussion}
 
