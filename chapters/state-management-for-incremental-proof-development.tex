@@ -128,7 +128,7 @@ Example of a \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verb
 In the theory, a referencing environment is an association list with delimiters for scopes.
 Each entry in the list may itself point to a separate association list to support namespacing.
 Shadowing is also supported since those association lists can function as stacks.
-Lookups in this environment then proceed by simultaneously traversing the fully qualified identifier and the association list.
+Lookups in this environment proceed by simultaneously traversing the fully qualified identifier and the association list.
 
 % TODO: Illustrate this structure
 
@@ -170,10 +170,26 @@ Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern sco
 \label{figure:referencing-environment-definition}
 \end{figure}
 
+\begin{figure}[H]
+\begin{equation*}
+\begin{aligned}
+\Xi_{\texttt{\verbhole{?h1}}} &= \left[\dots\right]_\Module; \left[\Public{\mathsf{nat}} : \mathsf{LF}_{\mathsf{type\ const}}, \Public{\mathsf{z}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{s}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{plus}} : \mathsf{Prog}\right]_\Module\\
+\Xi_{\texttt{\verbhole{?h2}}} &= \left[\dots, \Public{\mathsf{Nat}} : \mathsf{Module}\left(\Public{\mathsf{nat}} : \_, \Public{\mathsf{z}} : \_, \Public{\mathsf{s}} : \_, \Public{\mathsf{plus}} : \_\right), \Public{\mathsf{f}} : \mathsf{Prog}\right]_\Module\\
+\Xi_{\texttt{\verbhole{?h3}}} &= \left[\dots, \Public{\mathsf{Nat}} : \_, \Public{\mathsf{f}} : \_, \Private{\mathsf{nat}} : \_, \Private{\mathsf{z}} : \_, \Private{\mathsf{s}} : \_, \Private{\mathsf{plus}} : \_, \Public{\mathsf{g}} : \mathsf{Prog}\right]_\Module
+\end{aligned}
+\end{equation*}
+\caption[Example referencing environments in the formalism]{%
+Example referencing environments for the holes $\texttt{\verbhole{?h1}}$, $\texttt{\verbhole{?h2}}$ and $\texttt{\verbhole{?h3}}$ in figure~\ref{figure:referencing-environment-example} using the formal definitions of figure~\ref{figure:referencing-environment-definition}, showcasing the semantics of opening a module.
+Some annotations are omitted for brevity.
+}
+\label{figure:example-reference-environment-formalism}
+\end{figure}
+
 \newcommand{\Fail}{\lightning}
 \newcommand{\Lookup}[2]{\operatorname{lookup}\left[#1\right]\left(#2\right)}
 \newcommand{\Domain}{\operatorname{domain}}
-% TODO: Define \Env \setminus \Var(\Env) \mid \Env', punch holes in the environment for variables
+\begin{figure}[H]
+\begin{subfigure}{\linewidth}
 \begin{equation*}
 \begin{aligned}
 \Domain(\cdot) &= \{\}\\
@@ -184,6 +200,14 @@ Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern sco
 \Domain(\Pattern, \public{x} : \Var) &= \Domain(\Pattern)
 \end{aligned}
 \end{equation*}
+\caption{%
+Definition for the sets of identifiers in scope by scope kind.
+}
+\end{subfigure}
+\end{figure}
+
+\begin{figure}\ContinuedFloat
+\begin{subfigure}{\linewidth}
 \begin{equation*}
 \begin{aligned}
 \Lookup{x}{\cdot} &= \Fail\\
@@ -198,15 +222,34 @@ Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern sco
 \Lookup{x}{\Env; \Pattern, \private{y} : \Var} &= \Lookup{x}{\Env \setminus \Var(\Env); \Pattern} & x \neq y\\
 \Lookup{x}{\overrightarrow{\cdot}} &= \Fail\\
 \Lookup{x}{\overrightarrow{\Public{y} : \Constant}, x : \Constant} &= (x : \Constant)\\
-\Lookup{x}{\overrightarrow{\Public{x} : \Constant}, y : \Constant} &= \Lookup{x}{\overrightarrow{\Public{x} : \Constant}} & x \neq y
+\Lookup{x}{\overrightarrow{\Public{x} : \Constant}, y : \Constant} &= \Lookup{x}{\overrightarrow{\Public{x} : \Constant}} & x \neq y\\
+\Lookup{x}{\Xi \setminus \Var(\Xi)} &= \begin{cases}
+(x : \Constant) & \Lookup{x}{\Xi} = (x : \Constant)\\
+\Fail & \Lookup{x}{\Xi} = (x : \Var)\\
+\Fail & \Lookup{x}{\Xi} = \Fail
+\end{cases}
 \end{aligned}
 \end{equation*}
+\caption{%
+Definition for looking up plain identifiers in referencing environments.
+When the topmost scope is a pattern scope, looking up a variable fails if it is bound in a different scope.
+}
+\end{subfigure}
+\end{figure}
+
+\begin{figure}\ContinuedFloat
+\begin{subfigure}{\linewidth}
 \begin{equation*}
 \begin{aligned}
 \Lookup{x_1.x_2.\cdots.x_n}{\Env; \Scope} &= \Lookup{x_1.x_2.\cdots.x_n}{\Env} & x_1 \notin \Domain(\Scope)\\
 \Lookup{x_1.x_2.\cdots.x_n}{\Env; \Scope} &= \Fail & x_1 \in \Domain(\Scope)
 \end{aligned}
 \end{equation*}
+\caption{%
+Definition for looking up fully qualified identifiers in plain scopes.
+}
+\end{subfigure}
+\begin{subfigure}{\linewidth}
 \begin{equation*}
 \begin{aligned}
 \Lookup{x_1.x_2.\cdots.x_n}{\Env; \Module, x_1 : \mathsf{Module}\left(\overrightarrow{\Public{x}:\Constant}\right)} &= \Lookup{x_2.\cdots.x_n}{\overrightarrow{\Public{x}:\Constant}}\\
@@ -215,12 +258,26 @@ Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern sco
 \Lookup{x_1.x_2.\cdots.x_n}{\overrightarrow{\Public{y}:\Constant}, x_1: \mathsf{Module}\left(\overrightarrow{\Public{x}:\Constant}\right)} &= \Lookup{x_2.\cdots.x_n}{\overrightarrow{\Public{x}:\Constant}}
 \end{aligned}
 \end{equation*}
+\caption{%
+Definition for looking up fully qualified identifiers in module scopes.
+}
+\end{subfigure}
+\par\bigskip
+\begin{subfigure}{\linewidth}
 \begin{equation*}
 \begin{aligned}
 \Lookup{x_1.x_2.\cdots.x_n}{\Env; \Pattern} &= \Lookup{x_1.x_2.\cdots.x_n}{\Env} & x_1 \notin \Domain(\Pattern)\\
 \Lookup{x_1.x_2.\cdots.x_n}{\Env; \Pattern} &= \Fail & x_1 \in \Domain(\Scope)
 \end{aligned}
 \end{equation*}
+\caption{%
+Definition for looking up fully qualified identifiers in pattern scopes.
+}
+\end{subfigure}
+\end{figure}
+
+\begin{figure}\ContinuedFloat
+\begin{subfigure}{\linewidth}
 \begin{equation*}
 \begin{aligned}
 \Psi(\cdot) &= ()\\
@@ -234,6 +291,13 @@ Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern sco
 \Psi(\Env; \Pattern, \private{x} : \Var) &= \Psi(\Pattern) & \Var \neq \mathsf{LF}_{\mathsf{term}}
 \end{aligned}
 \end{equation*}
+\caption{%
+Definition of filtering to extract the \LF context from a referencing environment.
+}
+\end{subfigure}
+\end{figure}
+
+\pagebreak
 
 \subsection{Implementing Unified Indexing}
 
@@ -285,8 +349,9 @@ Indeed, it suffices to increase the indexing context's size to shift it, so ther
 \includegraphics{figures/lf-indexing.eps}
 \caption[Example of de Bruijn indices computation with respect to a lookup table]{%
 Computation of de Bruijn indices for the $\mathbf{S}$-combinator using indexing context sizes stored in the lookup table.
-The expression $x\ z\ (y\ z)$ is indexed with respect to the context $\Psi'$ having $|\Psi| + 3$ entries.
-Variables in $\Psi'$ are annotated with the size of the context before each of them was added.
+The bindings of the \LF context $\Psi$ are included in the referencing environment $\Xi$.
+The expression $x\ z\ (y\ z)$ is indexed with respect to $\Psi'$ having $|\Psi| + 3$ entries since $x$, $y$ and $z$ are introduced by \LF~abstractions.
+Variables in $\Psi'$ are annotated with the size of the \LF indexing context before each of them was added.
 }
 \label{figure:lf-indexing}
 \end{figure}

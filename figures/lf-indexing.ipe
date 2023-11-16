@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <!DOCTYPE ipe SYSTEM "ipe.dtd">
 <ipe version="70218" creator="Ipe 7.2.28">
-<info created="D:20231114160704" modified="D:20231115110927"/>
+<info created="D:20231114160704" modified="D:20231115174646"/>
+<preamble>\usepackage{amsmath}</preamble>
 <ipestyle name="basic">
 <symbol name="arrow/arc(spx)">
 <path stroke="sym-stroke" fill="sym-stroke" pen="sym-pen">
@@ -313,15 +314,19 @@ h
 <page>
 <layer name="alpha"/>
 <view layers="alpha" active="alpha"/>
-<text layer="alpha" matrix="1 0 0 1 192 0" transformations="translations" pos="64 768" stroke="black" type="label" width="103.226" height="7.473" depth="2.49" halign="center" valign="baseline" style="math">\Psi \vdash \lambda x. \lambda y. \lambda z.\ \color{red}{x\ z\ (y\ z)}</text>
-<text matrix="1 0 0 1 192 -128" transformations="translations" pos="64 768" stroke="black" type="label" width="84.406" height="7.473" depth="2.49" halign="center" valign="baseline" style="math">\Psi \vdash \lambda\ \lambda\ \lambda\ \color{red}{3\ 1\ (2\ 1)}</text>
-<text matrix="1 0 0 1 -64 -32" transformations="translations" pos="352 768" stroke="black" type="label" width="140.87" height="7.45" depth="18.16" valign="baseline" style="math">\underbrace{\Psi, x_{\color{blue}{|\Psi|}}, y_{\color{blue}{|\Psi|+1}}, z_{\color{blue}|\Psi|+2}}_{\Psi&apos;} \vdash \color{red}{x\ z\ (y\ z)}</text>
-<text matrix="1 0 0 1 -64 -64" transformations="translations" pos="352 768" stroke="black" type="label" width="186.72" height="7.49" depth="2.49" valign="baseline" style="math">\mathsf{index}_{\Psi&apos;}(x)=|\Psi&apos;|-{\color{blue}{|\Psi|}}=|\Psi|+3-|\Psi|=3</text>
-<text matrix="1 0 0 1 -64 -80" transformations="translations" pos="352 768" stroke="black" type="label" width="228.332" height="7.49" depth="2.49" valign="baseline" style="math">\mathsf{index}_{\Psi&apos;}(y)=|\Psi&apos;|-({\color{blue}{|\Psi|+1}})=|\Psi|+3-|\Psi|-1=2</text>
-<text matrix="1 0 0 1 -64 -96" transformations="translations" pos="352 768" stroke="black" type="label" width="228.161" height="7.49" depth="2.49" valign="baseline" style="math">\mathsf{index}_{\Psi&apos;}(z)=|\Psi&apos;|-({\color{blue}{|\Psi|+2}})=|\Psi|+3-|\Psi|-2=1</text>
+<text layer="alpha" matrix="1 0 0 1 192 0" transformations="translations" pos="64 768" stroke="black" type="label" width="102.119" height="7.473" depth="2.49" halign="center" valign="baseline" style="math">\Xi \vdash \lambda x. \lambda y. \lambda z.\ \color{red}{x\ z\ (y\ z)}</text>
+<text matrix="1 0 0 1 192 -128" transformations="translations" pos="64 768" stroke="black" type="label" width="83.299" height="7.473" depth="2.49" halign="center" valign="baseline" style="math">\Xi \vdash \lambda\ \lambda\ \lambda\ \color{red}{3\ 1\ (2\ 1)}</text>
 <path stroke="black" arrow="farc/normal">
 256 752 m
 256 656 l
 </path>
+<group matrix="1 0 0 1 0 12.9915">
+<text matrix="1 0 0 1 -64 -45" transformations="translations" pos="352 768" stroke="black" type="label" width="139.763" height="7.45" depth="18.16" valign="baseline" style="math">\underbrace{\Xi, x_{\color{blue}{|\Psi|}}, y_{\color{blue}{|\Psi|+1}}, z_{\color{blue}|\Psi|+2}}_{\Xi&apos;} \vdash \color{red}{x\ z\ (y\ z)}</text>
+<text matrix="1 0 0 1 -64 -93" transformations="translations" pos="352 768" stroke="black" type="label" width="148.779" height="23.393" depth="18.45" valign="baseline" style="math">\begin{aligned}
+\mathsf{index}_{\Xi&apos;}(x)&amp;=|\Psi&apos;|-{\color{blue}{|\Psi|}}&amp;=3\\
+\mathsf{index}_{\Xi&apos;}(y)&amp;=|\Psi&apos;|-({\color{blue}{|\Psi|+1}})&amp;=2\\
+\mathsf{index}_{\Xi&apos;}(z)&amp;=|\Psi&apos;|-({\color{blue}{|\Psi|+2}})&amp;=1
+\end{aligned}</text>
+</group>
 </page>
 </ipe>
