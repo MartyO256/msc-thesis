@@ -73,7 +73,7 @@ Without having types available at this stage of processing, the accidental featu
 
 % What is unified indexing?
 
-Unified indexing is the conversion from a named \ac{AST} to a nameless \ac{AST} in a single pass and using a single lookup structure for all identifier kinds.
+Unified indexing is the conversion from a named \ac{AST} to a locally nameless \ac{AST} in a single pass and using a single lookup structure for all identifier kinds.
 For \Beluga, this requires having a merged view of the lookup tables for constants and variables so as to uniformly know what identifiers are in scope at any given \ac{AST} node.
 In particular, variables identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together.
 To approach this problem, some definitions are in order.
@@ -182,7 +182,7 @@ Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern sco
 \end{aligned}
 \end{equation*}
 \caption[Example referencing environments in the formalism]{%
-Example referencing environments for the holes $\texttt{\verbhole{?h1}}$, $\texttt{\verbhole{?h2}}$ and $\texttt{\verbhole{?h3}}$ in figure~\ref{figure:referencing-environment-example} using the formal definitions of figure~\ref{figure:referencing-environment-definition}, showcasing the semantics of opening a module.
+Example referencing environments $\Xi_{\texttt{\verbhole{?h1}}}$, $\Xi_{\texttt{\verbhole{?h2}}}$ and $\Xi_{\texttt{\verbhole{?h3}}}$ for the holes $\texttt{\verbhole{?h1}}$, $\texttt{\verbhole{?h2}}$ and $\texttt{\verbhole{?h3}}$ in figure~\ref{figure:referencing-environment-example} using the formal definitions of figure~\ref{figure:referencing-environment-definition}, showcasing the semantics of opening a module.
 Some annotations are omitted for brevity.
 }
 \label{figure:example-reference-environment-formalism}
@@ -207,6 +207,9 @@ Some annotations are omitted for brevity.
 Definition for the sets of identifiers in scope by scope kind.
 }
 \end{subfigure}
+\caption[Formal definition of referencing environments for \Beluga]{%
+Formal definition of referencing environments for \Beluga, modelled as association lists.
+}
 \end{figure}
 
 \begin{figure}\ContinuedFloat
@@ -234,10 +237,13 @@ Definition for the sets of identifiers in scope by scope kind.
 \end{aligned}
 \end{equation*}
 \caption{%
-Definition for looking up plain identifiers in referencing environments.
+Definition for looking up plain identifiers in referencing environments, with $\Fail$ denoting failure.
 When the topmost scope is a pattern scope, looking up a variable fails if it is bound in a different scope.
 }
 \end{subfigure}
+\caption[]{%
+Formal definition of referencing environments for \Beluga, modelled as association lists (cont.).
+}
 \end{figure}
 
 \begin{figure}\ContinuedFloat
@@ -278,6 +284,9 @@ This amounts to simultaneously traversing the list of plain identifiers and the 
 Definition for looking up fully qualified identifiers in pattern scopes.
 }
 \end{subfigure}
+\caption[]{%
+Formal definition of referencing environments for \Beluga, modelled as association lists (cont.).
+}
 \end{figure}
 
 \begin{figure}\ContinuedFloat
@@ -300,6 +309,9 @@ Definition of filtering to extract the \LF context from a referencing environmen
 The $\oplus$~operator denotes list concatenation.
 }
 \end{subfigure}
+\caption[]{%
+Formal definition of referencing environments for \Beluga, modelled as association lists (cont.).
+}
 \end{figure}
 
 \pagebreak

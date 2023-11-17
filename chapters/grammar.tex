@@ -105,8 +105,8 @@ Additionally, the following characters are reserved and cannot be used anywhere 
 \subsection{Lexical Conventions}\label{section:lexical-convention}
 
 \Beluga programs must be encoded in \textsc{UTF-8}.
-The production \synt{white-space} corresponds to the Unicode property \texttt{White\_Space} as described in the Unicode Standard Version 15.0.0 Annex \#44, \href{https://www.unicode.org/reports/tr44/tr44-30.html#White_Space}{\textit{Unicode Character Database}}.
-The production \synt{any} stands for any unicode character.
+The nonterminal \synt{white-space} corresponds to the Unicode property \texttt{White\_Space} as described in the Unicode Standard Version 15.0.0 Annex \#44, \href{https://www.unicode.org/reports/tr44/tr44-30.html#White_Space}{\textit{Unicode Character Database}}.
+The nonterminal \synt{any} stands for any unicode character.
 
 \begin{grammar}
 <forward-arrow> ::=
@@ -148,6 +148,8 @@ The production \synt{any} stands for any unicode character.
 <identifier-start> ::= <identifier-continue> - (<digit> | `$' | `#')
 
 <identifier> ::= <identifier-start> <identifier-continue>*
+
+<dot-integer> ::= `.'<integer>
 
 <dot-identifier> ::= `.'<identifier>
 
@@ -255,8 +257,8 @@ The following is the grammar for the extension of \LF with substitutions, contex
 \alt `_'
 \alt `?'[<identifier>]
 \alt `<' <clf-term> (`;' <clf-term>)* `>'
-\alt <clf-term> `.' <integer>
-\alt <clf-term> `.' <identifier>
+\alt <clf-term> <dot-integer>
+\alt <clf-term> <dot-identifier>
 \alt <clf-term> `:' <clf-type>
 \alt `(' <clf-term> `)'
 
@@ -265,8 +267,8 @@ The following is the grammar for the extension of \LF with substitutions, contex
 \alt <qualified-identifier>
 \alt `_'
 \alt `<' <clf-pattern> (`;' <clf-pattern>)* `>'
-\alt <clf-pattern> `.' <integer>
-\alt <clf-pattern> `.' <identifier>\\
+\alt <clf-pattern> <dot-integer>
+\alt <clf-pattern> <dot-identifier>\\
 \alt `\\' `(' <omittable-identifier> `:' <clf-type> `)' `.' <clf-pattern>
 \alt `\\' <omittable-identifier> `.' <clf-pattern>
 \alt <clf-pattern> `[' <clf-substitution> `]'
@@ -493,7 +495,7 @@ The following is the grammar for the serialized form of \Harpoon interactive ses
 <harpoon-case-label> ::= `extended' `by' <integer>
 \alt `empty' `context'
 \alt <qualified-identifier>
-\alt `#' [<integer>] [`.'<integer>]
+\alt `#' [<integer>] [<dot-integer>]
 \alt `head' `variable'
 
 <harpoon-hypothetical> ::= <meta-context> `|' <comp-context> `;' <harpoon-proof>
@@ -646,13 +648,13 @@ As such, a \Beluga signature is first parsed into an \ac{AST} with ambiguous nod
 By design, the grammar of section~\ref{section:syntax} does not require type information for disambiguation.
 Hence, the symbol table only keeps track of identifiers in scope and their associated sort without types.
 
-The following sections present alternative production rules used in place of those in the grammar of section~\ref{section:syntax} obtained by merging productions that lead to ambiguities.
+The following sections present alternative production rules used in place of those in the grammar of section~\ref{section:syntax} obtained by merging nonterminals that lead to ambiguities.
 Rewriting the grammar for optimization, left recursion elimination, and stateless ambiguity resolution with recursive descent is outside the scope of this presentation.
 
 \subsection{Resolving Syntactic Ambiguities for \acs{LF}'s Grammar}\label{section:blurred-lf-syntax}
 
 The grammar for \LF kinds, types and terms from section~\ref{section:syntax-lf} is data-dependent because \LF term variables, type constants and term constants are syntactically indistinguishable from one another, and likewise for $ \Pi $-kinds and $ \Pi $-types.
-This next grammar blurs together \LF kinds, types and terms with corresponding productions \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} for context-free parsing.
+This next grammar blurs together \LF kinds, types and terms with corresponding nonterminals \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} for context-free parsing.
 Occurrences of \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} elsewhere in the grammar are replaced with \synt{lf-object}.
 Disambiguation of an \LF object as presented below requires:
 \begin{itemize}
@@ -688,9 +690,9 @@ Additionally, the syntax is disambiguated in order of decreasing precedence as f
 \subsection{Resolving Syntactic Ambiguities for Contextual \acs{LF}'s Grammar}
 
 The grammar for contextual \LF types, terms, patterns, substitutions, contexts and their patterns from section~\ref{section:syntax-contextual-lf} is data-dependent because contextual \LF term variables, type constants and term constants are syntactically indistinguishable from one another.
-This next grammar blurs together contextual \LF types, terms and patterns with corresponding productions \synt{clf-type}, \synt{clf-term} and \synt{clf-pattern} for context-free parsing.
+This next grammar blurs together contextual \LF types, terms and patterns with corresponding nonterminals \synt{clf-type}, \synt{clf-term} and \synt{clf-pattern} for context-free parsing.
 Occurrences of \synt{clf-type}, \synt{clf-term} and \synt{clf-pattern} elsewhere in the grammar are replaced with \synt{clf-object}.
-Likewise, the productions \synt{clf-substitution}, \synt{clf-substitution-pattern}, \synt{clf-context} and \synt{clf-context-pattern} are blurred together as \synt{clf-context-object}.
+Likewise, the nonterminals \synt{clf-substitution}, \synt{clf-substitution-pattern}, \synt{clf-context} and \synt{clf-context-pattern} are blurred together as \synt{clf-context-object}.
 Disambiguation of a contextual \LF object as presented below requires:
 \begin{itemize}
 \item complete scope information to resolve constants, and
@@ -716,8 +718,8 @@ Additionally, contextual \LF contexts starting with an untyped identifier are al
 \alt `?'[<identifier>]
 \alt <clf-object> `[' <clf-context-object> `]'
 \alt `<' <clf-object> (`;' <clf-object>)* `>'
-\alt <clf-object>`.'<integer>
-\alt <clf-object>`.'<identifier>
+\alt <clf-object> <dot-integer>
+\alt <clf-object> <dot-identifier>
 \alt `(' <clf-object> `)'
 
 <clf-context-object> ::= [`^']
@@ -740,9 +742,9 @@ Additionally, the syntax is disambiguated in order of decreasing precedence as f
 \subsection{Resolving Syntactic Ambiguities for the Meta-Level's Grammar}
 
 The grammar for context schemas, meta-types, meta-objects, meta-patterns and meta-contexts from section~\ref{section:syntax-meta-level} is ambiguous because the contextual \LF types and terms therein have ambiguous grammars.
-This next grammar blurs together meta-types, meta-objects and meta-patterns with corresponding productions \synt{meta-type}, \synt{meta-object} and \synt{meta-pattern} for context-free parsing.
+This next grammar blurs together meta-types, meta-objects and meta-patterns with corresponding nonterminals \synt{meta-type}, \synt{meta-object} and \synt{meta-pattern} for context-free parsing.
 Occurrences of \synt{meta-type}, \synt{meta-object} and \synt{meta-pattern} elsewhere in the grammar are replaced with \synt{meta-thing}.
-Likewise, the productions \synt{schema} and \synt{meta-context} are replaced with \synt{schema-object} and \synt{meta-context-object} respectively.
+Likewise, the nonterminals \synt{schema} and \synt{meta-context} are replaced with \synt{schema-object} and \synt{meta-context-object} respectively.
 Disambiguation of a meta-thing as presented below requires:
 \begin{itemize}
 \item complete scope information to resolve constants, and
@@ -776,7 +778,7 @@ Such context schema constants are disambiguated from the parsed context object.
 \subsection{Resolving Syntactic Ambiguities in Computations}
 
 The grammar for computation-level kinds and types from section~\ref{section:syntax-computations} is data-dependent because computational base and cobase type constants are syntactically indistinguishable from one another, and because the grammar relies on meta-level objects.
-This next grammar blurs together computational kinds and types with corresponding productions \synt{comp-kind} and \synt{comp-type} for context-free parsing.
+This next grammar blurs together computational kinds and types with corresponding nonterminals \synt{comp-kind} and \synt{comp-type} for context-free parsing.
 Occurrences of \synt{comp-kind} and \synt{comp-type} elsewhere in the grammar are replaced with \synt{comp-sort-object}.
 Disambiguation of a computational sort object as presented below requires:
 \begin{itemize}

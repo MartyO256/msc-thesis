@@ -29,7 +29,8 @@ Functionalities of typical interactive theorem provers range from \acp{REPL} all
 
 \Harpoon~\cite{errington2021harpoon} is a command-line frontend to \Beluga for proving theorems interactively.
 It provides a proof development workflow closer to proofs on paper, with built-in commands replicating proof techniques such as case analyses and appeals to induction hypotheses.
-The system then produces verbose yet simple tree-shaped proof scripts which can be translated into well-formed \Beluga programs.
+Additional administrative commands are supported to navigate through the history of input commands, and to checkout different holes in proofs declared elsewhere in \Beluga signatures.
+Upon closing interactive sessions, \Harpoon produces verbose yet simple tree-shaped proof scripts which can be translated into well-formed \Beluga programs.
 \Harpoon's design is largely inspired by \Coq's interactive proof mode using tactics~\cite{delahaye2000tactic} to solve unproven goals.
 Crucially, \Harpoon is a system integrated into \Beluga's core functionalities in such a way that the overall proof state does not have to be reconstructed from scratch on every command, which is akin to structural editing.
 
@@ -38,18 +39,22 @@ Crucially, \Harpoon is a system integrated into \Beluga's core functionalities i
 Structural (or projectional) editing in programming language tooling is the functionality of a software editor that allows the user to manipulate \acp{AST} directly.
 This is in contrast with plain text editors in which users may only edit textual representations of their programs, that then require parsing to be interpreted.
 The \textsc{Hazel}~\cite{omar2017hazelnut, omar2019live} functional programming environment is a notable example of a structural editor in the functional programming community for its ability to dynamically provide type information as the user writes programs with holes.
-As for theorem provers, the \textsc{CoqIDE} leverages the \textsc{Coq} \texttt{XML} protocol to interact with the proof system's kernel, much like is done with implementations of the language server protocol to provide advanced editing functionalities for programming languages.
+This is achieved using carefully designed semantics of moving a text-editing cursor in the concrete syntax and mapping it to the parsed \ac{AST}.
+When it comes to theorem provers, one example of structured editing is the \textsc{CoqIDE}, which leverages the \textsc{Coq} \texttt{XML} protocol to interact with the proof system's kernel by way of messages.
+This is not too dissimilar to what is done with implementations of the language server protocol to provide advanced editing functionalities for programming languages.
 
 % What are typical edit actions in programming languages?
 
 Structural editors define a set of edit actions the user may execute at any given point in their editing session.
-Typical edit actions include navigating the \ac{AST} being modified, as well as constructing new nodes using either a graphical interface or a textual language.
+Typical edit actions include navigating the \ac{AST} being modified, or constructing new nodes using either a graphical interface or a textual language.
 These actions are then reflected in the editor state in a predictable way, such that the edited program does not need to be re-parsed from scratch.
+Having a greater control over how a program is edited is also used to prevent or signal edit actions that can invalidate a program.
+This can be as simple as signalling type errors on-the-fly, or in the case of theorem provers, to reject unsound operations like invalid appeals to induction hypotheses.
 
 % What are edit actions required by Beluga and Harpoon?
 
-Although \Beluga's interactive mode and \Harpoon are \acp{REPL} as opposed to structural editors, they do share some functional requirements.
-Indeed, as in \textsc{Hazel} and \textsc{Coq}, users of \Beluga and \Harpoon postpone the completion of programs or proof scripts by inserting holes in them.
+Although \Beluga's interactive mode and \Harpoon are \acp{REPL} as opposed to full-fledged structural editors, they do share some functional requirements.
+Indeed, like in \textsc{Hazel} and \textsc{Coq}, users of \Beluga and \Harpoon postpone the completion of programs or proof scripts by inserting holes in them.
 These holes stand for missing expressions, and they are later filled in with the help of a proof assistant that provides typing information for the identifiers in scope for each hole.
 As such, both \acp{REPL} and structural editors are required to construct and update an editor state as the user performs edit actions.
 
@@ -85,44 +90,22 @@ This issue of locality in references has further been shown to deteriorate the p
 This thesis reports on improvements made to the implementation \Beluga and \Harpoon to address some of the soundness issues in interactive proof development in these two systems.
 Overall, the changes listed below have improved the maintainability, resiliency and stability of the affected modules.
 Better architectural software design patterns have been put in place, and these may be expanded upon in future iterations on the later phases of semantic analysis.
-The specific contributions of this thesis are:
+The specific contributions of this work are:
 \begin{enumerate}
 \item
 A complete and formal specification of \Beluga and \Harpoon's grammars for parsing.
-% TODO:
 \item
 A robust implementation of a context-free parser for \Beluga and \Harpoon, along with a new context-sensitive disambiguation phase to rectify and expand existing features.
 Most notably, the \Beluga feature of fixity pragmas for defining prefix, infix or postfix notations for \LF-level constants is reworked to also support computation-level constants.
-% TODO:
 \item
 A unified name resolution algorithm to improve the clarity of \Beluga programs, implement namespaces, and to support sound incremental proof development.
 This fixed the soundness issue for \Harpoon proof sessions whereby constants declared after a proof hole would be in scope and shadow earlier declarations.
-% TODO:
 \item
 Improved and context-aware pretty-printing algorithms for formatting \Beluga programs in external \ac{AST} representation, and for generating corresponding \textsc{HTML} pages.
-% TODO:
 \end{enumerate}
 
-% TODO: List research questions
-
-%\section{\Beluga and \Harpoon}
-
 % TODO: To justify the addition of modules (functioning only as namespaces), use an example of translation between two languages (deBruijn vs. HOAS for instance)
+
 % TODO: To justify the dynamic side of things, consider a query appearing in the middle of a signature. The logic engine is considering too large of a search space by including the constants appearing later in the signature.
+
 % TODO: To additionally justify the dynamic side of things, talk about structured proof editing in a dynamic environment like Harpoon, or Beluga's interactive mode.
-
-% TODO: Drop Harpoon, focus on tension between static and dynamic settings
-
-% What are dependent types? What is LF? What is Twelf? What proofs have been successfully mechanized in Twelf?
-
-% What is contextual modal type theory? Why do we want contextual modal type theory?
-
-% What is Beluga? What proofs have been successfully mechanized in Beluga?
-
-% What is Harpoon? What proofs have been successfully mechanized in Harpoon?
-
-% TODO:
-
-%\section{Structured Editing}
-
-% TODO:

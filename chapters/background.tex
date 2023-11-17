@@ -6,6 +6,11 @@ In \Beluga, theorems are encoded using contextual \LF, its index language, and p
 Logic propositions are represented as \LF type families with term-level constants parameterized by $\beta$-normal $\eta$-long \LF terms to construct witnesses for these propositions~\cite{nanevski2008contextual, foundation2008pientka, DBLP:journals/corr/abs-1009-2789}.
 To facilitate the implementation of semantic checkers, \LF terms are required to be encoded in normal form by the user.
 \Beluga extends \LF to support explicit contexts and substitutions, which enables mechanized reasoning with respect to assumptions, like in proofs on paper~\cite{pientka2010programming}.
+This means that terms containing free variables can be manipulated and reasoned about explicitly in \Beluga.
+
+A signature in \Beluga is the list of all the toplevel constant declarations in a mechanization.
+This includes the aforementioned \LF type-level and term-level constant declarations, but also includes inductive and coinductive type declarations at the computation-level, with their associated constructors and destructors respectively.
+A complete specification of signature-level declarations is provided in section~\ref{section:syntax-signature} as part of grammars for parsing.
 
 % TODO:
 
@@ -31,8 +36,8 @@ Contexts & $\Psi$ & $\Coloneqq$ & $\cdot \mid \psi \mid \Psi, x : A$\\
 \par\bigskip
 \begin{subfigure}{\linewidth}
 \begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
-Meta-types & $U$ & $\Coloneqq$ & $g \mid \Psi \vdash A \mid \Psi \vdash \Psi \mid \cdots$\\
-Meta-objects & $C$ & $\Coloneqq$ & $\Psi \mid \Psi \vdash M \mid \Psi \vdash \sigma \mid \cdots$
+Meta-types & $U$ & $\Coloneqq$ & $g \mid (\Psi \vdash A) \mid (\Psi \vdash \Psi) \mid \cdots$\\
+Meta-objects & $C$ & $\Coloneqq$ & $\Psi \mid (\Psi \vdash M) \mid (\Psi \vdash \sigma) \mid \cdots$
 \end{tabular}
 \caption{Internal syntax of \Beluga's meta level (excerpt).}
 \end{subfigure}
