@@ -15,6 +15,11 @@ A formalism of identifier resolution in \Beluga is presented to showcase how to 
 % TODO: See if Agda breaks with splicing
 % TODO: See if Coq has incremental development as well
 
+The \Abella\footnote{\Abella version \texttt{2.0.8}}~\cite{baelde2014abella} interactive theorem prover has limited support for structurally editing proofs.
+Indeed, it leverages a single global state comprised of mutable references with a snapshot mechanism to copy the entire state on every undoable command.
+%Performance concerns aside, this design cannot support 
+In its interactive mode, \Abella users are restricted to adding new declarations at the end of the session's state.
+
 % What are aspects of state management that are required to support incremental proof development?
 % In what way are state management and exception handling closely linked with respect to interactive proof sessions?
 
@@ -69,11 +74,9 @@ Without having types available at this stage of processing, the accidental featu
 % What is unified indexing?
 
 Unified indexing is the conversion from a named \ac{AST} to a nameless \ac{AST} in a single pass and using a single lookup structure for all identifier kinds.
-For \Beluga, this entails having a merged view of the lookup tables for constants and variables so as to uniformly know what identifiers are in scope at any given \ac{AST} node.
-In particular, variables identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were design to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together.
+For \Beluga, this requires having a merged view of the lookup tables for constants and variables so as to uniformly know what identifiers are in scope at any given \ac{AST} node.
+In particular, variables identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together.
 To approach this problem, some definitions are in order.
-
-% An important implementation challenge in re-implementing this phase of the pipeline was ensuring that the outcome of indexing is the same as it was with the legacy architecture.
 
 A fully qualified identifier is a list of plain identifiers separated by dots denoting projection.
 A referencing environment in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
@@ -219,15 +222,15 @@ Definition for the sets of identifiers in scope by scope kind.
 \Lookup{x}{\Env; \Module, \Public{x} : \Constant} &= (x : \Constant)\\
 \Lookup{x}{\Env; \Module, \Public{y} : \Constant} &= \Lookup{x}{\Env; \Module} & x \neq y\\
 \Lookup{x}{\Env; \Pattern, \private{x} : \Var} &= (x : \Var)\\
-\Lookup{x}{\Env; \Pattern, \private{y} : \Var} &= \Lookup{x}{\Env \setminus \Var(\Env); \Pattern} & x \neq y\\
-\Lookup{x}{\overrightarrow{\cdot}} &= \Fail\\
-\Lookup{x}{\overrightarrow{\Public{y} : \Constant}, x : \Constant} &= (x : \Constant)\\
-\Lookup{x}{\overrightarrow{\Public{x} : \Constant}, y : \Constant} &= \Lookup{x}{\overrightarrow{\Public{x} : \Constant}} & x \neq y\\
-\Lookup{x}{\Xi \setminus \Var(\Xi)} &= \begin{cases}
+\Lookup{x}{\Env; \Pattern, \private{y} : \Var} &= \Lookup{x}{\Env; \Pattern} & x \neq y\\
+\Lookup{x}{\Xi; \cdot_\Pattern} &= \begin{cases}
 (x : \Constant) & \Lookup{x}{\Xi} = (x : \Constant)\\
 \Fail & \Lookup{x}{\Xi} = (x : \Var)\\
 \Fail & \Lookup{x}{\Xi} = \Fail
-\end{cases}
+\end{cases}\\
+\Lookup{x}{\overrightarrow{\cdot}} &= \Fail\\
+\Lookup{x}{\overrightarrow{\Public{y} : \Constant}, x : \Constant} &= (x : \Constant)\\
+\Lookup{x}{\overrightarrow{\Public{x} : \Constant}, y : \Constant} &= \Lookup{x}{\overrightarrow{\Public{x} : \Constant}} & x \neq y
 \end{aligned}
 \end{equation*}
 \caption{%
@@ -260,6 +263,7 @@ Definition for looking up fully qualified identifiers in plain scopes.
 \end{equation*}
 \caption{%
 Definition for looking up fully qualified identifiers in module scopes.
+This amounts to simultaneously traversing the list of plain identifiers and the namespace structure in the referencing environment.
 }
 \end{subfigure}
 \par\bigskip
@@ -293,6 +297,7 @@ Definition for looking up fully qualified identifiers in pattern scopes.
 \end{equation*}
 \caption{%
 Definition of filtering to extract the \LF context from a referencing environment.
+The $\oplus$~operator denotes list concatenation.
 }
 \end{subfigure}
 \end{figure}
@@ -358,11 +363,11 @@ Variables in $\Psi'$ are annotated with the size of the \LF indexing context bef
 
 \section{Discussion}
 
-% TODO: Purpot that we can have a unification algorithm in a named setting if we compute de Bruijn indices on the fly
-
-% TODO: Purpot that this implementation is scalable to multi-modal logics and multi-level contextual modal logic
-
-Given \Beluga's design for signature-level declaration of constants, the indexing phase can be parallelized.
-This is because the body of a signature-level declaration is guaranteed not to export non-constant identifiers, which means that most of the \ac{AST} can be disregarded when we need to construct the referencing environment right before a signature-level declaration.
+From a programming language implementation standpoint, the revised indexing phase simplified the flow of information by decoupling it from the signature reconstruction store.
+This opens up multiple opportunities, including proper unit-testing of the referencing environment structure and indexing functions.
+Additionally, given \Beluga's design for signature-level declaration of constants, the indexing phase can be parallelized.
+This is because the body of a signature-level declaration is guaranteed not to export non-constant identifiers.
+This means that the referencing environment right before a signature-level can be constructed while disregarding most of the \ac{AST}.
 As such, the declarations in a signature can first be traversed to preallocate symbolic identifiers for toplevel constants and store them in a queue.
 Concurrent threads can then be assigned non-overlapping ranges of declarations to process, and the initial referencing environment for each can be constructed using only that queue.
+Should this isolation for signature-level declarations be extended to the later phases of processing, concurrently type-checking programs could improve \Beluga's performance.
