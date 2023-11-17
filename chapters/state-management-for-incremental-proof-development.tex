@@ -23,7 +23,7 @@ In its interactive mode, \Abella users are restricted to adding new declarations
 % What are aspects of state management that are required to support incremental proof development?
 % In what way are state management and exception handling closely linked with respect to interactive proof sessions?
 
-% TODO:
+% TODO: Talk about trailing, snapshot mechanisms, soundness preservation, ...
 
 \section{The Legacy Indexing Phase}
 
@@ -313,6 +313,49 @@ The $\oplus$~operator denotes list concatenation.
 Formal definition of referencing environments for \Beluga, modelled as association lists (cont.).
 }
 \end{figure}
+
+% TODO: Continue, and explain
+
+\newcommand{\Translates}{\rightsquigarrow}
+\begin{equation}
+\infer{\Xi \vdash x \Translates_M i \dashv \Xi}{\Lookup{x}{\Xi} = (x : \mathsf{LF}_{\mathsf{term}}) & \operatorname{index}_{\Psi(\Xi)}(x) = i}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash \lambda x. M \Translates_M \lambda\ M' \dashv \Xi
+}{\Xi, x : \mathsf{LF}_{\mathsf{term}} \vdash M \Translates_M M' \dashv \Xi, x : \mathsf{LF}_{\mathsf{term}}}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi; \Pattern \vdash u \Translates_{Mp} u \dashv \Xi; \Pattern, u_{\downarrow\uparrow} : \mathsf{Meta}_{\mathsf{object}}}{\Lookup{u}{\Xi; \Pattern} = \Fail}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi; \Pattern \vdash u \Translates_{Mp} u \dashv \Xi; \Pattern}{\Lookup{u}{\Xi; \Pattern} = (u : \mathsf{Meta}_{\mathsf{object}})}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi; \Pattern \vdash x \Translates_p x \dashv \Xi; \Pattern, \public{x} : \mathsf{Comp}_{\mathsf{term}}}{\Lookup{x}{\Xi; \Pattern} = \Fail}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Xi; \Pattern \vdash [x1, x2, \dots, xn \vdash M_p] \Translates_p [x1, x2, \dots, xn \vdash M_p'] \dashv \Xi; \Pattern'
+}{
+	\Xi; \Pattern, \private{x1}, \private{x2}, \dots, \private{xn} \vdash M_p \Translates_{Mp} M_p' \dashv \Xi; \Pattern'
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Xi \vdash \mathbf{case}\ i\ \mathbf{of}\ \{p_k \Rightarrow e_k\}_k \Translates_e \mathbf{case}\ i'\ \mathbf{of}\ \{p_k' \Rightarrow e_k'\}_k \dashv \Xi
+}{
+	\Xi \vdash i \Translates_e i' \dashv \Xi &
+	\Xi; \cdot_\Pattern \vdash p_k \Translates_p p_k' \dashv \Xi; \Pattern_k &
+	\Pattern_k \mapsto \Scope_k &
+	\Xi; \Scope_k \vdash e_k \Translates_e e_k' \dashv \Xi
+}
+\end{equation}
 
 \pagebreak
 
