@@ -658,7 +658,7 @@ This next grammar blurs together \LF kinds, types and terms with corresponding n
 Occurrences of \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} elsewhere in the grammar are replaced with \synt{lf-object}.
 Disambiguation of an \LF object as presented below requires:
 \begin{itemize}
-\item complete scope information to resolve constants, and
+\item a referencing environment to resolve constants and variables, and
 \item a target sort for the elaboration (i.e. knowing beforehand whether the \LF object should be a kind, type or term).
 \end{itemize}
 
@@ -695,7 +695,7 @@ Occurrences of \synt{clf-type}, \synt{clf-term} and \synt{clf-pattern} elsewhere
 Likewise, the nonterminals \synt{clf-substitution}, \synt{clf-substitution-pattern}, \synt{clf-context} and \synt{clf-context-pattern} are blurred together as \synt{clf-context-object}.
 Disambiguation of a contextual \LF object as presented below requires:
 \begin{itemize}
-\item complete scope information to resolve constants, and
+\item a referencing environment to resolve constants and variables, and
 \item a target sort for the elaboration (i.e. knowing beforehand whether the contextual \LF object should be a type, term or pattern).
 \end{itemize}
 Additionally, contextual \LF contexts starting with an untyped identifier are always disambiguated as having a context variable in head position.
@@ -747,7 +747,7 @@ Occurrences of \synt{meta-type}, \synt{meta-object} and \synt{meta-pattern} else
 Likewise, the nonterminals \synt{schema} and \synt{meta-context} are replaced with \synt{schema-object} and \synt{meta-context-object} respectively.
 Disambiguation of a meta-thing as presented below requires:
 \begin{itemize}
-\item complete scope information to resolve constants, and
+\item a referencing environment to resolve constants and variables, and
 \item a target sort for the elaboration (i.e. knowing beforehand whether the meta-thing should be a meta-type, meta-object or pattern).
 \end{itemize}
 
@@ -782,7 +782,7 @@ This next grammar blurs together computational kinds and types with correspondin
 Occurrences of \synt{comp-kind} and \synt{comp-type} elsewhere in the grammar are replaced with \synt{comp-sort-object}.
 Disambiguation of a computational sort object as presented below requires:
 \begin{itemize}
-\item complete scope information to resolve constants, and
+\item a referencing environment to resolve constants and variables, and
 \item a target sort for the elaboration (i.e. knowing beforehand whether the computation-level sort object should be a kind or a type).
 \end{itemize}
 

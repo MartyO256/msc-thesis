@@ -78,12 +78,13 @@ For \Beluga, this requires having a merged view of the lookup tables for constan
 In particular, variables identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together.
 To approach this problem, some definitions are in order.
 
-A fully qualified identifier is a list of plain identifiers separated by dots denoting projection.
+A fully qualified identifier $x_1.x_2.\cdots.x_n$ is a list of plain identifiers $x_1$, $x_2$, $\dots$, $x_n$ separated by dots denoting projection.
 A referencing environment in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
+Referencing environments provide restricted views over signatures for name resolution.
 The unified indexing phase is designed as a single sequential traversal of the external \ac{AST} to map it to the approximate \ac{AST}, using the referencing environment as visitor state.
 As \ac{AST} nodes are traversed, the referencing environment is updated by adding or removing identifiers in scope so that the resolution of identifiers is consistent with the language's specification.
 This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across different indexing contexts ($\Psi$, $\Delta$ and $\Gamma$).
-This includes name resolution under pattern lambda-expressions in contextual \LF patterns, and distinguishing between pattern variables and bound identifiers.
+This includes name resolution under lambda-expressions and contexts in contextual \LF patterns, as well as distinguishing between pattern variables and bound identifiers.
 All the while, indexing has to feature backtracking mechanisms to support incremental proof development in \Harpoon sessions.
 In the disambiguation phase, where a similar mapping occurs from the parser \ac{AST} to the external \ac{AST}, the visitor state has to additionally keep track of user-defined notations.
 
@@ -94,9 +95,8 @@ Since \Beluga supports defining constants in modules and pattern-matching, we di
 Plain scopes are suitable for introducing multiple identifiers in such a way that they can be efficiently removed by discarding the scope entirely.
 \item
 \textit{Module scopes}: constants added to this kind of scope are either private or public.
-Private constant declarations refer to constants that are not exported from the module when it is opened.
+Only public constant declarations are exported from the module they appear in when it is opened, in which case they are brought in scope.
 This ensures that constants and notations imported from external modules are not re-exported when the module is opened elsewhere.
-Public constant declarations on the other hand are brought in scope when the module is opened.
 \item
 \textit{Pattern scopes}: variables added to this kind of scope are inner pattern-bound or pattern variables.
 Inner pattern-bound variables are introduced by binders in the pattern.
@@ -104,11 +104,11 @@ Pattern variables on the other hand are free variables in the pattern, which bec
 Because of automated reconstruction of meta-level abstractions in \Beluga, free meta-variables in patterns are both inner pattern-bound and pattern variables.
 \end{enumerate}
 
-The next subsections present two different ways of realising a referencing environment for \Beluga that supports unified indexing.
-The first definition is suitable for mechanized proofs, whereas the second is used in the implementation as it is computationally more efficient.
+The next subsections present two different ways of realising a referencing environment for \Beluga to support unified indexing.
+The first definition (section~\ref{section:formalising-unified-indexing}) is suitable for mechanized proofs, whereas the second (section~\ref{section:implementing-unified-indexing}) is used in the implementation as it is computationally more efficient.
 Both are presented here for the sake of completeness.
 
-\begin{figure}[htb]
+\begin{figure}[H]
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1, numbers=left]
 \verbbf{module} Nat = \verbbf{struct}
   \verbbf{LF} nat : \verbbf{type} =
@@ -128,19 +128,6 @@ Example of a \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verb
 
 \subsection{Formalising Unified Indexing}\label{section:formalising-unified-indexing}
 
-In the theory, a referencing environment is an association list with delimiters for scopes.
-Each entry in the list may itself point to a separate association list to support namespacing.
-Shadowing is also supported since those association lists can function as stacks.
-Lookups in this environment proceed by simultaneously traversing the fully qualified identifier and the association list.
-
-% TODO: Illustrate this structure
-
-% TODO: Introduce modules and patterns in two separate paragraphs
-
-% TODO:
-
-% TODO: Present a model for mechanizing name resolution semantic analysis, using an association list, context sizes and binding sorts (bindings tagged with their domains)
-
 \newcommand{\private}[1]{#1_\downarrow}
 \newcommand{\public}[1]{#1_\uparrow}
 \newcommand{\Private}[1]{#1_\Downarrow}
@@ -152,6 +139,22 @@ Lookups in this environment proceed by simultaneously traversing the fully quali
 \newcommand{\Entry}{\mathbb{E}}
 \newcommand{\Var}{\mathbb{V}}
 \newcommand{\Constant}{\mathbb{C}}
+
+In the theory, a referencing environment is an association list with delimiters for scopes.
+Each entry in the list may itself point to a separate association list to support namespacing.
+Lookups in this environment proceed by simultaneously traversing the fully qualified identifier and the association list.
+Shadowing is supported by the association lists since they are maintained in insertion order, and hence function as stacks.
+
+Referencing environments in \Beluga are formally specified in figure~\ref{figure:referencing-environment-definition}.
+Identifiers denoted as $\Private{x}$ and $\Public{x}$ in a module scope denote private declarations and public declarations respectively.
+Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern scope denote inner pattern-bound variables and pattern variables respectively.
+When a variable in a pattern scope is both inner pattern-bound and a pattern variable, then it is denoted as $x_{\downarrow\uparrow}$.
+We use the notation $\cdot_\Scope$, $\cdot_\Module$ and $\cdot_\Pattern$ to denote empty plain, module and pattern scopes respectively when the distinction is important.
+Similarly, we enclose declarations from a scope in delimiters $\left[\cdot\right]_\Scope$, $\left[\cdot\right]_\Module$ and $\left[\cdot\right]_\Pattern$ in examples such as figure~\ref{figure:example-reference-environment-formalism}.
+
+% TODO: Present lookup and its quirks for patterns and namespaces
+% TODO: Define pop
+% TODO: Define filtering for de Bruijn index computation
 
 \begin{figure}[htb]
 \centering
@@ -167,8 +170,6 @@ Variable & $ \Var $ & $ \Coloneqq $ & $ \mathsf{LF}_{\mathsf{term}} \mid \mathsf
 \caption[Definition of referencing environments for indexing \Beluga signatures]{%
 Definition of the structure of referencing environments for indexing \Beluga signatures.
 Some variants for constants and variables have been omitted for brevity.
-Identifiers denoted as $\Private{x}$ and $\Public{x}$ in a module scope denote private declarations and public declarations respectively.
-Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern scope denote inner-pattern variables and pattern variables respectively.
 }
 \label{figure:referencing-environment-definition}
 \end{figure}
@@ -183,7 +184,7 @@ Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern sco
 \end{equation*}
 \caption[Example referencing environments in the formalism]{%
 Example referencing environments $\Xi_{\texttt{\verbhole{?h1}}}$, $\Xi_{\texttt{\verbhole{?h2}}}$ and $\Xi_{\texttt{\verbhole{?h3}}}$ for the holes $\texttt{\verbhole{?h1}}$, $\texttt{\verbhole{?h2}}$ and $\texttt{\verbhole{?h3}}$ in figure~\ref{figure:referencing-environment-example} using the formal definitions of figure~\ref{figure:referencing-environment-definition}, showcasing the semantics of opening a module.
-Some annotations are omitted for brevity.
+Some annotations to the bindings are omitted for brevity.
 }
 \label{figure:example-reference-environment-formalism}
 \end{figure}
@@ -249,10 +250,11 @@ Formal definition of referencing environments for \Beluga, modelled as associati
 \begin{figure}\ContinuedFloat
 \begin{subfigure}{\linewidth}
 \begin{equation*}
-\begin{aligned}
-\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Scope} &= \Lookup{x_1.x_2.\cdots.x_n}{\Env} & x_1 \notin \Domain(\Scope)\\
-\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Scope} &= \Fail & x_1 \in \Domain(\Scope)
-\end{aligned}
+\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Scope} =
+\begin{cases}
+\Lookup{x_1.x_2.\cdots.x_n}{\Env} & x_1 \notin \Domain(\Scope)\\
+\Fail & x_1 \in \Domain(\Scope)
+\end{cases}
 \end{equation*}
 \caption{%
 Definition for looking up fully qualified identifiers in plain scopes.
@@ -275,10 +277,11 @@ This amounts to simultaneously traversing the list of plain identifiers and the 
 \par\bigskip
 \begin{subfigure}{\linewidth}
 \begin{equation*}
-\begin{aligned}
-\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Pattern} &= \Lookup{x_1.x_2.\cdots.x_n}{\Env} & x_1 \notin \Domain(\Pattern)\\
-\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Pattern} &= \Fail & x_1 \in \Domain(\Scope)
-\end{aligned}
+\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Pattern} =
+\begin{cases}
+\Lookup{x_1.x_2.\cdots.x_n}{\Env} & x_1 \notin \Domain(\Pattern)\\
+\Fail & x_1 \in \Domain(\Pattern)
+\end{cases}
 \end{equation*}
 \caption{%
 Definition for looking up fully qualified identifiers in pattern scopes.
@@ -305,7 +308,7 @@ Formal definition of referencing environments for \Beluga, modelled as associati
 \end{aligned}
 \end{equation*}
 \caption{%
-Definition of filtering to extract the \LF context from a referencing environment.
+Definition of filtering a referencing environment to extract the \LF context.
 The $\oplus$~operator denotes list concatenation.
 }
 \end{subfigure}
@@ -314,17 +317,42 @@ Formal definition of referencing environments for \Beluga, modelled as associati
 }
 \end{figure}
 
+\newcommand{\Translates}{\rightsquigarrow}
+
+Using the definition for referencing environments in \Beluga, the indexing phase is defined as a set of translations functions.
+These are of the form $\Xi \vdash e \Translates_{s} e' \dashv \Xi'$ to represent the state monad, with $\Xi$ and $\Xi'$ being the input and output referencing environments respectively, and $e$ and $e'$ being the input and output term.
+The translation $\Translates_{s}$ is split following the semantic classes of figure~\ref{figure:internal-syntax}, with $s$ being one of $K, A, M, U, C, \kappa, \tau, e$ and $i$, with the addition of $Mp, Cp$ and $p$ for \LF patterns, meta-object patterns and computation-level patterns respectively.
+
 % TODO: Continue, and explain
 
-\newcommand{\Translates}{\rightsquigarrow}
+\newcommand{\Pop}[2]{\operatorname{pop}\left[#1\right]\left(#2\right)}
 \begin{equation}
-\infer{\Xi \vdash x \Translates_M i \dashv \Xi}{\Lookup{x}{\Xi} = (x : \mathsf{LF}_{\mathsf{term}}) & \operatorname{index}_{\Psi(\Xi)}(x) = i}
+\infer{\Xi \vdash x \Translates_M \iota \dashv \Xi}{\Lookup{x}{\Xi} = (x : \mathsf{LF}_{\mathsf{term}}) & \operatorname{index}_{\Psi(\Xi)}(x) = \iota}
 \end{equation}
 
 \begin{equation}
-\infer{\Xi \vdash \lambda x. M \Translates_M \lambda\ M' \dashv \Xi
-}{\Xi, x : \mathsf{LF}_{\mathsf{term}} \vdash M \Translates_M M' \dashv \Xi, x : \mathsf{LF}_{\mathsf{term}}}
+\infer{\Xi \vdash \lambda x. M \Translates_M \lambda\ M' \dashv \Pop{x}{\Xi'}
+}{\Xi, x : \mathsf{LF}_{\mathsf{term}} \vdash M \Translates_M M' \dashv \Xi'}
 \end{equation}
+
+\begin{equation}
+\infer{\Xi \vdash M\ N_1\ N_2\ \dots\ N_n \Translates_M \dashv M'\ N_1'\ N_2'\ \dots\ N_n' \dashv \Xi_n}{\Xi \vdash M \Translates_M M' \dashv \Xi_0 & (\Xi_{k - 1} \vdash N_k \Translates_M N_k' \dashv \Xi_k)_{1 \leq k \leq n}}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Xi \vdash [x_1, x_2, \dots, x_n \vdash M] \Translates_C [x_1, x_2, \dots, x_n \vdash M'] \dashv \Pop{x_1, x_2, \dots, x_n}{\Xi'}
+}{
+	\Xi; x_1, x_2, \dots, x_n \vdash M \Translates_M M' \dashv \Xi'
+}
+\end{equation}
+
+
+\begin{equation}
+\infer{\Xi; \Pattern \vdash x \Translates_p x \dashv \Xi; \Pattern, \public{x} : \mathsf{Comp}_{\mathsf{term}}}{\Lookup{x}{\Xi; \Pattern} = \Fail}
+\end{equation}
+
+
 
 \begin{equation}
 \infer{\Xi; \Pattern \vdash u \Translates_{Mp} u \dashv \Xi; \Pattern, u_{\downarrow\uparrow} : \mathsf{Meta}_{\mathsf{object}}}{\Lookup{u}{\Xi; \Pattern} = \Fail}
@@ -335,39 +363,50 @@ Formal definition of referencing environments for \Beluga, modelled as associati
 \end{equation}
 
 \begin{equation}
-\infer{\Xi; \Pattern \vdash x \Translates_p x \dashv \Xi; \Pattern, \public{x} : \mathsf{Comp}_{\mathsf{term}}}{\Lookup{x}{\Xi; \Pattern} = \Fail}
+\infer{\Xi; \Pattern \vdash x \Translates_{Mp} \iota \dashv \Xi; \Pattern}{\Lookup{x}{\Xi; \Pattern} = (x : \mathsf{LF}_{\mathsf{term}}) & \operatorname{index}_{\Psi(\Xi; \Pattern)}(x) = \iota}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi; \Pattern \vdash \lambda x. M \Translates_{Mp} \lambda\ M' \dashv \Pop{x}{\Xi; \Pattern'}}{\Xi; \Pattern, \private{x} : \mathsf{LF}_{\mathsf{term}} \vdash M \Translates_{Mp} M' \dashv \Xi; \Pattern'}
+\end{equation}
+
+\begin{equation}
+\infer{\Xi; \Pattern \vdash M\ N_1\ N_2\ \dots\ N_n \Translates_{Mp} \dashv M'\ N_1'\ N_2'\ \dots\ N_n' \dashv \Xi; \Pattern_n}{\Xi; \Pattern \vdash M \Translates_{Mp} M' \dashv \Xi; \Pattern_0 & (\Xi; \Pattern_{k - 1} \vdash N_k \Translates_{Mp} N_k' \dashv \Xi; \Pattern_k)_{1 \leq k \leq n}}
 \end{equation}
 
 \begin{equation}
 \infer{
-	\Xi; \Pattern \vdash [x1, x2, \dots, xn \vdash M_p] \Translates_p [x1, x2, \dots, xn \vdash M_p'] \dashv \Xi; \Pattern'
+	\Xi; \Pattern \vdash [x_1, x_2, \dots, x_n \vdash M_p] \Translates_{Cp} [x_1, x_2, \dots, x_n \vdash M_p'] \dashv \Pop{x_1, x_2, \dots, x_n}{\Xi; \Pattern'}
 }{
-	\Xi; \Pattern, \private{x1}, \private{x2}, \dots, \private{xn} \vdash M_p \Translates_{Mp} M_p' \dashv \Xi; \Pattern'
+	\Xi; \Pattern, x_{1\downarrow}, x_{2\downarrow}, \dots, x_{n\downarrow} \vdash M_p \Translates_{Mp} M_p' \dashv \Xi; \Pattern'
 }
 \end{equation}
 
+
+
 \begin{equation}
 \infer{
-	\Xi \vdash \mathbf{case}\ i\ \mathbf{of}\ \{p_k \Rightarrow e_k\}_k \Translates_e \mathbf{case}\ i'\ \mathbf{of}\ \{p_k' \Rightarrow e_k'\}_k \dashv \Xi
+	\Xi \vdash \mathbf{case}\ i\ \mathbf{of}\ \{p_k \Rightarrow e_k\}_{0\leq k \leq n} \Translates_e \mathbf{case}\ i'\ \mathbf{of}\ \{p_k' \Rightarrow e_k'\}_{0\leq k \leq n} \dashv \Xi
 }{
-	\Xi \vdash i \Translates_e i' \dashv \Xi &
-	\Xi; \cdot_\Pattern \vdash p_k \Translates_p p_k' \dashv \Xi; \Pattern_k &
+	\Xi \vdash i \Translates_i i' \dashv \Xi &
+	(\Xi; \cdot_\Pattern \vdash p_k \Translates_p p_k' \dashv \Xi; \Pattern_k &
 	\Pattern_k \mapsto \Scope_k &
-	\Xi; \Scope_k \vdash e_k \Translates_e e_k' \dashv \Xi
+	\Xi; \Scope_k \vdash e_k \Translates_e e_k' \dashv \Xi)_{0\leq k \leq n}
 }
 \end{equation}
 
 \pagebreak
 
-\subsection{Implementing Unified Indexing}
+\subsection{Implementing Unified Indexing}\label{section:implementing-unified-indexing}
 
 In the implementation, a referencing environment is a stack of scopes.
 Each scope holds a tree of bindings, where each node is a stack of entries.
-Concretely, this tree is supported by dictionaries associating identifiers to stacks of entries, each of which may optionally point to a subtree of bindings.
-An example of this structure is illustrated in figure~\ref{figure:referencing-environment-implementation}.
+This tree is supported by dictionaries associating identifiers to stacks of entries, each of which may optionally point to a subtree of bindings.
+This means that the order of insertions is not readily available in this data structure.
+Figure~\ref{figure:referencing-environment-implementation} provides an example of such a referencing environment.
 
 A lookup for the definition bound to a fully qualified identifier in a referencing environment searches for the topmost scope whose tree of bindings contains the leading identifier in the fully qualified identifier.
-Once that scope is found, then its tree of bindings is traversed following the list of identifiers that forms the fully qualified identifier.
+Once that scope is found, then its tree of bindings is traversed following the rest of the list of identifiers that forms the fully qualified identifier.
 The topmost entry in the stack associated with the trailing identifier is the one that's returned.
 If the traversal of the stack of scopes fails or if no node in the tree of bindings can be found to match the fully qualified identifier, then the lookup fails.
 The stack structures at the level of scopes and entries allow for identifier shadowing.
@@ -391,9 +430,10 @@ This is also replicated during pretty-printing to recover a textual representati
 Pretty-printing to \texttt{HTML} further assigns IDs to constants so that references to them can be printed as hyperlinks.
 
 For indexing, data is required in the referencing environment to compute valid de Bruijn indices when variables are looked up.
-Traversing of the dictionaries and stacks in order of addition like is done in the formalism of section~\ref{section:formalising-unified-indexing} to count up to the correct de Bruijn index defeats the purpose of using dictionaries to speed up lookups.
-Instead, as variables are added to the referencing environment, they are annotated with the previous size of their indexing context.
+Counting up to the correct de Bruijn index by traversing the dictionaries and stacks in order of addition like is done in the formalism of section~\ref{section:formalising-unified-indexing} defeats the purpose of using dictionaries to speed up lookups.
+Instead, as variables are added to the referencing environment, they are annotated with the size of the corresponding indexing context that immediately precedes their addition.
 This is achieved using a separate counter that keeps track of the indexing context size.
+These annotations effectively indicate the order of insertion into the indexing context.
 The de Bruijn index for a variable can then later be recovered simply by subtracting the current indexing context size with the size that was recorded at the binder for that variable.
 In other words, as illustrated in figure~\ref{figure:lf-indexing}, if $\Psi'$ is an indexing context with $x \in \operatorname{domain}(\Psi')$, and $\Psi$ is the indexing context immediately before that $x$ was added, then $|\Psi'| > |\Psi|$ and the de Bruijn index of $x$ with respect to $\Psi'$ is
 \begin{equation*}
