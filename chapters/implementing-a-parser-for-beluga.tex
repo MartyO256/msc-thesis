@@ -1,5 +1,12 @@
 \chapter{Implementing a Parser for \Beluga}
 
+\newcommand{\prefix}{\mathsf{op}_{\text{prefix}}}
+\newcommand{\infix}{\mathsf{op}_{\text{infix}}}
+\newcommand{\infixl}{\mathsf{op}_{\text{infix}}^L}
+\newcommand{\infixr}{\mathsf{op}_{\text{infix}}^R}
+\newcommand{\infixn}{\mathsf{op}_{\text{infix}}^N}
+\newcommand{\postfix}{\mathsf{op}_{\text{postfix}}}
+
 This chapter presents an overview of parsing and explains the motivation behind the contributions made to \Beluga's and \Harpoon's parsing algorithms.
 Some aspects of context-sensitive disambiguation of \acp{AST} are showcased, including grammars for parsing user-defined prefix, infix and postfix operators.
 
@@ -410,12 +417,6 @@ As illustrated in figure~\ref{figure:user-defined-operators-grammar}, the key ta
 Those three categories of operators cannot mix at the same precedence level without introducing an unresolvable ambiguity.
 As such, the recursive descent parselet for $\rightarrow$ and $\leftarrow$ operators only allows one or the other operator to appear.
 
-{\newcommand{\prefix}{\mathsf{op}_{\text{prefix}}}
-\newcommand{\infix}{\mathsf{op}_{\text{infix}}}
-\newcommand{\infixl}{\mathsf{op}_{\text{infix}}^L}
-\newcommand{\infixr}{\mathsf{op}_{\text{infix}}^R}
-\newcommand{\infixn}{\mathsf{op}_{\text{infix}}^N}
-\newcommand{\postfix}{\mathsf{op}_{\text{postfix}}}
 \begin{figure}[H]
 \begin{subfigure}{\linewidth}
 \centering
@@ -476,7 +477,7 @@ $ \angled{e}_{P + 1} $ & $ \Coloneqq $ & $ \mathbf{a}+ $
 \label{figure:user-defined-operators-final-grammar-scheme}
 \end{subfigure}
 \caption[]{Grammars for parsing user-defined operators in \Beluga (cont.).}
-\end{figure}}
+\end{figure}
 
 \section{Discussion}
 

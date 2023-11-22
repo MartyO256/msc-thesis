@@ -1,17 +1,44 @@
 \chapter{State Management for Incremental Proof Development}
 
+\newcommand{\private}[1]{#1_\downarrow}
+\newcommand{\public}[1]{#1_\uparrow}
+\newcommand{\Private}[1]{#1_\Downarrow}
+\newcommand{\Public}[1]{#1_\Uparrow}
+\newcommand{\Env}{\Xi}
+\newcommand{\Scope}{\mathbb{S}}
+\newcommand{\Module}{\mathbb{M}}
+\newcommand{\Pattern}{\mathbb{P}}
+\newcommand{\Entry}{\mathbb{E}}
+\newcommand{\Var}{\mathbb{V}}
+\newcommand{\Constant}{\mathbb{C}}
+\newcommand{\Fail}{\lightning}
+\newcommand{\Lookup}[2]{\operatorname{lookup}\left[#1\right]\left(#2\right)}
+\newcommand{\Domain}{\operatorname{domain}}
+\newcommand{\Pop}[2]{\operatorname{pop}\left[#1\right]\left(#2\right)}
+\newcommand{\Translates}{\rightsquigarrow}
+
 This chapter presents implementation concerns with supporting incremental program development in \Beluga and \Harpoon.
 Some technical debt in those systems is highlighted to justify the reimplementation of the indexing phase.
-A formalism of identifier resolution in \Beluga is presented to showcase how to efficiently and correctly support de Bruijn indices with multiple indexing contexts.
+A formalism and an implementation of identifier resolution in \Beluga are presented to showcase how to efficiently and correctly support de Bruijn indices with multiple indexing contexts.
 
 \section{Introduction}
 
 % What are the features desired for Harpoon and Beluga?
 % Why do those features help in incremental proof development?
 
+As an interactive frontend for \Beluga, the \Harpoon system is designed such that each of its supported commands is guaranteed to be sound with respect to the rest of the signature.
+%This includes, among other things, ensuring that input terms are well-typed, 
+Chiefly, \Harpoon's administrative commands must work as intended in any valid order of execution so as to ensure that user's work does not get lost.
+% Undo, redo, translate, select...
+
+%The structural editing functionalities of \Harpoon allow end users to develop 
+%\Harpoon proof scripts are translated into \Beluga programs 
+%In order to preserve soundness of \Harpoon proof sessions with respect to 
+
+% TODO:
+
 % How do other systems supporting interactive proof sessions handle state management?
 
-% TODO: Does Abella support incremental development?
 % TODO: See if Agda breaks with splicing
 % TODO: See if Coq has incremental development as well
 
@@ -128,18 +155,6 @@ Example of a \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verb
 
 \subsection{Formalising Unified Indexing}\label{section:formalising-unified-indexing}
 
-\newcommand{\private}[1]{#1_\downarrow}
-\newcommand{\public}[1]{#1_\uparrow}
-\newcommand{\Private}[1]{#1_\Downarrow}
-\newcommand{\Public}[1]{#1_\Uparrow}
-\newcommand{\Env}{\Xi}
-\newcommand{\Scope}{\mathbb{S}}
-\newcommand{\Module}{\mathbb{M}}
-\newcommand{\Pattern}{\mathbb{P}}
-\newcommand{\Entry}{\mathbb{E}}
-\newcommand{\Var}{\mathbb{V}}
-\newcommand{\Constant}{\mathbb{C}}
-
 In the theory, a referencing environment is an association list with delimiters for scopes.
 Each entry in the list may itself point to a separate association list to support namespacing.
 Lookups in this environment proceed by simultaneously traversing the fully qualified identifier and the association list.
@@ -149,12 +164,8 @@ Referencing environments in \Beluga are formally specified in figure~\ref{figure
 Identifiers denoted as $\Private{x}$ and $\Public{x}$ in a module scope denote private declarations and public declarations respectively.
 Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern scope denote inner pattern-bound variables and pattern variables respectively.
 When a variable in a pattern scope is both inner pattern-bound and a pattern variable, then it is denoted as $x_{\downarrow\uparrow}$.
-We use the notation $\cdot_\Scope$, $\cdot_\Module$ and $\cdot_\Pattern$ to denote empty plain, module and pattern scopes respectively when the distinction is important.
-Similarly, we enclose declarations from a scope in delimiters $\left[\cdot\right]_\Scope$, $\left[\cdot\right]_\Module$ and $\left[\cdot\right]_\Pattern$ in examples such as figure~\ref{figure:example-reference-environment-formalism}.
-
-% TODO: Present lookup and its quirks for patterns and namespaces
-% TODO: Define pop
-% TODO: Define filtering for de Bruijn index computation
+The notation $\cdot_\Scope$, $\cdot_\Module$ and $\cdot_\Pattern$ is used to denote empty plain, module and pattern scopes respectively when the distinction is important.
+Similarly, declarations from a scope are enclosed in delimiters $\left[\cdot\right]_\Scope$, $\left[\cdot\right]_\Module$ and $\left[\cdot\right]_\Pattern$ in examples such as figure~\ref{figure:example-reference-environment-formalism}.
 
 \begin{figure}[htb]
 \centering
@@ -189,38 +200,19 @@ Some annotations to the bindings are omitted for brevity.
 \label{figure:example-reference-environment-formalism}
 \end{figure}
 
-\newcommand{\Fail}{\lightning}
-\newcommand{\Lookup}[2]{\operatorname{lookup}\left[#1\right]\left(#2\right)}
-\newcommand{\Domain}{\operatorname{domain}}
-\begin{figure}[H]
-\begin{subfigure}{\linewidth}
-\begin{equation*}
-\begin{aligned}
-\Domain(\cdot) &= \{\}\\
-\Domain(\Scope, x : \Var) &= \{x\} \cup \Domain(\Scope)\\
-\Domain(\Module, \Private{x} : \Var) &= \{x\} \cup \Domain(\Module)\\
-\Domain(\Module, \Public{x} : \Var) &= \{x\} \cup \Domain(\Module)\\
-\Domain(\Pattern, \private{x} : \Var) &= \{x\} \cup \Domain(\Pattern)\\
-\Domain(\Pattern, \public{x} : \Var) &= \Domain(\Pattern)
-\end{aligned}
-\end{equation*}
-\caption{%
-Definition for the sets of identifiers in scope by scope kind.
-}
-\end{subfigure}
-\caption[Formal definition of referencing environments for \Beluga]{%
-Formal definition of referencing environments for \Beluga, modelled as association lists.
-}
-\end{figure}
+% TODO: Present lookup and its quirks for patterns and namespaces
+% TODO: Define pop
+% TODO: Define filtering for de Bruijn index computation
 
-\begin{figure}\ContinuedFloat
+\begin{figure}[htb]
 \begin{subfigure}{\linewidth}
 \begin{equation*}
 \begin{aligned}
 \Lookup{x}{\cdot} &= \Fail\\
-\Lookup{x}{\Env; \cdot} &= \Lookup{x}{\Env}\\
+\Lookup{x}{\Env; \cdot_\Scope} &= \Lookup{x}{\Env}\\
 \Lookup{x}{\Env; \Scope, x : \Var} &= (x : \Var)\\
 \Lookup{x}{\Env; \Scope, y : \Var} &= \Lookup{x}{\Env; \Scope} & x \neq y\\
+\Lookup{x}{\Env; \cdot_\Module} &= \Lookup{x}{\Env}\\
 \Lookup{x}{\Env; \Module, \Private{x} : \Constant} &= (x : \Constant)\\
 \Lookup{x}{\Env; \Module, \Private{y} : \Constant} &= \Lookup{x}{\Env; \Module} & x \neq y\\
 \Lookup{x}{\Env; \Module, \Public{x} : \Constant} &= (x : \Constant)\\
@@ -245,6 +237,7 @@ When the topmost scope is a pattern scope, looking up a variable fails if it is 
 \caption[]{%
 Formal definition of referencing environments for \Beluga, modelled as association lists (cont.).
 }
+\label{figure:definition-lookup-formal}
 \end{figure}
 
 \begin{figure}\ContinuedFloat
@@ -252,8 +245,8 @@ Formal definition of referencing environments for \Beluga, modelled as associati
 \begin{equation*}
 \Lookup{x_1.x_2.\cdots.x_n}{\Env; \Scope} =
 \begin{cases}
-\Lookup{x_1.x_2.\cdots.x_n}{\Env} & x_1 \notin \Domain(\Scope)\\
-\Fail & x_1 \in \Domain(\Scope)
+\Lookup{x_1.x_2.\cdots.x_n}{\Env} & \Lookup{x_1}{\Scope} = \Fail\\
+\Fail & \Lookup{x_1}{\Scope} \neq \Fail
 \end{cases}
 \end{equation*}
 \caption{%
@@ -279,8 +272,8 @@ This amounts to simultaneously traversing the list of plain identifiers and the 
 \begin{equation*}
 \Lookup{x_1.x_2.\cdots.x_n}{\Env; \Pattern} =
 \begin{cases}
-\Lookup{x_1.x_2.\cdots.x_n}{\Env} & x_1 \notin \Domain(\Pattern)\\
-\Fail & x_1 \in \Domain(\Pattern)
+\Lookup{x_1.x_2.\cdots.x_n}{\Env} & \Lookup{x_1}{\Pattern} = \Fail\\
+\Fail & \Lookup{x_1}{\Pattern} \neq \Fail
 \end{cases}
 \end{equation*}
 \caption{%
@@ -317,15 +310,12 @@ Formal definition of referencing environments for \Beluga, modelled as associati
 }
 \end{figure}
 
-\newcommand{\Translates}{\rightsquigarrow}
-
 Using the definition for referencing environments in \Beluga, the indexing phase is defined as a set of translations functions.
 These are of the form $\Xi \vdash e \Translates_{s} e' \dashv \Xi'$ to represent the state monad, with $\Xi$ and $\Xi'$ being the input and output referencing environments respectively, and $e$ and $e'$ being the input and output term.
 The translation $\Translates_{s}$ is split following the semantic classes of figure~\ref{figure:internal-syntax}, with $s$ being one of $K, A, M, U, C, \kappa, \tau, e$ and $i$, with the addition of $Mp, Cp$ and $p$ for \LF patterns, meta-object patterns and computation-level patterns respectively.
 
 % TODO: Continue, and explain
 
-\newcommand{\Pop}[2]{\operatorname{pop}\left[#1\right]\left(#2\right)}
 \begin{equation}
 \infer{\Xi \vdash x \Translates_M \iota \dashv \Xi}{\Lookup{x}{\Xi} = (x : \mathsf{LF}_{\mathsf{term}}) & \operatorname{index}_{\Psi(\Xi)}(x) = \iota}
 \end{equation}
@@ -341,7 +331,7 @@ The translation $\Translates_{s}$ is split following the semantic classes of fig
 
 \begin{equation}
 \infer{
-	\Xi \vdash [x_1, x_2, \dots, x_n \vdash M] \Translates_C [x_1, x_2, \dots, x_n \vdash M'] \dashv \Pop{x_1, x_2, \dots, x_n}{\Xi'}
+	\Xi \vdash [x_1, x_2, \dots, x_n \vdash M] \Translates_C [x_1, x_2, \dots, x_n \vdash M'] \dashv \Pop{x_n, x_{n - 1}, \dots, x_1}{\Xi'}
 }{
 	\Xi; x_1, x_2, \dots, x_n \vdash M \Translates_M M' \dashv \Xi'
 }
@@ -376,7 +366,7 @@ The translation $\Translates_{s}$ is split following the semantic classes of fig
 
 \begin{equation}
 \infer{
-	\Xi; \Pattern \vdash [x_1, x_2, \dots, x_n \vdash M_p] \Translates_{Cp} [x_1, x_2, \dots, x_n \vdash M_p'] \dashv \Pop{x_1, x_2, \dots, x_n}{\Xi; \Pattern'}
+	\Xi; \Pattern \vdash [x_1, x_2, \dots, x_n \vdash M_p] \Translates_{Cp} [x_1, x_2, \dots, x_n \vdash M_p'] \dashv \Pop{x_n, x_{n - 1}, \dots, x_1}{\Xi; \Pattern'}
 }{
 	\Xi; \Pattern, x_{1\downarrow}, x_{2\downarrow}, \dots, x_{n\downarrow} \vdash M_p \Translates_{Mp} M_p' \dashv \Xi; \Pattern'
 }
@@ -458,7 +448,18 @@ Variables in $\Psi'$ are annotated with the size of the \LF indexing context bef
 
 \section{Discussion}
 
-From a programming language implementation standpoint, the revised indexing phase simplified the flow of information by decoupling it from the signature reconstruction store.
+As part of the reimplementation of the indexing phase, the referencing environment was first designed using immutable data structures.
+Specifically, \acp{HAMT} were leveraged for the dictionaries mapping identifiers to stacks of bindings.
+The indexing functions were then implemented using the state monad so that derived states could be passed on to later operations.
+The motivation for using an immutable data structure was to get copies of the referencing environment for free during indexing, which could then be attached to proof declarations.
+In turn, checking out an incomplete theorem in \Harpoon would simply result in the referencing environment's copy being used for elaborating commands.
+Unfortunately, the increased number of memory allocations and the lack of contiguity in the memory layout for the referencing environment incurred a decrease in runtime performance by a factor of 10 for \Beluga's test suite.
+This meant that running the indexing phase on a signature would take more time than type-checking it.
+Thankfully, the indexing phase's implementation was loosely coupled with the representation of the referencing environment, and the state monad was used throughout.
+As such, it was easy to shift back to a mutable data structure and recover runtime performance comparable to that of the legacy implementation of \Beluga.
+As a consequence, checking out incomplete proofs in \Harpoon involves reconstructing the referencing environment using the internal \ac{AST}'s representation of the signature.
+
+From a programming language implementation standpoint, the revised indexing phase simplified the system's flow of information by decoupling it from the signature reconstruction store.
 This opens up multiple opportunities, including proper unit-testing of the referencing environment structure and indexing functions.
 Additionally, given \Beluga's design for signature-level declaration of constants, the indexing phase can be parallelized.
 This is because the body of a signature-level declaration is guaranteed not to export non-constant identifiers.
