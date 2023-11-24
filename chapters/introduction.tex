@@ -13,7 +13,7 @@
 \Beluga~\cite{pientka2010beluga} is a dependently-typed programming language for specifying and proving properties about formal systems using contextual modal type theory~\cite{nanevski2008contextual}.
 It leverages the \acf{LF}~\cite{harper1993framework}, extended with explicit contexts, contextual objects and substitutions~\cite{DBLP:journals/corr/abs-1009-2789, cave2013first}, which allow for logic reasoning involving open terms.
 Using \ac{HOAS}~\cite{pfenning1988higher}, elegant and succinct datatype definitions can be made in \LF to subsequently prove theorems pertaining to programming languages and $ \lambda $-calculi.
-\Beluga has notably been successfully used to mechanically verify proofs for the type safety of \textsc{System F}, cut-admissibility in the intuitionistic sequent calculus, and termination of weak-head normalization for the simply-typed lambda calculus.
+\Beluga has notably been successfully used to mechanically verify proofs for the type safety of \SystemF, cut-admissibility in the intuitionistic sequent calculus, and termination of weak-head normalization for the simply-typed lambda calculus.
 Extensions to \Beluga have facilitated the development of proofs by providing interactive tools for manipulating and constructing proof terms.
 
 % How does one specify a formal system using Beluga?
@@ -22,7 +22,7 @@ Extensions to \Beluga have facilitated the development of proofs by providing in
 
 Interactive theorem proving is the computer-assisted process of finding valid proofs for propositions in a logic system.
 Proof assistants have been implemented and successfully leveraged to prove fundamentals of mathematics and type theories.
-\Agda~\cite{clffolp}, \Coq~\cite{Coq, bertot2013interactive}, \textsc{Isabelle}~\cite{nipkow2002isabelle} and \textsc{Lean}~\cite{lean4} are among the most prevalent proof assistants used in the formalization of programming languages.
+\Agda~\cite{clffolp, norell2007towards, agda2023}, \Coq~\cite{Coq, bertot2013interactive}, \Isabelle~\cite{nipkow2002isabelle} and \Lean~\cite{lean4} are among the most prevalent proof assistants used in the formalization of programming languages.
 Functionalities of typical interactive theorem provers range from \acp{REPL} allowing for structural editing and code inspection to automated proof search to generate valid programs.
 
 % What is Harpoon?
@@ -38,9 +38,9 @@ Crucially, \Harpoon is a system integrated into \Beluga's core functionalities i
 
 Structural (or projectional) editing in programming language tooling is the functionality of a software editor that allows the user to manipulate \acp{AST} directly.
 This is in contrast with plain text editors in which users may only edit textual representations of their programs, that then require parsing to be interpreted.
-The \textsc{Hazel}~\cite{omar2017hazelnut, omar2019live} functional programming environment is a notable example of a structural editor in the functional programming community for its ability to dynamically provide type information as the user writes programs with holes.
+The \Hazel~\cite{omar2017hazelnut, omar2019live} functional programming environment is a notable example of a structural editor in the functional programming community for its ability to dynamically provide type information as the user writes programs with holes.
 This is achieved using carefully designed semantics of moving a text-editing cursor in the concrete syntax and mapping it to the parsed \ac{AST}.
-When it comes to theorem provers, one example of structured editing is the \textsc{CoqIDE}, which leverages the \textsc{Coq} \texttt{XML} protocol to interact with the proof system's kernel by way of messages.
+When it comes to theorem provers, one example of structured editing is the \CoqIDE, which leverages the \Coq \XML protocol to interact with the proof system's kernel by way of messages.
 This is not too dissimilar to what is done with implementations of the language server protocol to provide advanced editing functionalities for programming languages.
 
 % What are typical edit actions in programming languages?
@@ -54,7 +54,7 @@ This can be as simple as signalling type errors on-the-fly, or in the case of th
 % What are edit actions required by Beluga and Harpoon?
 
 Although \Beluga's interactive mode and \Harpoon are \acp{REPL} as opposed to full-fledged structural editors, they do share some functional requirements.
-Indeed, like in \textsc{Hazel} and \textsc{Coq}, users of \Beluga and \Harpoon postpone the completion of programs or proof scripts by inserting holes in them.
+Indeed, like in \Isabelle, \Hazel and \Coq, users of \Beluga and \Harpoon postpone the completion of programs or proof scripts by inserting holes in them.
 These holes stand for missing expressions, and they are later filled in with the help of a proof assistant that provides typing information for the identifiers in scope for each hole.
 As such, both \acp{REPL} and structural editors are required to construct and update an editor state as the user performs edit actions.
 
@@ -84,7 +84,7 @@ This issue of locality in references has further been shown to deteriorate the p
 %This fixed the soundness issue for \Harpoon proof sessions whereby constants declared after the proof hole would be in scope and shadow earlier declarations.
 %The revised approach to name resolution allowed for consistent namespacing of constants to be implemented.
 %Additionally, the \Beluga feature of fixity pragmas for defining prefix, infix or postfix notations for \LF-level constants was expanded upon to also work with computation-level constants.
-%Using the proposed specification for \Beluga and \Harpoon's grammars, the generation of \textsc{HTML} pages corresponding to signatures was restored, with a new and improved pretty-printing algorithm of the concrete syntax.
+%Using the proposed specification for \Beluga and \Harpoon's grammars, the generation of \HTML pages corresponding to signatures was restored, with a new and improved pretty-printing algorithm of the concrete syntax.
 %Overall, the changes have improved the maintainability, resiliency and stability of the affected modules, and have proposed better architectural design patterns that may be applied to the rest of the implementation.
 
 This thesis reports on improvements made to the implementation \Beluga and \Harpoon to address some of the soundness issues in interactive proof development in these two systems.
@@ -101,7 +101,7 @@ Most notably, the \Beluga feature of fixity pragmas for defining prefix, infix o
 A unified name resolution algorithm to improve the clarity of \Beluga programs, implement namespaces, and to support sound incremental proof development.
 This fixed the soundness issue for \Harpoon proof sessions whereby constants declared after a proof hole would be in scope and shadow earlier declarations.
 \item
-Improved and context-aware pretty-printing algorithms for formatting \Beluga programs in external \ac{AST} representation, and for generating corresponding \textsc{HTML} pages.
+Improved and context-aware pretty-printing algorithms for formatting \Beluga programs in external \ac{AST} representation, and for generating corresponding \HTML pages.
 \end{enumerate}
 
 % TODO: To justify the addition of modules (functioning only as namespaces), use an example of translation between two languages (deBruijn vs. HOAS for instance)

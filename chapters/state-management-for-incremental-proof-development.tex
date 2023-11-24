@@ -43,10 +43,8 @@ Indeed, it leverages a single global state comprised of mutable references with 
 This state notably includes the signature of declarations, the subordination relation on type families, and the list of subgoals that have yet to be proven in the current lemma under edit.
 Hence in its interactive mode, \Abella users are restricted to adding new declarations at the end of the session's state.
 
-% TODO: Isabelle/Isar supports incremental development with immutable 2-3 balanced treemaps (tables), Earley parsing for mixfix/extensible see My Personal, Ecclectic Isabelle Programming Manual
-
 \Isabelle/\Isar\footnote{\Isabelle2023} implements a system of transitions between immutable state structures to support pure edit actions~\cite{wenzel2023isabelleimpl, wenzel2023isabelleisarref, wenzel2023isabellesys}.
-Indeed, most of that system's state, or contexts~\cite{ballarin2006interpretation}, is implemented using immutable 2-3~trees to tabulate data, and each context holds a list of all predecessor states.
+Indeed, most of that system's state, also called contexts~\cite{ballarin2006interpretation}, is implemented using immutable 2-3~trees to tabulate data, and each context holds a list of all predecessor states.
 The definitions, proofs and terms in the buffer under edit are stored in such contexts.
 Undo operations and modification to the signature then proceed by rolling back the contexts to before the edit was done using the list of predecessors.
 Mutable references are leveraged to represent the global state of the kernel, though their usage is limited.
@@ -54,7 +52,15 @@ This mutable data is split between synchronized and unsynchronized management st
 Overall, the extensive use of immutable data structures coupled with synchronization for mutable data result in degraded memory usage and runtime performance.
 Nonetheless, this system allows finer edit actions and ensures that cache invalidations are resolved consistently.
 
-% TODO: See if Agda breaks with splicing
+\Agda\footnote{\Agda \texttt{v2.6.4}}~\cite{clffolp, norell2007towards, agda2023} supports incremental interactions through commands evaluated in its type checking monad.
+Issuing a command in this \Agda mode directly affects the text editor's buffer, which provides a seamless editing experience.
+In essence, the type checking monad is an instance of the state monad, whose state structure contains most of the mutable and immutable data used throughout the system.
+This includes global configuration parameters, scope information, user-defined notations for parsing, typing contexts for variables as association lists, etc.
+It is an agglomeration of all the data used in \Agda's processing pipeline, readily available as a function parameter as opposed to being represented using a global mutable data structure.
+The main issues when dealing with this type checking monad are performance overheads, and ensuring that state mutations are sound.
+To mitigate soundness issues, some interactions kinds are internally assigned scopes to restrict their effect on the type checking state.
+In case of bugs arising during edit sessions, separate commands are available to restore the state to what it was and to reload the current editor buffer.
+
 % TODO: See if Coq has incremental development as well
 
 % What are the features desired for Harpoon and Beluga?
@@ -434,7 +440,7 @@ The aliases introduced by opening module \texttt{Nat} are properly handled, such
 The actual data bound to identifiers in referencing environments depends on the kind of binding and the intended usage of that data structure.
 As mentioned earlier, the disambiguation phase keeps track of user-defined notations in its referencing environment by attaching their associated parameters to the constants themselves.
 This is also replicated during pretty-printing to recover a textual representation of the \ac{AST} that respects user-defined notations.
-Pretty-printing to \texttt{HTML} further assigns IDs to constants so that references to them can be printed as hyperlinks.
+Pretty-printing to \HTML further assigns IDs to constants so that references to them can be printed as hyperlinks.
 
 For indexing, data is required in the referencing environment to compute valid de Bruijn indices when variables are looked up.
 Counting up to the correct de Bruijn index by traversing the dictionaries and stacks in order of addition like is done in the formalism of section~\ref{section:formalising-unified-indexing} defeats the purpose of using dictionaries to speed up lookups.

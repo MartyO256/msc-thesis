@@ -40,8 +40,8 @@ Contexts & $\Psi$ & $\Coloneqq$ & $\cdot \mid \psi \mid \Psi, x : A$\\
 \par\bigskip
 \begin{subfigure}{\linewidth}
 \begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
-Meta-types & $U$ & $\Coloneqq$ & $g \mid (\Psi \vdash A) \mid (\Psi \vdash \Psi) \mid \cdots$\\
-Meta-objects & $C$ & $\Coloneqq$ & $\Psi \mid (\Psi \vdash M) \mid (\Psi \vdash \sigma) \mid \cdots$
+Meta-types & $U$ & $\Coloneqq$ & $\cdots \mid g \mid (\Psi \vdash A) \mid (\Psi \vdash \Psi)$\\
+Meta-objects & $C$ & $\Coloneqq$ & $\cdots \mid \Psi \mid (\Psi \vdash M) \mid (\Psi \vdash \sigma)$
 \end{tabular}
 \caption{Internal syntax of \Beluga's meta level (excerpt).}
 \end{subfigure}
@@ -49,10 +49,10 @@ Meta-objects & $C$ & $\Coloneqq$ & $\Psi \mid (\Psi \vdash M) \mid (\Psi \vdash 
 \begin{subfigure}{\linewidth}
 \begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
 Computation-level kinds & $\kappa$ & $\Coloneqq$ & $[U] \to \kappa \mid \Pi X{:}U. \kappa \mid \mathbf{ctype}$\\
-Computation-level types & $\tau$ & $\Coloneqq$ & $c \mid \tau_1 \to \tau_2 \mid \Pi X{:}U. \tau \mid [U] \mid \tau\ [C] \mid \cdots$\\
-Type-checkable expressions & $e$ & $\Coloneqq$ & $i \mid [C] \mid \mathbf{fn}\ x \Rightarrow e \mid \mathbf{mlam}\ X \Rightarrow e$ \\
-& & $|$ & $\mathbf{let}\ x = i\ \mathbf{in}\ e \mid \mathbf{case}\ i\ \mathbf{of}\ \overrightarrow{p \Rightarrow e} \mid \cdots$\\
-Type-synthesizing expressions & $i$ & $\Coloneqq$ & $x \mid c \mid i \ e \mid e : \tau \mid \cdots$
+Computation-level types & $\tau$ & $\Coloneqq$ & $\cdots \mid c \mid \tau_1 \to \tau_2 \mid \Pi X{:}U. \tau \mid [U] \mid \tau\ [C]$\\
+Type-checkable expressions & $e$ & $\Coloneqq$ & $\cdots \mid i \mid [C] \mid \mathbf{fn}\ x \Rightarrow e \mid \mathbf{mlam}\ X \Rightarrow e$ \\
+& & $|$ & $\mathbf{let}\ x = i\ \mathbf{in}\ e \mid \mathbf{case}\ i\ \mathbf{of}\ \overrightarrow{p \Rightarrow e}$\\
+Type-synthesizing expressions & $i$ & $\Coloneqq$ & $\cdots \mid x \mid c \mid i \ e \mid e : \tau$
 \end{tabular}
 \caption{Internal syntax of \Beluga's computation level (excerpt).}
 \end{subfigure}
@@ -87,8 +87,8 @@ The model for this \ac{AST} contains ambiguous nodes, meaning that some \ac{AST}
 Specifically, the application of \LF type-level and term-level constants is represented as a list of parsemes.
 Parsing of signature-level declarations also features mixing/unmixing flags (auxiliary data types for bookkeeping) to postpone some elements of disambiguation to phases after context-free parsing.
 
-Indexing in \Beluga is the process where the concrete syntax is elaborated to an approximate syntax in which most variables are replaced with de Bruijn indices.
-Some de Bruin indices computations are postponed until the abstraction phase.
+Indexing in \Beluga is the process where the concrete syntax is elaborated to a locally nameless representation called the approximate syntax, wherein bound variables are replaced with their corresponding de Bruijn indices.
+As part of \Beluga's design for terse type declarations and programs, the computation of de Bruin indices for some free variables is postponed until the abstraction phase.
 Indexing is run after parsing, and is additionally responsible for disambiguating the juxtaposition of \LF parsemes at the precedence level of applications (which may contain user-defined operators), as well as disambiguating \LF types from terms and resolving constants.
 This design is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings to produce the referencing environment.
 Using the centralized store of declarations, some measure of identifier overloading is supported using a pre-defined order of lookups in the referencing environment based on the kind of identifier that is expected for a given \ac{AST} node.
@@ -126,7 +126,8 @@ Both systems allow the user to input \LF-level terms or computation-level expres
 \Harpoon further enables the interactive definition and proving of theorems using sets of tactics aimed at automating proof development.
 Both the \ac{REPL} and \Harpoon depend on the earlier processing phases of \Beluga and the flow of information therein.
 
-This thesis focuses on the first few phases of the \Beluga processing pipeline, specifically parsing and indexing, and how re-architected solutions to those phases provide better support for some of \Beluga's and \Harpoon's existing features and addresses usability and soundness issues.
+This thesis focuses on the first few phases of the \Beluga processing pipeline, specifically parsing and indexing.
+Re-architected solutions to those phases are then shown to provide better support for some of \Beluga's and \Harpoon's existing features, while also addressing usability and soundness issues in those systems.
 
 \section{State Management and Incremental Program Development}\label{section:intro-state-management}
 
