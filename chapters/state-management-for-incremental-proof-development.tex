@@ -1,4 +1,4 @@
-\chapter{State Management for Incremental Proof Development}
+\chapter{Indexing for Incremental Proof Development}
 
 \newcommand{\private}[1]{#1_\downarrow}
 \newcommand{\public}[1]{#1_\uparrow}
@@ -23,34 +23,51 @@ A formalism and an implementation of identifier resolution in \Beluga are presen
 
 \section{Introduction}
 
-% What are the features desired for Harpoon and Beluga?
-% Why do those features help in incremental proof development?
+% What are aspects of state management that are required to support incremental proof development?
+% In what way are state management and exception handling closely linked with respect to interactive proof sessions?
 
-As an interactive frontend for \Beluga, the \Harpoon system is designed such that each of its supported commands is guaranteed to be sound with respect to the rest of the signature.
-%This includes, among other things, ensuring that input terms are well-typed, 
-Chiefly, \Harpoon's administrative commands must work as intended in any valid order of execution so as to ensure that user's work does not get lost.
-% Undo, redo, translate, select...
+% TODO: Talk about trailing, snapshot mechanisms, soundness preservation, ... 
+Incremental program and proof development are broad and open problems in the implementation of interpreters and compilers.
 
-%The structural editing functionalities of \Harpoon allow end users to develop 
-%\Harpoon proof scripts are translated into \Beluga programs 
-%In order to preserve soundness of \Harpoon proof sessions with respect to 
+Structured editing obviates some of the issues with cache invalidation and the propagation of changes in incremental development.
 
 % TODO:
 
 % How do other systems supporting interactive proof sessions handle state management?
 
-% TODO: See if Agda breaks with splicing
-% TODO: See if Coq has incremental development as well
+Proof assistants providing interactivity through \acp{REPL} or tools for editors each approach the problem of incremental development in unique ways tailored to their systems.
+% TODO: Expand
 
 The \Abella\footnote{\Abella version \texttt{2.0.8}}~\cite{baelde2014abella} interactive theorem prover has limited support for structurally editing proofs.
 Indeed, it leverages a single global state comprised of mutable references with a snapshot mechanism to copy the entire state on every undoable command.
-%Performance concerns aside, this design cannot support 
-In its interactive mode, \Abella users are restricted to adding new declarations at the end of the session's state.
+This state notably includes the signature of declarations, the subordination relation on type families, and the list of subgoals that have yet to be proven in the current lemma under edit.
+Hence in its interactive mode, \Abella users are restricted to adding new declarations at the end of the session's state.
 
-% What are aspects of state management that are required to support incremental proof development?
-% In what way are state management and exception handling closely linked with respect to interactive proof sessions?
+% TODO: Isabelle/Isar supports incremental development with immutable 2-3 balanced treemaps (tables), Earley parsing for mixfix/extensible see My Personal, Ecclectic Isabelle Programming Manual
 
-% TODO: Talk about trailing, snapshot mechanisms, soundness preservation, ...
+\Isabelle/\Isar\footnote{\Isabelle2023} implements a system of transitions between immutable state structures to support pure edit actions~\cite{wenzel2023isabelleimpl, wenzel2023isabelleisarref, wenzel2023isabellesys}.
+Indeed, most of that system's state, or contexts~\cite{ballarin2006interpretation}, is implemented using immutable 2-3~trees to tabulate data, and each context holds a list of all predecessor states.
+The definitions, proofs and terms in the buffer under edit are stored in such contexts.
+Undo operations and modification to the signature then proceed by rolling back the contexts to before the edit was done using the list of predecessors.
+Mutable references are leveraged to represent the global state of the kernel, though their usage is limited.
+This mutable data is split between synchronized and unsynchronized management strategies, the former adding mutual exclusion locks to references that hold mutable data.
+Overall, the extensive use of immutable data structures coupled with synchronization for mutable data result in degraded memory usage and runtime performance.
+Nonetheless, this system allows finer edit actions and ensures that cache invalidations are resolved consistently.
+
+% TODO: See if Agda breaks with splicing
+% TODO: See if Coq has incremental development as well
+
+% What are the features desired for Harpoon and Beluga?
+% Why do those features help in incremental proof development?
+
+%TODO: The structural editing functionalities of \Harpoon allow end users to develop proofs in a top-down fashion (state theorems first and then prove them all)
+%\Harpoon proof scripts are translated into \Beluga programs 
+%In order to preserve soundness of \Harpoon proof sessions with respect to
+
+As an interactive frontend for \Beluga, the \Harpoon system is designed such that each of its supported commands is guaranteed to be sound with respect to the rest of the signature.
+%This includes, among other things, ensuring that input terms are well-typed, 
+Chiefly, \Harpoon's administrative commands must work as intended in any valid order of execution so as to ensure that user's work does not get lost.
+% Undo, redo, translate, select...
 
 \section{The Legacy Indexing Phase}
 
@@ -429,6 +446,7 @@ In other words, as illustrated in figure~\ref{figure:lf-indexing}, if $\Psi'$ is
 \begin{equation*}
 \mathsf{index}_{\Psi'}(x) = |\Psi'| - |\Psi|.
 \end{equation*}
+In effect, this is the same computation as subtracting the de Bruijn level of $x$ from the current abstraction depth~\cite{DEBRUIJN1972381, debruijnlevels1995}.
 This approach is scalable to arbitrarily many indexing contexts, provided that the context to use for a variable is known at its binding site.
 This is the case in \Beluga, where variables in $\Psi$, $\Delta$ and $\Gamma$ are indexed separately and have distinct binders.
 Additionally, this approach simplifies shifting contexts in cases like $\mathsf{const} = \lambda x.\lambda\_.\ x$ wherein the identifier introduced by a binder is omitted since it is unused in the abstraction's body.
@@ -451,7 +469,8 @@ Variables in $\Psi'$ are annotated with the size of the \LF indexing context bef
 As part of the reimplementation of the indexing phase, the referencing environment was first designed using immutable data structures.
 Specifically, \acp{HAMT} were leveraged for the dictionaries mapping identifiers to stacks of bindings.
 The indexing functions were then implemented using the state monad so that derived states could be passed on to later operations.
-The motivation for using an immutable data structure was to get copies of the referencing environment for free during indexing, which could then be attached to proof declarations.
+The motivation for using an immutable data structure was to get copies of the referencing environment for free during indexing.
+These copies could then be attached to proof declarations to allow rollbacks like in \Isabelle/\Isar with its context graphs.
 In turn, checking out an incomplete theorem in \Harpoon would simply result in the referencing environment's copy being used for elaborating commands.
 Unfortunately, the increased number of memory allocations and the lack of contiguity in the memory layout for the referencing environment incurred a decrease in runtime performance by a factor of 10 for \Beluga's test suite.
 This meant that running the indexing phase on a signature would take more time than type-checking it.

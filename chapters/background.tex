@@ -4,7 +4,7 @@
 
 In \Beluga, theorems are encoded using contextual \LF, its index language, and proofs are encoded as programs.
 Logic propositions are represented as \LF type families with term-level constants parameterized by $\beta$-normal $\eta$-long \LF terms to construct witnesses for these propositions~\cite{nanevski2008contextual, foundation2008pientka, DBLP:journals/corr/abs-1009-2789}.
-To facilitate the implementation of semantic checkers, \LF terms are required to be encoded in normal form by the user.
+To facilitate the implementation of semantic analysis, \LF terms are required to be encoded in normal form by the user.
 \Beluga extends \LF to support explicit contexts and substitutions, which enables mechanized reasoning with respect to assumptions, like in proofs on paper~\cite{pientka2010programming}.
 This means that terms containing free variables can be manipulated and reasoned about explicitly in \Beluga.
 
@@ -14,8 +14,12 @@ A complete specification of signature-level declarations is provided in section~
 
 % TODO:
 
-Let $x$ range over identifiers, $c$ over constants, $X$ over contextual objects, $\psi$ over contexts and $g$ over context schemas.
-Figure~\ref{figure:internal-syntax} then provides a brief overview of \Beluga from a theoretical standpoint.
+Let $x$ range over identifiers, $c$ over constants, $X$ over meta-objects, $\psi$ over contexts and $g$ over context schemas.
+Figure~\ref{figure:internal-syntax} then provides an overview of \Beluga's core language.
+
+% What's the point of meta-level constructs?
+
+% TODO: Go over some topics from Programming Inductive Proofs - A New Approach Based on Contextual Types, namely type reconstruction, totality
 
 \begin{figure}
 \begin{subfigure}{\linewidth}
@@ -122,14 +126,14 @@ Both systems allow the user to input \LF-level terms or computation-level expres
 \Harpoon further enables the interactive definition and proving of theorems using sets of tactics aimed at automating proof development.
 Both the \ac{REPL} and \Harpoon depend on the earlier processing phases of \Beluga and the flow of information therein.
 
-This thesis focuses on the first few phases of the \Beluga processing pipeline, specifically parsing and indexing, and how re-architected solutions to those phases provide better support for some of \Beluga's and \Harpoon's existing features.
+This thesis focuses on the first few phases of the \Beluga processing pipeline, specifically parsing and indexing, and how re-architected solutions to those phases provide better support for some of \Beluga's and \Harpoon's existing features and addresses usability and soundness issues.
 
 \section{State Management and Incremental Program Development}\label{section:intro-state-management}
 
 Users benefit from interacting with the code they are editing by way of auxiliary software that performs actions on it.
 Incremental program development in programming language tooling is the problem of applying edit actions to programs while only re-processing a minimal portion of the program under edit.
 The kinds of edit actions that can be implemented vary from one programming language to the other depending on the language's features.
-Typically, edit actions include software refactoring commands such as variable renaming, reordering functions in a file, selecting a list of statements from one function and extracting them to a separate function, pretty-printing and formatting the textual representation of code, etc.
+Typically, edit actions include software refactoring commands such as variable renaming, reordering functions in a file, selecting a list of statements from one function and extracting them into a separate function, pretty-printing and formatting the textual representation of code, etc.
 Sound and efficient handling of these edit actions is instrumental to the productivity of users working on large scale software systems.
 This problem of incremental program development arises in \Beluga and \Harpoon because of the interactive tooling they provide for editing proofs, which are represented as programs.
 
