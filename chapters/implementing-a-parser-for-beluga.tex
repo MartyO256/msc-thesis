@@ -139,7 +139,7 @@ By accepting a wider range of programs during parsing, the subsequent disambigua
 By decoupling disambiguation from indexing, both phases now respect the single-responsibility principle, which in turn simplifies the information flow at the early stage of signature reconstruction.
 Dependency injection of mutable states is also introduced define clear boundaries on effects in the implementation of the disambiguation phase, which enables the development of structured editing procedures.
 \item
-\textit{Provide verifiably-correct external \acp{AST} to enable debugging of signature reconstruction.}
+\textit{Provide verifiably correct external \acp{AST} to enable debugging of signature reconstruction.}
 Since the disambiguated external \ac{AST} of a program fully captures the meaning of what the user wrote, then the internal \ac{AST} as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} is no longer the only complete data representation for programs in \Beluga.
 \end{enumerate}
 

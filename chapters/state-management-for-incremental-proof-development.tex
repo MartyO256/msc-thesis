@@ -26,7 +26,7 @@ A formalism and an implementation of identifier resolution in \Beluga are presen
 % What are aspects of state management that are required to support incremental proof development?
 % In what way are state management and exception handling closely linked with respect to interactive proof sessions?
 
-% TODO: Talk about trailing, snapshot mechanisms, soundness preservation, ... 
+% TODO: Talk about trailing, snapshot mechanisms, soundness preservation, ...
 Incremental program and proof development are broad and open problems in the implementation of interpreters and compilers.
 
 Structured editing obviates some of the issues with cache invalidation and the propagation of changes in incremental development.
@@ -42,6 +42,7 @@ The \Abella\footnote{\Abella version \texttt{2.0.8}}~\cite{baelde2014abella} int
 Indeed, it leverages a single global state comprised of mutable references with a snapshot mechanism to copy the entire state on every undoable command.
 This state notably includes the signature of declarations, the subordination relation on type families, and the list of subgoals that have yet to be proven in the current lemma under edit.
 Hence in its interactive mode, \Abella users are restricted to adding new declarations at the end of the session's state.
+Constructing visiting states to other parts of the signature under edit would require re-running the processing pipeline.
 
 \Isabelle/\Isar\footnote{\Isabelle2023} implements a system of transitions between immutable state structures to support pure edit actions~\cite{wenzel2023isabelleimpl, wenzel2023isabelleisarref, wenzel2023isabellesys}.
 Indeed, most of that system's state, also called contexts~\cite{ballarin2006interpretation}, is implemented using immutable 2-3~trees to tabulate data, and each context holds a list of all predecessor states.
@@ -57,9 +58,10 @@ Issuing a command in this \Agda mode directly affects the text editor's buffer, 
 In essence, the type checking monad is an instance of the state monad, whose state structure contains most of the mutable and immutable data used throughout the system.
 This includes global configuration parameters, scope information, user-defined notations for parsing, typing contexts for variables as association lists, etc.
 It is an agglomeration of all the data used in \Agda's processing pipeline, readily available as a function parameter as opposed to being represented using a global mutable data structure.
+This wholly captures the idea of a visiting state over declarations in an \Agda signature.
 The main issues when dealing with this type checking monad are performance overheads, and ensuring that state mutations are sound.
 To mitigate soundness issues, some interactions kinds are internally assigned scopes to restrict their effect on the type checking state.
-In case of bugs arising during edit sessions, separate commands are available to restore the state to what it was and to reload the current editor buffer.
+Additionally, in case of bugs arising during edit sessions, separate commands are available to restore the state to what it was and to reload the current editor buffer.
 
 % TODO: See if Coq has incremental development as well
 
@@ -67,11 +69,11 @@ In case of bugs arising during edit sessions, separate commands are available to
 % Why do those features help in incremental proof development?
 
 %TODO: The structural editing functionalities of \Harpoon allow end users to develop proofs in a top-down fashion (state theorems first and then prove them all)
-%\Harpoon proof scripts are translated into \Beluga programs 
+%\Harpoon proof scripts are translated into \Beluga programs
 %In order to preserve soundness of \Harpoon proof sessions with respect to
 
 As an interactive frontend for \Beluga, the \Harpoon system is designed such that each of its supported commands is guaranteed to be sound with respect to the rest of the signature.
-%This includes, among other things, ensuring that input terms are well-typed, 
+%This includes, among other things, ensuring that input terms are well-typed,
 Chiefly, \Harpoon's administrative commands must work as intended in any valid order of execution so as to ensure that user's work does not get lost.
 % Undo, redo, translate, select...
 
