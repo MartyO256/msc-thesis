@@ -68,14 +68,18 @@ Additionally, in case of bugs arising during edit sessions, separate commands ar
 % What are the features desired for Harpoon and Beluga?
 % Why do those features help in incremental proof development?
 
-%TODO: The structural editing functionalities of \Harpoon allow end users to develop proofs in a top-down fashion (state theorems first and then prove them all)
-%\Harpoon proof scripts are translated into \Beluga programs
-%In order to preserve soundness of \Harpoon proof sessions with respect to
-
 As an interactive frontend for \Beluga, the \Harpoon system is designed such that each of its supported commands is guaranteed to be sound with respect to the rest of the signature.
-%This includes, among other things, ensuring that input terms are well-typed,
+This includes, among other things, ensuring that input terms are well-typed, that cases analyses cover all possible branches with respect to type family definitions, and that identifiers can be properly resolved once proof scripts are translated into programs.
 Chiefly, \Harpoon's administrative commands must work as intended in any valid order of execution so as to ensure that user's work does not get lost.
-% Undo, redo, translate, select...
+Just like \Abella, \Isabelle/\Isar, \Coq and \Agda, undoable commands in \Harpoon must undo those commands' transformations applied to the editing state.
+Unlike \Abella though, undone commands can be redone so users can move effortlessly forward and backward in the edit history.
+One feature that is unique to \Harpoon is the ability to efficiently checkout the proof state for incomplete theorems occurring anywhere in a \Beluga signature.
+This enables the development of proofs in a top-down fashion by first stating theorems and lemmas and then proving them, fully or partially, in any order that seems most productive.
+This is stronger than \Abella's and \Coq's subgoal deferring feature, which \Harpoon also supports.
+
+Unfortunately, case studies revealed that the implementation of \Harpoon's theorem-switching feature can lead to invalid \Beluga signatures when proof scripts developed out of order are translated into programs.
+To fully support this feature, the \Beluga system requires a mechanism to rollback the referencing state to the point where theorems are declared.
+This prompted the reimplementation of name resolution in \Beluga and \Harpoon to support visiting states.
 
 \section{The Legacy Indexing Phase}
 
@@ -114,7 +118,7 @@ Additionally, the legacy indexing algorithm is tightly coupled and implicitly de
 This means that external mutations to that store affect the output of functions responsible for identifier resolution.
 As outlined in section~\ref{section:intro-state-management}, this design is only suitable for a single pass through the processing pipeline since the store's state is consistent with how the \ac{AST} is traversed.
 However, indexing was explicitly parameterized with respect to a store of variables to allow \acp{REPL} instantiated at the very end of a \Beluga signature to be consistent with identifier resolution during signature reconstruction.
-Incremental proof development sessions instantiated on holes anywhere else but the end of a \Beluga signature could potentially result in invalid programs.
+Incremental proof development sessions instantiated on holes located anywhere else but the end of a \Beluga signature could potentially result in invalid programs.
 Indeed, since the store is stuck at its state at the very end of the \Beluga signature, constants declared later would be incorrectly brought into scope, even shadowing the actual constants required for the proof development.
 In order to ensure soundness of incremental proof development with multiple holes, it became necessary for indexing to be implemented with an explicit parameterization over the entire referencing environment as opposed to just the stores of variables.
 
