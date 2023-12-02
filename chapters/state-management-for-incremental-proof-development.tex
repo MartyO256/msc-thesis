@@ -30,13 +30,14 @@ A formalism and an implementation of identifier resolution in \Beluga are presen
 Incremental program and proof development are broad and open problems in the implementation of interpreters and compilers.
 
 Structured editing obviates some of the issues with cache invalidation and the propagation of changes in incremental development.
+Indeed, edit actions are scoped to a model of the program as opposed to the program's textual representation itself, which means they have a limited and controlled effect on the structured editor's state.
 
 % TODO:
 
 % How do other systems supporting interactive proof sessions handle state management?
 
 Proof assistants providing interactivity through \acp{REPL} or tools for editors each approach the problem of incremental development in unique ways tailored to their systems.
-% TODO: Expand
+% TODO: Expand: Trailing mechanisms to undo meta-variable instantiations from typing constraints, rollbacks of referencing environements for name resolution, subgoal management with undo-redo histories
 
 The \Abella\footnote{\Abella version \texttt{2.0.8}}~\cite{baelde2014abella} interactive theorem prover has limited support for structurally editing proofs.
 Indeed, it leverages a single global state comprised of mutable references with a snapshot mechanism to copy the entire state on every undoable command.
@@ -79,7 +80,7 @@ This is stronger than \Abella's and \Coq's subgoal deferring feature, which \Har
 
 Unfortunately, case studies revealed that the implementation of \Harpoon's theorem-switching feature can lead to invalid \Beluga signatures when proof scripts developed out of order are translated into programs.
 To fully support this feature, the \Beluga system requires a mechanism to rollback the referencing state to the point where theorems are declared.
-This prompted the reimplementation of name resolution in \Beluga and \Harpoon to support visiting states.
+This prompted the refactoring of name resolution in \Beluga and \Harpoon to support visiting states.
 
 \section{The Legacy Indexing Phase}
 
