@@ -4,9 +4,21 @@
 
 \section{Evaluation}
 
-% TODO:
+% TODO: Run Beluga v1 and Beluga v1.1 tests on different machines (i9-12900k, i7-3770k, whatever laptop, RAM speeds and disk speeds, deltas in percentage, repeated runs), comment on the runtime performance and memory usage (likely some increased runtime overhead, less memory usage, highlight that the test suites are different from v1 to v1.1 [syntax updates make them technically easier to parse], but also highlight that referencing environments are constructed twice)
+
+Properly defining referencing environments and implementing indexing with respect to them is a step in the right direction.
+There are still many implementation challenges ahead in order to fully support structural editing of \Beluga programs and \Harpoon proofs.
+Chiefly, proper information flow analysis is required in the later phases of semantic analysis, specifically reconstruction, type-checking and unification, to ascertain whether their stateful operations are always handled soundly.
+Indeed, while there is a trailing mechanism for higher-order unification to keep track of meta-variable instantiations (the assignment of a contextual object to a meta-variable), there are routines during \LF reconstruction that ignore this bookkeeping.
+This can result in unsound programs when users undo edit actions during interactive proof developments.
+Similarly, 
+
+Fresh name generation is currently unsound in the implementation of \Beluga.
+% TODO: Expand, argue we need something akin to Agda's type-checking monad
 
 \section{Future Work}
+
+% TODO: Enable knowledge-based development with proper documentation (language specification for the parser is one step towards that goal)
 
 % TODO:
 
