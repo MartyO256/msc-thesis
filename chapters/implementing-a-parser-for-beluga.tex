@@ -64,16 +64,14 @@ For instance, in a dependently-typed language, type-level and term-level variabl
 Semantic analysis of the \ac{AST} with respect to a symbol table is usually sufficient to disambiguate those cases.
 However overloading of identifiers in more advanced features, like user-defined mixfix operators~\cite{danielsson2008parsing}, pose additional challenge since identifiers may not be considered in isolation.
 \item
-\textit{Type-based ambiguities}: the correct interpretation of an expression may only be determined once a type has been inferred for it.
+\textit{Type-based ambiguities}: the correct interpretation of an expression may only be determined once a type has been inferred for it, or if it is checked against a type.
 This does not refer to method overloading in object-oriented programming languages since the syntax for calling a method is not ambiguous.
 Rather, if the expression being parsed is an identifier, then a type-based ambiguity may be that that expression or a surrounding one falls into a different syntactic category based on the identifier's type or kind.
-For instance, the syntax $ (g, x : t) $ may denote a pair of terms, with the variable $ x $ being checked against the type $ t $, or it may denote a context, with $ x : t $ being a new variable declaration.
-In this case, what $ (g, x : t) $ denotes depends on the type of $ g $.
+For instance, the syntax $ (g, x : t) $ may denote a pair of terms, with the variable $ x $ being checked against the type $ t $, or it may denote the context $g$ with an added variable declaration $ x : t $.
+In this case, what $ (g, x : t) $ syntactically denotes depends on the type of $ g $.
 To solve such ambiguities, some type information may be provided by a symbol table if the type ascribed to an identifier is known at the declaration site.
 In general it is not practical to disambiguate expressions having type-based ambiguities before type-checking, especially when more intricate type inference algorithms need to be applied to determine the type of an identifier.
 \end{enumerate}
-
-% TODO: Figure showcasing typical ambiguities
 
 % What do ambiguities have to do with language design?
 % What is the typical workflow for designing syntaxes and implementing parsers? What are parser generators? What are their limitations?
@@ -84,13 +82,13 @@ If a language can be specified by a \ac{CFG}, then it is a \ac{CFL}.
 \Acp{CFL} have many advantages, including the fact that there is an abundance of well-vetted parser generators for such languages.
 \ocamllex together with \ocamlyacc~\cite{smith2007ocamllex} is one example of such a parser generator.
 Crucially, \acp{CFL} are easy to parse, both algorithmically and by the end user.
-As the name suggests, parsing of a \ac{CFL} does not require additional data in a context specifically intended for disambiguation.
-This ensures that programs can scale and be readable by the user without having to fully known the context in which programs appear.
+As the name suggests, parsers for \acp{CFL} does not require additional data in a context specifically intended for disambiguation.
+This ensures that programs can scale and be readable by the user without having to fully know the context in which programs appear.
 That is, other code sections in a \ac{CFL} do not affect how a given code section is parsed.
 Static operator ambiguities as mentioned previously can be resolved by rewriting the grammar while keeping it context-free.
 The other two kinds of ambiguities however give rise to context-sensitive languages, or even strictly Turing-recognizable languages~\cite{chomsky1956three}.
 Context-sensitive languages necessitate additional data about the context in which parts of a program appear to correctly parse it.
-This typically implies that some semantic analysis needs to be performed during parsing in order to complete the syntactic analysis.
+This typically means that some semantic analysis is required during parsing in order to complete the syntactic analysis.
 Consequently, the concrete syntax's design for a programming language is intrinsically linked with the algorithm required to parse it.
 
 % What are some language design considerations?
@@ -106,21 +104,23 @@ This forces tooling to be tightly coupled with the core implementation of the la
 %This is notably the case for tooling in \Cpp because of its rich pre-processor that increases the complexity of parsing and name resolution.
 
 Early versions of the \Beluga language were context-free and used \CamlpFour~\cite{de2003camlp4} as parser generator to implement its parser.
-\Beluga became context-sensitive when modifications were made to its syntax, specifically to improve the syntax of contextual objects and to add user-defined operators as in \Twelf for \LF type-level and term-level constants.
+\Beluga became context-sensitive when modifications were made to its syntax, specifically to improve the readability of contextual objects and to add user-defined operators as in \Twelf for \LF type-level and term-level constants.
 These changes did not pose a problem with the parser's implementation per se, but it did require the introduction of disambiguation mechanisms, or rather the inclusion of syntactically ambiguous nodes in the signature reconstruction algorithm.
 Specifically, parts of indexing and reconstruction, as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline}, and the elaboration steps in between, had to be implemented with \ac{AST} node variants that mix together syntactically ambiguous constructs.
 This complicated the processing pipeline since the semantics of a given \Beluga program is only gradually discovered as it is elaborated through the external, approximate and internal syntax representations.
+%The data-dependent semantic rules necessary to complete the syntactic analysis are hence difficult to convey to end users.
 
 % What are parser combinators? What are some well-known libraries for parser combinators? What are their limitations?
 
-As the \Beluga language grew, so did the complexity of its grammar, such that the errors generated by \CamlpFour were deemed not sufficiently informative to the end-user.
+As the \Beluga language grew, so did the complexity of its grammar, such that user errors output by the parser generated with \CamlpFour were deemed not sufficiently informative.
 Hence, \Beluga version \texttt{1.0} featured a new parser implemented using monadic parser combinators, which are higher-order functions for constructing top-down recursive descent parsers~\cite{Burge1975-BURRPT, hutton1996monadic, leijen2001parsec, generalparsercombs}.
 They provide a more declarative way of constructing complex parsers than shift-reduce parsers.
 Indeed, the combination of smaller parsers (or parselets) in \OCaml using operators closely resembles grammar specifications using \acp{CFG}, which allows for fast prototyping and better readability of the implementation.
-As such, the intent of re-implementing \Beluga's parser to use parser combinators was to improve error-reporting for the end user, and to improve the overall maintainability of the implementation for subsequent developers by making it more modular.
+As such, the intent of reworking \Beluga to use parser combinators was to improve error-reporting for the end user, and to improve the overall maintainability of the implementation for subsequent developers by making it more modular.
 These objectives were largely met, and as a consequence \Harpoon was also implemented using that parsing framework.
 %However, one may argue that shifting from a parser generator implementation to parser combinators was detrimental to the system's maintainability since that discarded the benefits of static analyses of the language's grammar for ambiguities.
 Nonetheless, there is still room to improve in the way of user-friendly error messages to help newcomers get a better grasp of the language and its features.
+This further extends to how the language's syntax is specified.
 
 \section{\Beluga Lexing, Parsing and Disambiguation Phases}\label{section:lexing-parsing-disambiguation}
 
@@ -143,6 +143,7 @@ Dependency injection of mutable states is also introduced define clear boundarie
 Since the disambiguated external \ac{AST} of a program fully captures the meaning of what the user wrote, then the internal \ac{AST} as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} is no longer the only complete data representation for programs in \Beluga.
 \end{enumerate}
 
+A complete specification of \Beluga's and \Harpoon's syntax is provided in appendix~\ref{chapter:grammar} to facilitate future changes to the language, and to provide documentation to the end user.
 The revised parsing algorithm for \Beluga signatures is split into three phases, namely: lexing, parsing and disambiguation.
 These phases are outlined in the next subsections.
 First, lexing is implemented just like in typical whitespace-agnostic programming languages, except for one lexer hack used to handle some overloading of a static operator.
@@ -175,7 +176,8 @@ The projection out of a module acting as a namespace.
 \end{enumerate}
 
 This first usage of the dot operator proved particularly difficult to resolve when the operator was overloaded with projections out of namespaces.
-The solution that was ultimately put in place was to introduce two additional token kinds \synt{dot-identifier} and \synt{dot-integer} in the lexer for identifiers and numbers immediately prefixed by a dot.
+One approach to solve this issue is to replace the dot operator with a different syntax for accesses to a module's values and types.
+The solution that was ultimately put in place was to instead introduce two additional token kinds \synt{dot-identifier} and \synt{dot-integer} in the lexer for identifiers and numbers immediately prefixed by a dot.
 These token kinds were reserved to denote projections.
 During context-free parsing, wherever a dot is expected to not be part of a projection, these two token kinds would still be accepted, but a corresponding identifier or number token would be spliced in the input stream.
 This effectively means that whitespace cannot follow a dot operator used for projection.

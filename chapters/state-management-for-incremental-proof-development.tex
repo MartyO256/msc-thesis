@@ -438,8 +438,8 @@ On the other hand, the dictionaries speed up identifier lookups.
 \centering
 \includegraphics{figures/referencing-environment-implementation.eps}
 \caption[Example referencing environment in the implementation]{%
-Diagram of the referencing environment at hole \texttt{\verbhole{?h3}} from figure~\ref{figure:referencing-environment-example} as it is implemented in \Beluga~\texttt{v1.1}.
-The identifiers on the left are part of the toplevel module scope, and are each associated with a stack of bindings, with the most recent bindings on the right end of the stack.
+Diagram of the referencing environment at hole \texttt{\verbhole{?h3}} from figure~\ref{figure:referencing-environment-example} as it is implemented in \Beluga~\texttt{v1.1} using dictionaries and stacks.
+The identifiers on the left are part of the toplevel module scope, and are each associated with a stack of bindings, with the most recent binding on the right end of the stack.
 The numbers \texttt{\#1}, \texttt{\#2}, ..., \texttt{\#7} denote the symbolic identifiers associated with the constants in the signature reconstruction store.
 The aliases introduced by opening module \texttt{Nat} are properly handled, such that constant \texttt{\#3} can be referenced either as \texttt{Nat.z} or \texttt{z} at that point in the signature.
 }
