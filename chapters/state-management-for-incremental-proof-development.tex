@@ -27,7 +27,7 @@ A formalism and an implementation of identifier resolution in \Beluga are presen
 % In what way are state management and exception handling closely linked with respect to interactive proof sessions?
 
 % TODO: Talk about trailing, snapshot mechanisms, soundness preservation, ...
-Incremental program and proof development are broad and open problems in the implementation of interpreters and compilers.
+Incremental program development is a broad and open problem in the implementation of interpreters and compilers.
 
 Structured editing obviates some of the issues with cache invalidation and the propagation of changes in incremental development.
 Indeed, edit actions are scoped to a model of the program as opposed to the program's textual representation itself, which means they have a limited and controlled effect on the structured editor's state.
@@ -37,13 +37,17 @@ Indeed, edit actions are scoped to a model of the program as opposed to the prog
 % How do other systems supporting interactive proof sessions handle state management?
 
 Proof assistants providing interactivity through \acp{REPL} or tools for editors each approach the problem of incremental development in unique ways tailored to their systems.
-% TODO: Expand: Trailing mechanisms to undo meta-variable instantiations from typing constraints, rollbacks of referencing environements for name resolution, subgoal management with undo-redo histories
+For instance, constraint-based type systems require trailing mechanisms to revert state changes induced by solving type constraints on new and pre-existing type variables when type-checking fails for a given program.
+Likewise, context-switching between different parts of a program under edit requires updating the state to correctly reflect what identifiers are in scope.
+Furthermore, in proof assistants specifically, command histories may be implemented to support undoing and redoing commands or tactics.
+Subgoal trees may also added to allow navigating between incomplete parts of a proof.
+The successful implementation of these structured editing features hinges on careful management of recorded state.
 
 The \Abella\footnote{\Abella version \texttt{2.0.8}}~\cite{baelde2014abella} interactive theorem prover has limited support for structurally editing proofs.
 Indeed, it leverages a single global state comprised of mutable references with a snapshot mechanism to copy the entire state on every undoable command.
 This state notably includes the signature of declarations, the subordination relation on type families, and the list of subgoals that have yet to be proven in the current lemma under edit.
 Hence in its interactive mode, \Abella users are restricted to adding new declarations at the end of the session's state.
-Constructing visiting states to other parts of the signature under edit would require re-running the processing pipeline.
+Indeed, constructing visiting states to other parts of the signature under edit would require re-running the processing pipeline.
 
 \Isabelle/\Isar\footnote{\Isabelle2023} implements a system of transitions between immutable state structures to support pure edit actions~\cite{wenzel2023isabelleimpl, wenzel2023isabelleisarref, wenzel2023isabellesys}.
 Indeed, most of that system's state, also called contexts~\cite{ballarin2006interpretation}, is implemented using immutable 2-3~trees to tabulate data, and each context holds a list of all predecessor states.
