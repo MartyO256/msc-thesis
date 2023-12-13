@@ -124,7 +124,7 @@ This further extends to how the language's syntax is specified.
 
 \section{\Beluga Lexing, Parsing and Disambiguation Phases}\label{section:lexing-parsing-disambiguation}
 
-As part of this thesis, \Beluga's parser was re-implemented to handle expressions in non-canonical form, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
+As part of this thesis, \Beluga's parser was reimplemented to handle expressions in non-canonical form, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
 Particularly, semantic analysis is introduced as part of a new context-sensitive disambiguation phase to the parser in order to produce a fully unambiguous \ac{AST} before signature reconstruction.
 The motivation for these changes to the implementation of \Beluga can be summarized in the following points:
 \begin{enumerate}
@@ -140,7 +140,7 @@ By decoupling disambiguation from indexing, both phases now respect the single-r
 Dependency injection of mutable states is also introduced define clear boundaries on effects in the implementation of the disambiguation phase, which enables the development of structured editing procedures.
 \item
 \textit{Provide verifiably correct external \acp{AST} to enable debugging of signature reconstruction.}
-Since the disambiguated external \ac{AST} of a program fully captures the meaning of what the user wrote, then the internal \ac{AST} as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} is no longer the only complete data representation for programs in \Beluga.
+Since the disambiguated external \ac{AST} of a program fully captures the meaning of what the user wrote, then the internal \ac{AST} as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} is no longer the only unambiguous data representation for programs in \Beluga.
 \end{enumerate}
 
 A complete specification of \Beluga's and \Harpoon's syntax is provided in appendix~\ref{chapter:grammar} to facilitate future changes to the language, and to provide documentation to the end user.
@@ -187,7 +187,7 @@ Thus, \Twelf-style \LF term-level and type-level constant declarations could be 
 
 Parsing of \Beluga signatures is achieved using $ \mathsf{LALR(\infty)} $ parsing in pathological cases and $ \mathsf{LALR(1)} $ parsing in the most frequent cases.
 This is implemented using the monadic parser combinator library introduced in \Beluga version \texttt{1.0}.
-Unlimited backtracking of the parser state is enabled only in select cases, or if no input token has been consumed, which provides sufficient performance for parsing large \Beluga files.
+Unlimited lookahead is enabled only in select cases, or if no input token has been consumed, which provides sufficient performance for parsing large \Beluga files.
 
 The main contribution made to the context-free parsing phase of \Beluga is the simplification of its grammar.
 Indeed, the legacy parser was designed following the grammars developed along signature reconstruction and type-checking algorithms, which introduced syntactic classes that ensure some properties always hold by construction for terms in the language.

@@ -47,7 +47,7 @@ The \Abella\footnote{\Abella version \texttt{2.0.8}}~\cite{baelde2014abella} int
 Indeed, it leverages a single global state comprised of mutable references with a snapshot mechanism to copy the entire state on every undoable command.
 This state notably includes the signature of declarations, the subordination relation on type families, and the list of subgoals that have yet to be proven in the current lemma under edit.
 Hence in its interactive mode, \Abella users are restricted to adding new declarations at the end of the session's state.
-Indeed, constructing visiting states to other parts of the signature under edit would require re-running the processing pipeline.
+Indeed, constructing visiting states to other parts of the signature under edit would require rerunning the processing pipeline.
 
 \Isabelle/\Isar\footnote{\Isabelle2023} implements a system of transitions between immutable state structures to support pure edit actions~\cite{wenzel2023isabelleimpl, wenzel2023isabelleisarref, wenzel2023isabellesys}.
 Indeed, most of that system's state, also called contexts~\cite{ballarin2006interpretation}, is implemented using immutable 2-3~trees to tabulate data, and each context holds a list of all predecessor states.
@@ -99,7 +99,7 @@ In the implementation, not all variables are replaced with de Bruijn indices dur
 
 % What features are required of indexing?
 
-% What was the legacy implementation of indexing? Why did it require re-implementation?
+% What was the legacy implementation of indexing? Why did it require reimplementation?
 
 The legacy implementation of indexing was responsible for disambiguating the application of user-defined operators since it kept track of constants as they are introduced in \Beluga signatures.
 This disambiguation leveraged Dijkstra's shunting-yard algorithm as opposed to the recursive descent parsing algorithm presented in section~\ref{section:parsing-user-defined-operators}.
@@ -159,7 +159,7 @@ Plain scopes are suitable for introducing multiple identifiers in such a way tha
 \item
 \textit{Module scopes}: constants added to this kind of scope are either private or public.
 Only public constant declarations are exported from the module they appear in when it is opened, in which case they are brought in scope.
-This ensures that constants and notations imported from external modules are not re-exported when the module is opened elsewhere.
+This ensures that constants and notations imported from external modules are not reexported when the module is opened elsewhere.
 \item
 \textit{Pattern scopes}: variables added to this kind of scope are inner pattern-bound or pattern variables.
 Inner pattern-bound variables are introduced by binders in the pattern.

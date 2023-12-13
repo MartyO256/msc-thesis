@@ -127,12 +127,12 @@ Both systems allow the user to input \LF-level terms or computation-level expres
 Both the \ac{REPL} and \Harpoon depend on the earlier processing phases of \Beluga and the flow of information therein.
 
 This thesis focuses on the first few phases of the \Beluga processing pipeline, specifically parsing and indexing.
-Re-architected solutions to those phases are then shown to provide better support for some of \Beluga's and \Harpoon's existing features, while also addressing usability and soundness issues in those systems.
+Rearchitected solutions to those phases are then shown to provide better support for some of \Beluga's and \Harpoon's existing features, while also addressing usability and soundness issues in those systems.
 
 \section{State Management and Incremental Program Development}\label{section:intro-state-management}
 
 Users benefit from interacting with the code they are editing by way of auxiliary software that performs actions on it.
-Incremental program development in programming language tooling is the problem of applying edit actions to programs while only re-processing a minimal portion of the program under edit.
+Incremental program development in programming language tooling is the problem of applying edit actions to programs while only reprocessing a minimal portion of the program under edit.
 The kinds of edit actions that can be implemented vary from one programming language to the other depending on the language's features.
 Typically, edit actions include software refactoring commands such as variable renaming, reordering functions in a file, selecting a list of statements from one function and extracting them into a separate function, pretty-printing and formatting the textual representation of code, etc.
 Sound and efficient handling of these edit actions is instrumental to the productivity of users working on large scale software systems.
@@ -151,7 +151,7 @@ A preliminary step to supporting incremental program development is to parameter
 As such, those routines can be used in an out-of-order fashion as opposed to when the program is processed during compilation tasks.
 This is because the routine can be visited with a different state than the one that is naturally constructed when sequentially processing program units.
 For instance, a routine like conflict-avoiding variable renaming can be dependent on a referencing environment to perform variable and constant lookups.
-If such a routine is invoked during an interactive program development session, then a separate routine can be implemented to rebuild the referencing environment without having to re-process the entire program and its dependencies.
+If such a routine is invoked during an interactive program development session, then a separate routine can be implemented to rebuild the referencing environment without having to reprocess the entire program and its dependencies.
 In this case, the edit action requires visiting a selected \ac{AST} node with the referencing environment as visitor state.
 The issue then becomes how to efficiently construct and preserve the correctness of such visitor states.
 As it pertains to \Beluga and \Harpoon, this specifically affects \ac{REPL} sessions instantiated at program holes.
