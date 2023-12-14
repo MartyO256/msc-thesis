@@ -9,13 +9,19 @@ To facilitate the implementation of semantic analysis, \LF terms are required to
 This means that terms containing free variables can be manipulated and reasoned about explicitly in \Beluga.
 
 A signature in \Beluga is the list of all the toplevel constant declarations in a mechanization.
-This includes the aforementioned \LF type-level and term-level constant declarations, but also includes inductive and coinductive type declarations at the computation-level, with their associated constructors and destructors respectively.
+This includes the aforementioned \LF type-level and term-level constant declarations, but also includes inductive and coinductive type declarations at the computation-level, with their associated constructors and destructors respectively, and computation-level programs.
+\Harpoon provides an alternative to specifying proofs as programs in the form of a proof script comprised of tactics and their effects on the meta-level and computation-level contexts for variables.
 A complete specification of signature-level declarations is provided in section~\ref{section:syntax-signature} as part of grammars for parsing.
 
 % TODO:
 
 Let $x$ range over identifiers, $c$ over constants, $X$ over meta-objects, $\psi$ over contexts and $g$ over context schemas.
 Figure~\ref{figure:internal-syntax} then provides an overview of \Beluga's core language.
+\LF kinds classify \LF types, which classify \LF terms.
+Likewise, computation-level kinds classify computation-level types, which classify computation-level expressions.
+\LF terms are broken down into normal and neutral terms, along with heads and spines, to syntactically enforce canonical forms.
+Since \Beluga's type system is bidirectional, the syntax of computation-level expressions is split into those for which a type can be inferred (type-synthesizing expressions), and those that can be checked against a type (type-checkable expressions).
+Meta-objects, classified by meta-types, can be embedded in the computation-level by way of boxes that simultaneously bind all variables from \LF contexts.
 
 % What's the point of meta-level constructs?
 
