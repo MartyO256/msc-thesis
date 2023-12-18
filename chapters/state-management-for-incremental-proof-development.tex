@@ -13,6 +13,7 @@
 \newcommand{\Constant}{\mathbb{C}}
 \newcommand{\Fail}{\lightning}
 \newcommand{\Lookup}[2]{\operatorname{lookup}\left[#1\right]\left(#2\right)}
+\newcommand{\Index}{\operatorname{index}}
 \newcommand{\Domain}{\operatorname{domain}}
 \newcommand{\Pop}[2]{\operatorname{pop}\left[#1\right]\left(#2\right)}
 \newcommand{\Translates}{\rightsquigarrow}
@@ -36,7 +37,7 @@ Indeed, edit actions are scoped to a model of the program as opposed to the prog
 
 % How do other systems supporting interactive proof sessions handle state management?
 
-Proof assistants providing interactivity through \acp{REPL} or tools for editors each approach the problem of incremental development in unique ways tailored to their systems.
+Proof assistants providing interactivity through \acp{REPL} or tools for text editors each approach the problem of incremental development in unique ways tailored to their systems.
 For instance, constraint-based type systems require trailing mechanisms to revert state changes induced by solving type constraints on new and pre-existing type variables when type-checking fails for a given program.
 Likewise, context-switching between different parts of a program under edit requires updating the state to correctly reflect what identifiers are in scope.
 Furthermore, in proof assistants specifically, command histories may be implemented to support undoing and redoing commands or tactics.
@@ -75,17 +76,19 @@ Additionally, in case of bugs arising during edit sessions, separate commands ar
 % What are the features desired for Harpoon and Beluga?
 % Why do those features help in incremental proof development?
 
-As an interactive frontend for \Beluga, the \Harpoon system is designed such that each of its supported commands is guaranteed to be sound with respect to the rest of the signature.
+As an interactive frontend for \Beluga, the \Harpoon system is designed such that editing a proof script by way of administrative commands or tactics is guaranteed to preserve the soundness of the proof with respect to the rest of the \Beluga signature.
 This includes, among other things, ensuring that input terms are well-typed, that cases analyses cover all possible branches with respect to type family definitions, and that identifiers can be properly resolved once proof scripts are translated into programs.
 Chiefly, \Harpoon's administrative commands must work as intended in any valid order of execution so as to ensure that user's work does not get lost.
-Just like \Abella, \Isabelle/\Isar, \Coq and \Agda, undoable commands in \Harpoon must undo those commands' transformations applied to the editing state.
-Unlike \Abella though, undone commands can be redone so users can move effortlessly forward and backward in the edit history.
+Just like \Abella, \Isabelle/\Isar, \Coq and \Agda, undoable commands in \Harpoon must undo those commands' effects on both the proof script and the editing state.
+Unlike \Abella though, undone commands can be redone, which allows users to move effortlessly forward and backward in the edit history.
 One feature that is unique to \Harpoon is the ability to efficiently checkout the proof state for incomplete theorems occurring anywhere in a \Beluga signature.
 This enables the development of proofs in a top-down fashion by first stating theorems and lemmas and then proving them, fully or partially, in any order that seems most productive.
-This is stronger than \Abella's and \Coq's subgoal deferring feature, which \Harpoon also supports.
+This is stronger than \Abella's and \Coq's subgoal deferring feature, which \Harpoon also supports, in that theorems may be declared with respect to different subsets of the signature.
 
 Unfortunately, case studies revealed that the implementation of \Harpoon's theorem-switching feature can lead to invalid \Beluga signatures when proof scripts developed out of order are translated into programs.
-To fully support this feature, the \Beluga system requires a mechanism to rollback the referencing state to the point where theorems are declared.
+Indeed, upon checking out an incomplete proof script, the signature would not be reverted back to the state at which that proof is declared.
+This effectively means that definitions occurring later in a proof session would appear in scope during interactive proof sessions.
+To soundly support switching between theorems, the \Beluga system requires a mechanism to rollback the referencing state to the point where theorems are declared.
 This prompted the refactoring of name resolution in \Beluga and \Harpoon to support visiting states.
 
 \section{The Legacy Indexing Phase}
@@ -353,7 +356,7 @@ The translation $\Translates_{s}$ is split following the semantic classes of fig
 % TODO: Continue, and explain
 
 \begin{equation}
-\infer{\Xi \vdash x \Translates_M \iota \dashv \Xi}{\Lookup{x}{\Xi} = (x : \mathsf{LF}_{\mathsf{term}}) & \operatorname{index}_{\Psi(\Xi)}(x) = \iota}
+\infer{\Xi \vdash x \Translates_M \iota \dashv \Xi}{\Lookup{x}{\Xi} = (x : \mathsf{LF}_{\mathsf{term}}) & \Index_{\Psi(\Xi)}(x) = \iota}
 \end{equation}
 
 \begin{equation}
@@ -389,7 +392,7 @@ The translation $\Translates_{s}$ is split following the semantic classes of fig
 \end{equation}
 
 \begin{equation}
-\infer{\Xi; \Pattern \vdash x \Translates_{Mp} \iota \dashv \Xi; \Pattern}{\Lookup{x}{\Xi; \Pattern} = (x : \mathsf{LF}_{\mathsf{term}}) & \operatorname{index}_{\Psi(\Xi; \Pattern)}(x) = \iota}
+\infer{\Xi; \Pattern \vdash x \Translates_{Mp} \iota \dashv \Xi; \Pattern}{\Lookup{x}{\Xi; \Pattern} = (x : \mathsf{LF}_{\mathsf{term}}) & \Index_{\Psi(\Xi; \Pattern)}(x) = \iota}
 \end{equation}
 
 \begin{equation}
@@ -461,7 +464,7 @@ Instead, as variables are added to the referencing environment, they are annotat
 This is achieved using a separate counter that keeps track of the indexing context size.
 These annotations effectively indicate the order of insertion into the indexing context.
 The de Bruijn index for a variable can then later be recovered simply by subtracting the current indexing context size with the size that was recorded at the binder for that variable.
-In other words, as illustrated in figure~\ref{figure:lf-indexing}, if $\Psi'$ is an indexing context with $x \in \operatorname{domain}(\Psi')$, and $\Psi$ is the indexing context immediately before that $x$ was added, then $|\Psi'| > |\Psi|$ and the de Bruijn index of $x$ with respect to $\Psi'$ is
+In other words, as illustrated in figure~\ref{figure:lf-indexing}, if $\Psi'$ is an indexing context with $x \in \Domain(\Psi')$, and $\Psi$ is the indexing context immediately before that $x$ was added, then $|\Psi'| > |\Psi|$ and the de Bruijn index of $x$ with respect to $\Psi'$ is
 \begin{equation*}
 \mathsf{index}_{\Psi'}(x) = |\Psi'| - |\Psi|.
 \end{equation*}
@@ -496,6 +499,8 @@ This meant that running the indexing phase on a signature would take more time t
 Thankfully, the indexing phase's implementation was loosely coupled with the representation of the referencing environment, and the state monad was used throughout.
 As such, it was easy to shift back to a mutable data structure and recover runtime performance comparable to that of the legacy implementation of \Beluga.
 As a consequence, checking out incomplete proofs in \Harpoon involves reconstructing the referencing environment using the internal \ac{AST}'s representation of the signature.
+
+% TODO: Discuss scope graphs as an alternative to the formalism and implementation, argue this end up being the same as association lists because of telescopes
 
 From a programming language implementation standpoint, the revised indexing phase simplified the system's flow of information by decoupling it from the signature reconstruction store.
 This opens up multiple opportunities, including proper unit-testing of the referencing environment structure and indexing functions.

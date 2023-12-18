@@ -1,7 +1,7 @@
 \noindent $ \boxed{\Xi; \mathbb{I}; \mathbb{P} \vdash \ucorner{M_p} \rightsquigarrow_{M_p} M_P' \dashv \Xi'; \mathbb{I}'; \mathbb{P}'} $ \quad The parser object $ \ucorner{M_p} $ is disambiguated to the contextual \LF term pattern $ M_p' $ under the outer, inner and pattern disambiguation contexts $ \Xi, \mathbb{I}, \mathbb{P} $ respectively, which produces the output outer, inner and pattern disambiguation states $ \Xi', \mathbb{I}', \mathbb{P}' $ respectively.
 
 \begin{equation}
-\infer{\Xi; \mathbb{I}; \mathbb{P} \vdash \ucorner{x} \rightsquigarrow_{M_p} x \dashv \Xi; \mathbb{I}; \mathbb{P}, x : \mathsf{LF}_{\mathsf{term}}}{x \notin \operatorname{domain}(\mathbb{I})}
+\infer{\Xi; \mathbb{I}; \mathbb{P} \vdash \ucorner{x} \rightsquigarrow_{M_p} x \dashv \Xi; \mathbb{I}; \mathbb{P}, x : \mathsf{LF}_{\mathsf{term}}}{x \notin \Domain(\mathbb{I})}
 \end{equation}
 
 \begin{equation}
@@ -9,7 +9,7 @@
 \end{equation}
 
 \begin{equation}
-\infer{\Xi; \mathbb{I}; \mathbb{P} \vdash \ucorner{\#x} \rightsquigarrow_{M_p} \#x \dashv \Xi; \mathbb{I}; \mathbb{P}, \#x : \mathsf{LF}_{\mathsf{term}}}{\#x \notin \operatorname{domain}(\mathbb{I})}
+\infer{\Xi; \mathbb{I}; \mathbb{P} \vdash \ucorner{\#x} \rightsquigarrow_{M_p} \#x \dashv \Xi; \mathbb{I}; \mathbb{P}, \#x : \mathsf{LF}_{\mathsf{term}}}{\#x \notin \Domain(\mathbb{I})}
 \end{equation}
 
 \begin{equation}
