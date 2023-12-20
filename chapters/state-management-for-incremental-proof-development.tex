@@ -145,6 +145,11 @@ For \Beluga, this requires having a merged view of the lookup tables for constan
 In particular, variables identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together.
 To approach this problem, some definitions are in order.
 
+% What are frames?
+% What are scopes?
+% What are fully qualified identifiers?
+% What are referencing environments?
+
 A frame is a lexical region of an \ac{AST} wherein variable declarations and references can be made.
 A scope is a frame in which name resolution is uniform, meaning that references are resolved to the same declaration site irrespective of the \ac{AST} node in the scope.
 Whereas declarations can shadow each other within a frame, all declarations have to be distinct in scopes.
@@ -158,9 +163,17 @@ This includes name resolution under lambda-expressions and contexts in contextua
 All the while, indexing has to feature some backtracking mechanism to support incremental proof development in \Harpoon sessions.
 In the disambiguation phase, where a similar mapping occurs from the parser \ac{AST} to the external \ac{AST}, the visitor state has to additionally keep track of user-defined notations.
 
-%TODO: Rename "scope" to "frame". A scope is the minimal frame consistent with name resolution (i.e. scopes are different based on lookup results)
+% What motivates the introduction of frames?
 
-Since \Beluga supports defining constants in modules and pattern-matching, we distinguish between three kinds of frames which operate differently in the way bindings are added to them:
+Since \Beluga is a functional programming language, every identifier declaration is allowed to shadow previous declarations.
+The only admissible exception to this rule is that identifiers in mutually recursive declarations have to be unique.
+Everywhere else, constant and variable declarations introduce their own scope.
+This means that a scope graph~\cite{nameresolution} representation of name resolution for \Beluga programs is essentially a line graph, which is computationally inefficient.
+As such, name resolution is instead modelled and implemented using frames.
+
+% What kinds of frames will we deal with?
+
+Since \Beluga supports defining constants in modules, and pattern-matching in computation-level programs, three distinct kinds of frames are designed to operate differently in the way bindings are added to them:
 \begin{enumerate}
 \item
 \textit{Plain frames}: this kind of frame does not have additional mechanisms.
