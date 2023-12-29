@@ -185,7 +185,7 @@ Thus, \Twelf-style \LF term-level and type-level constant declarations could be 
 
 \subsection{Parsing}
 
-Parsing of \Beluga signatures is achieved using $ \mathsf{LALR(\infty)} $ parsing in pathological cases and $ \mathsf{LALR(1)} $ parsing in the most frequent cases.
+Parsing of \Beluga signatures is achieved using $ \mathsf{LL(\infty)} $ parsing in pathological cases and $ \mathsf{LL(1)} $ parsing in the most frequent cases.
 This is implemented using the monadic parser combinator library introduced in \Beluga version \texttt{1.0}.
 Unlimited lookahead is enabled only in select cases, or if no input token has been consumed, which provides sufficient performance for parsing large \Beluga files.
 
@@ -491,8 +491,9 @@ Should \Beluga be extended to support multiple context variables in contexts, th
 Likewise, should mixfix notations be a planned feature, then identifier overloading may need to be reintroduced with type-driven disambiguation since those notations typically require the reuse of names across different operators.
 
 Additionally, further blurring of the grammars in section~\ref{section:resolving-grammar-ambiguities} would be required to ensure that the context-free parsing phase does not have to perform infinite lookaheads.
-Indeed, there is a pathological case in parsing computation-level kinds and types where we run an unbounded lookahead because of the syntax for meta-types and meta-objects.
+Indeed, there is a pathological case in parsing computation-level kinds and types where an unbounded lookahead is required because of an overlapping syntax between meta-level types and computation-level types.
 The performance impact of this lookahead has not been measured, but it appears to be negligible based on the performance of running the entire processing pipeline on the numerous examples that are part of the system's test suite.
-Nonetheless, the observation that additional grammar blurring is required to get from an $ \mathsf{LALR}(\infty) $ parser to an $ \mathsf{LALR}(1) $ parser for \Beluga begs the question whether there should only be one encompassing grammar in section~\ref{section:resolving-grammar-ambiguities}.
-Since we need one parselet per precedence level, and most static operators in \Beluga have distinct precedences, the resulting increase in the recursion depth for recursive descent parsing could however deteriorate the runtime performance of the parser.
-Arguably, this design would be easier to extend, and could provide more opportunities to improve the precision of error messages in the disambiguation phase.
+Nonetheless, the observation that additional grammar blurring is required to get from an $ \mathsf{LL}(\infty) $ parser to an $ \mathsf{LL}(1) $ parser for \Beluga begs the question whether there should only be one encompassing grammar in section~\ref{section:resolving-grammar-ambiguities}.
+This would make the language's grammar uniform, and allow for more flexibility in overloading syntactic constructs.
+However, since a parselet is required per precedence level in recursive descent parsing, and most static operators in \Beluga have distinct precedences, the resulting increase in the recursion depth for parsing could deteriorate the runtime performance of the parser.
+Arguably, such a design presents more opportunities to improve the precision of syntax error messages during disambiguation.
