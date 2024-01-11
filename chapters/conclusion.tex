@@ -11,9 +11,9 @@ There are still many implementation challenges ahead in order to fully support s
 Chiefly, proper information flow analysis is required in the later phases of semantic analysis, specifically reconstruction, type-checking and unification, to ascertain whether their stateful operations are always handled soundly.
 Indeed, while there is a trailing mechanism for higher-order unification to keep track of meta-variable instantiations (the assignment of a contextual object to a meta-variable), there are routines during \LF reconstruction that ignore this bookkeeping.
 This can result in unsound programs when users undo edit actions during interactive proof developments.
-Similarly, 
 
 Fresh name generation is currently unsound in the implementation of \Beluga.
+This has consequences with program synthesis, both for the conversion of \Harpoon proof scripts to \Beluga programs and for error-reporting.
 % TODO: Expand, argue we need something akin to Agda's type-checking monad
 
 \section{Future Work}

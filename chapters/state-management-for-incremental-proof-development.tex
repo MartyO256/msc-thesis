@@ -27,47 +27,46 @@ A formalism and an implementation of identifier resolution in \Beluga are presen
 % What are aspects of state management that are required to support incremental proof development?
 % In what way are state management and exception handling closely linked with respect to interactive proof sessions?
 
-% TODO: Talk about trailing, snapshot mechanisms, soundness preservation, ...
 Incremental program development is a broad and open problem in the implementation of interpreters and compilers.
-
-Structured editing obviates some of the issues with cache invalidation and the propagation of changes in incremental development.
+The main challenge with implementing such systems is state invalidation, where an edit on part of a program triggers changes elsewhere, both in the code the user wrote and in the interpreter analysing it.
+While reprocessing the affected parts of the code is a valid solution to guarantee soundness, this does not scale efficiently to large programs.
+Structured editing obviates some of the issues with state invalidation and the propagation of changes in incremental development.
 Indeed, edit actions are scoped to a model of the program as opposed to the program's textual representation itself, which means they have a limited and controlled effect on the structured editor's state.
-
-% TODO:
+Mechanisms can then be designed for the interpreter's state to improve its runtime performance in soundly responding to edit actions.
 
 % How do other systems supporting interactive proof sessions handle state management?
 
-Proof assistants providing interactivity through \acp{REPL} or tools for text editors each approach the problem of incremental development in unique ways tailored to their systems.
-For instance, constraint-based type systems require mechanisms to keep track of the effects of solving contraints so that those effects can be reverted in the event that type-checking fails for a given program.
+Proof assistants providing interactivity through \acp{REPL} and tools for text editors each approach the problem of incremental development in unique ways tailored to their systems.
+For instance, constraint-based type systems require mechanisms to keep track of the effects of solving contraints, so that those effects can be undone in the event that type-checking fails for a given program.
 Likewise, context-switching between different parts of a program under edit requires updating the state to correctly reflect what identifiers are in scope, both for providing code completion hints and for performing identifier resolution in new terms.
-Furthermore, command histories may be implemented to support undoing and redoing commands, like in proof assistants since users may apply tactics that do not lead to a solution for a given subgoal.
-Additionally, subgoal trees may also added to allow navigating between incomplete parts of a proof.
+Furthermore, command histories may be implemented to support undoing and redoing edit actions, like in proof assistants since users may apply tactics that do not lead to a solution for a given subgoal.
+Additionally, subgoal may be arranged internally as a tree following the structure of a proof to allow navigating between holes.
 The successful implementation of these structured editing features hinges on careful management of recorded state to ensure soundness.
 
 The \Abella\footnote{\Abella version \texttt{2.0.8}}~\cite{baelde2014abella} interactive theorem prover has limited support for structurally editing proofs.
 Indeed, it leverages a single global state comprised of mutable references with a snapshot mechanism to copy the entire state on every undoable command.
 This state notably includes the signature of declarations, the subordination relation on type families, and the list of subgoals that have yet to be proven in the current lemma under edit.
 Hence in its interactive mode, \Abella users are restricted to adding new declarations at the end of the session's state.
-Indeed, constructing visiting states to other parts of the signature under edit would require rerunning the processing pipeline.
+Indeed, constructing visiting states to other parts of the signature under edit would require rerunning the processing pipeline from scratch.
 
 \Isabelle/\Isar\footnote{\Isabelle2023} implements a system of transitions between immutable state structures to support pure edit actions~\cite{wenzel2023isabelleimpl, wenzel2023isabelleisarref, wenzel2023isabellesys}.
-Indeed, most of that system's state, also called contexts~\cite{ballarin2006interpretation}, is implemented using immutable 2-3~trees to tabulate data, and each context holds a list of all predecessor states.
+Indeed, most of that system's state, internally referred to as contexts~\cite{ballarin2006interpretation}, is implemented using immutable 2-3~trees to tabulate data, with each context holding a list of all its predecessor states.
 The definitions, proofs and terms in the buffer under edit are stored in such contexts.
 Undo operations and modification to the signature then proceed by rolling back the contexts to before the edit was done using the list of predecessors.
 Mutable references are leveraged to represent the global state of the kernel, though their usage is limited.
 This mutable data is split between synchronized and unsynchronized management strategies, the former adding mutual exclusion locks to references that hold mutable data.
-Overall, the extensive use of immutable data structures coupled with synchronization for mutable data result in degraded memory usage and runtime performance.
+Overall, the extensive use of immutable data structures, coupled with synchronization for mutable data, results in degraded memory usage and runtime performance.
 Nonetheless, this system allows finer edit actions and ensures that cache invalidations are resolved consistently.
 
-\Agda\footnote{\Agda \texttt{v2.6.4}}~\cite{clffolp, norell2007towards, agda2023} supports incremental interactions through commands evaluated in its type checking monad.
-Issuing a command in this \Agda mode directly affects the text editor's buffer, which provides a seamless editing experience.
-In essence, the type checking monad is an instance of the state monad, whose state structure contains most of the mutable and immutable data used throughout the system.
-This includes global configuration parameters, scope information, user-defined notations for parsing, typing contexts for variables as association lists, etc.
+\Agda\footnote{\Agda \texttt{v2.6.4}}~\cite{clffolp, norell2007towards, agda2023} supports incremental interactions with its \Agda mode and its implementation of the language server protocol.
+Issuing an edit command with those systems directly affects the text editor's buffer, which provides a seamless editing experience.
+Under the hood, this is supported by \Agda's type checking monad, which is an instance of the state monad whose state structure contains most of the mutable and immutable data used throughout the system.
+This state includes global configuration parameters, scope information, user-defined notations for parsing, typing contexts for variables as association lists, etc.
 It is an agglomeration of all the data used in \Agda's processing pipeline, readily available as a function parameter as opposed to being represented using a global mutable data structure.
 This wholly captures the idea of a visiting state over declarations in an \Agda signature.
 The main issues when dealing with this type checking monad are performance overheads, and ensuring that state mutations are sound.
-To mitigate soundness issues, some interactions kinds are internally assigned scopes to restrict their effect on the type checking state.
-Additionally, in case of bugs arising during edit sessions, separate commands are available to restore the state to what it was and to reload the current editor buffer.
+To mitigate soundness issues, some interactions kinds have defined scopes to restrict their effect on the type checking state.
+In case of bugs arising during edit sessions, separate commands are available to the user to restore the state to earlier checkpoint or to entirely reload the current editor buffer.
 
 % TODO: See if Coq has incremental development as well
 % TODO: See chapter 7 of Coq's manual: Proof Handling
@@ -169,8 +168,8 @@ In the disambiguation phase, where a similar mapping occurs from the parser \ac{
 
 % What motivates the introduction of frames?
 
-Since \Beluga is a functional programming language, every identifier declaration is allowed to shadow previous declarations.
-The only admissible exception to this rule is that identifiers in mutually recursive declarations have to be unique.
+Every identifier declaration is allowed to shadow previous declarations in \Beluga.
+The only exception to this rule is that identifiers in mutually recursive declarations have to be unique.
 Everywhere else, constant and variable declarations introduce their own scope.
 This means that a scope graph~\cite{nameresolution} representation of name resolution for \Beluga programs is essentially a line graph, which is computationally inefficient.
 As such, name resolution is instead modelled and implemented using frames.
@@ -258,7 +257,7 @@ Some variants for constants and variables have been omitted for brevity.
 \end{aligned}
 \end{equation*}
 \caption[Example referencing environments in the formalism]{%
-Example referencing environments $\Xi_{\texttt{\verbhole{?h1}}}$, $\Xi_{\texttt{\verbhole{?h2}}}$ and $\Xi_{\texttt{\verbhole{?h3}}}$ for the holes $\texttt{\verbhole{?h1}}$, $\texttt{\verbhole{?h2}}$ and $\texttt{\verbhole{?h3}}$ in figure~\ref{figure:referencing-environment-example} using the formal definitions of figure~\ref{figure:referencing-environment-definition}, showcasing the semantics of opening a module.
+Example referencing environments $\Xi_{\texttt{\verbhole{?h1}}}$, $\Xi_{\texttt{\verbhole{?h2}}}$ and $\Xi_{\texttt{\verbhole{?h3}}}$ for the holes $\texttt{\verbhole{?h1}}$, $\texttt{\verbhole{?h2}}$ and $\texttt{\verbhole{?h3}}$ in figure~\ref{figure:referencing-environment-example} using the formal definitions of figure~\ref{figure:referencing-environment-definition}, illustrating the semantics of opening a module.
 Some annotations to the bindings are omitted for brevity.
 }
 \label{figure:example-reference-environment-formalism}
@@ -396,7 +395,7 @@ The translation $\Translates_{s}$ is split following the semantic classes of fig
 
 \begin{equation}
 \infer{
-	\Xi \vdash [x_1, x_2, \dots, x_n \vdash M] \Translates_C [x_1, x_2, \dots, x_n \vdash M'] \dashv \Pop{x_n, x_{n - 1}, \dots, x_1}{\Xi'}
+	\Xi \vdash [x_1, x_2, \dots, x_n \vdash M] \Translates_C [x_1, x_2, \dots, x_n \vdash M'] \dashv \Pop{x_1, x_2, \dots, x_n}{\Xi'}
 }{
 	\Xi; x_1, x_2, \dots, x_n \vdash M \Translates_M M' \dashv \Xi'
 }
@@ -431,7 +430,7 @@ The translation $\Translates_{s}$ is split following the semantic classes of fig
 
 \begin{equation}
 \infer{
-	\Xi; \Pattern \vdash [x_1, x_2, \dots, x_n \vdash M_p] \Translates_{Cp} [x_1, x_2, \dots, x_n \vdash M_p'] \dashv \Pop{x_n, x_{n - 1}, \dots, x_1}{\Xi; \Pattern'}
+	\Xi; \Pattern \vdash [x_1, x_2, \dots, x_n \vdash M_p] \Translates_{Cp} [x_1, x_2, \dots, x_n \vdash M_p'] \dashv \Pop{x_1, x_2, \dots, x_n}{\Xi; \Pattern'}
 }{
 	\Xi; \Pattern, x_{1\downarrow}, x_{2\downarrow}, \dots, x_{n\downarrow} \vdash M_p \Translates_{Mp} M_p' \dashv \Xi; \Pattern'
 }
@@ -441,12 +440,12 @@ The translation $\Translates_{s}$ is split following the semantic classes of fig
 
 \begin{equation}
 \infer{
-	\Xi \vdash \mathbf{case}\ i\ \mathbf{of}\ \{p_k \Rightarrow e_k\}_{0\leq k \leq n} \Translates_e \mathbf{case}\ i'\ \mathbf{of}\ \{p_k' \Rightarrow e_k'\}_{0\leq k \leq n} \dashv \Xi
+	\Xi \vdash \mathbf{case}\ i\ \mathbf{of}\ \{p_k \Rightarrow e_k\}_{0\leq k \leq n} \Translates_e \mathbf{case}\ i'\ \mathbf{of}\ \{p_k' \Rightarrow e_k'\}_{0\leq k \leq n} \dashv \Xi'
 }{
-	\Xi \vdash i \Translates_i i' \dashv \Xi &
-	(\Xi; \cdot_\Pattern \vdash p_k \Translates_p p_k' \dashv \Xi; \Pattern_k &
-	\Pattern_k \mapsto \Frame_k &
-	\Xi; \Frame_k \vdash e_k \Translates_e e_k' \dashv \Xi)_{0\leq k \leq n}
+	\Xi \vdash i \Translates_i i' \dashv \Xi' &
+	\left(\begin{matrix}\Xi'; \cdot_\Pattern \vdash p_k \Translates_p p_k' \dashv \Xi'; \Pattern_k \\
+	\Pattern_k \mapsto \Frame_k \\
+	\Xi'; \Frame_k \vdash e_k \Translates_e e_k' \dashv \Xi'; \Frame_k'\end{matrix}\right)_{0\leq k \leq n}
 }
 \end{equation}
 
