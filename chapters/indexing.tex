@@ -1,0 +1,295 @@
+\chapter{Indexing}\label{chapter:indexing}
+
+\begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
+Plain \LF kinds & $K$ & $\Coloneqq$ & $A \to K \mid \Pi x{:}A. K \mid \mathbf{type}$\\
+Plain \LF types & $A, B$ & $\Coloneqq$ & $A\to B \mid \Pi x{:}A. B \mid a \mid A\ M_1\ M_2 \dots M_n$\\
+Plain \LF terms & $M, N$ & $\Coloneqq$ & $x \mid c \mid \lambda x. M \mid M\ N_1\ N_2 \dots N_n \mid M : A$
+\end{tabular}
+
+\begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
+Indexed \LF kinds & $\tilde K$ & $\Coloneqq$ & $\tilde A \to \tilde K \mid \Pi_{\tilde A}\ \tilde K \mid \mathbf{type}$\\
+Indexed \LF types & $\tilde A, \tilde B$ & $\Coloneqq$ & $\tilde A\to \tilde B \mid \Pi_{\tilde A}\ \tilde B \mid \tilde a \mid \tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n$\\
+Indexed \LF terms & $\tilde M, \tilde N$ & $\Coloneqq$ & $\iota \mid \tilde c \mid \lambda\ \tilde M \mid \tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n \mid \tilde M : \tilde A$
+\end{tabular}
+
+\newcommand{\Hoare}[3]{\{#1\}\ #2\ \{#3\}}
+\renewcommand{\Env}{\mathsf{Env}}
+\renewcommand{\Pop}{\operatorname{pop}}
+\newcommand{\Push}{\operatorname{push}}
+\newcommand{\Shift}{\operatorname{shift}}
+\newcommand{\Unshift}{\operatorname{unshift}}
+\renewcommand{\Lookup}{\operatorname{lookup}}
+\renewcommand{\Index}{\operatorname{index}}
+\newcommand{\Indexes}[3]{#1 \rightsquigarrow_{#2} #3}
+\newcommand{\IndexesKind}[2]{\Indexes{#1}{K}{#2}}
+\newcommand{\IndexesType}[2]{\Indexes{#1}{A}{#2}}
+\newcommand{\IndexesTerm}[2]{\Indexes{#1}{M}{#2}}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift_\Psi(\Xi'')}
+}{
+	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}
+	& \Hoare{\Env = \Shift_\Psi(\Xi')}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A} \tilde K}}{\Env = \Pop_\Psi(x; \Xi'')}
+}{
+	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}
+	& \Hoare{\Env = \Push_\Psi(x; \Xi')}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesKind{\mathbf{type}}{\mathbf{type}}}{\Env = \Xi}
+}{}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesType{A \to B}{\tilde A \to \tilde B}}{\Env = \Unshift_\Psi(\Xi'')}
+}{
+	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}
+	& \Hoare{\Env = \Shift_\Psi(\Xi')}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}}{\Env = \Pop_\Psi(x; \Xi'')}
+}{
+	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}
+	& \Hoare{\Env = \Push_\Psi(x; \Xi')}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesType{a}{\tilde a}}{\Env = \Xi}
+}{
+	\Lookup(a; \Xi) = \tilde a : \mathsf{LF}_{\mathsf{type\ const}}
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesType{A\ M_1\ M_2 \dots M_n}{\tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n}}{\Env = \Xi_n}
+}{
+	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi_0}
+	& \left(\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi_k}\right)_{k \in \{1, 2, \dots, n\}}
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{x}{\iota}}{\Env = \Xi}
+}{
+	\Lookup(x; \Xi) = x : \mathsf{LF}_\mathsf{term}
+	& \Index_\Psi(x; \Xi) = \iota
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{c}{\tilde c}}{\Env = \Xi}
+}{
+	\Lookup(c; \Xi) = \tilde c : \mathsf{LF}_{\mathsf{term\ const}}
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{\lambda x. M}{\lambda\ \tilde M}}{\Env = \Pop_\Psi(x; \Xi')}
+}{
+	\Hoare{\Env = \Push_\Psi(x; \Xi)}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}}{\Env = \Xi_n}
+}{
+	\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi_0}
+	& \left(\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi_k}\right)_{k \in \{1, 2, \dots, n\}}
+}
+\end{equation}
+
+\begin{equation}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{M : A}{\tilde M : \tilde A}}{\Env = \Xi''}
+}{
+	\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}
+	& \Hoare{\Env = \Xi'}{\IndexesType{A}{\tilde A}}{\Env = \Xi''}
+}
+\end{equation}
+
+\newcommand{\D}{\mathcal{D}}
+
+\begin{theorem}[Purity]~
+\begin{enumerate}
+\item If $\Hoare{\Env = \Xi}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
+\item If $\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
+\item If $\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
+\end{enumerate}
+\begin{proof}
+{\footnotesize
+By simultaneous induction:
+\begin{enumerate}
+\item
+Assume $\deduce{\Hoare{\Env = \Xi}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'}}{\D}$.
+By structural induction on $\D$:
+\begin{itemize}
+\item
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift_\Psi(\Xi'')}
+}{
+	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
+	& \deduce{\Hoare{\Env = \Shift_\Psi(\Xi')}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}}{\D_2}
+}$.
+\par
+By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
+\par
+By the induction hypothesis on $\D_2$, $\Xi'' = \Shift_\Psi(\Xi')$.
+\par
+Then, $\Unshift_\Psi(\Xi'') = \Unshift_\Psi(\Shift_\Psi(\Xi')) = \Xi' = \Xi$.
+
+\item
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A} \tilde K}}{\Env = \Pop_\Psi(x; \Xi'')}
+}{
+	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
+	& \deduce{\Hoare{\Env = \Push_\Psi(x; \Xi')}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}}{\D_2}
+}$.
+\par
+By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
+\par
+By the induction hypothesis on $\D_2$, $\Xi'' = \Push_\Psi(x; \Xi')$.
+\par
+Then, $\Pop_\Psi(x; \Xi'') = \Pop_\Psi(x; \Push_\Psi(x; \Xi')) = \Xi' = \Xi$.
+
+\item
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesKind{\mathbf{type}}{\mathbf{type}}}{\Env = \Xi}
+}{}$.
+\par
+Holds trivially.
+\end{itemize}
+\item
+By structural induction on $\D$:
+\begin{itemize}
+\item
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesType{A \to B}{\tilde A \to \tilde B}}{\Env = \Unshift_\Psi(\Xi'')}
+}{
+	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
+	& \deduce{\Hoare{\Env = \Shift_\Psi(\Xi')}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}}{\D_2}
+}$.
+\par
+By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
+\par
+By the induction hypothesis on $\D_2$, $\Xi'' = \Shift_\Psi(\Xi')$.
+\par
+Then, $\Unshift_\Psi(\Xi'') = \Unshift_\Psi(\Shift_\Psi(\Xi')) = \Xi' = \Xi$.
+
+\item
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}}{\Env = \Pop_\Psi(x; \Xi'')}
+}{
+	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
+	& \deduce{\Hoare{\Env = \Push_\Psi(x; \Xi')}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}}{\D_2}
+}$.
+\par
+By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
+\par
+By the induction hypothesis on $\D_2$, $\Xi'' = \Push_\Psi(x; \Xi')$.
+\par
+Then, $\Pop_\Psi(x; \Xi'') = \Pop_\Psi(x; \Push_\Psi(x; \Xi')) = \Xi' = \Xi$.
+
+\item 
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesType{a}{\tilde a}}{\Env = \Xi}
+}{
+	\Lookup(a; \Xi) = \tilde a : \mathsf{LF}_{\mathsf{type\ const}}
+}$.
+\par
+Holds trivially.
+
+\item
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesType{A\ M_1\ M_2 \dots M_n}{\tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n}}{\Env = \Xi_n}
+}{
+	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi_0}}{\D_0}
+	& \left(\deduce{\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi_k}}{\D_k}\right)_{k \in \{1, 2, \dots, n\}}
+}$.
+\par
+By the induction hypothesis on $\D_0$, $\Xi_0 = \Xi$.
+\par
+For each $k \in \{1, 2, \dots, n\}$, by the induction hypothesis on $\D_k$, $\Xi_k = \Xi_{k - 1}$.
+\par
+Then, $\Xi_n = \Xi_{n - 1} = \dots = \Xi_1 = \Xi_0 = \Xi$.
+\end{itemize}
+\item
+By structural induction on $\D$:
+\begin{itemize}
+\item
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{x}{\iota}}{\Env = \Xi}
+}{
+	\Lookup(x; \Xi) = x : \mathsf{LF}_\mathsf{term}
+	& \Index_\Psi(x; \Xi) = \iota
+}$.
+\par
+Holds trivially.
+\item
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{c}{\tilde c}}{\Env = \Xi}
+}{
+	\Lookup(c; \Xi) = \tilde c : \mathsf{LF}_{\mathsf{term\ const}}
+}$.
+\par
+Holds trivially.
+\item
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{\lambda x. M}{\lambda\ \tilde M}}{\Env = \Pop_\Psi(x; \Xi')}
+}{
+	\deduce{\Hoare{\Env = \Push_\Psi(x; \Xi)}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}}{\D'}
+}$.
+\par
+By the induction hypothesis on $\D'$, $\Xi' = \Push_\Psi(x; \Xi)$.
+\par
+Then, $\Pop_\Psi(x; \Xi') = \Pop_\Psi(x; \Push_\Psi(x; \Xi)) = \Xi$.
+\item
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}}{\Env = \Xi_n}
+}{
+	\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi_0}}{\D_0}
+	& \left(\deduce{\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi_k}}{\D_k}\right)_{k \in \{1, 2, \dots, n\}}
+}$.
+\par
+By the induction hypothesis on $\D_0$, $\Xi_0 = \Xi$.
+\par
+For each $k \in \{1, 2, \dots, n\}$, by the induction hypothesis on $\D_k$, $\Xi_k = \Xi_{k - 1}$.
+\par
+Then, $\Xi_n = \Xi_{n - 1} = \dots = \Xi_1 = \Xi_0 = \Xi$.
+\item
+Case $\D = \infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{M : A}{\tilde M : \tilde A}}{\Env = \Xi''}
+}{
+	\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}}{\D_1}
+	& \deduce{\Hoare{\Env = \Xi'}{\IndexesType{A}{\tilde A}}{\Env = \Xi''}}{\D_2}
+}$.
+\par
+By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
+\par
+By the induction hypothesis on $\D_2$, $\Xi'' = \Xi'$.
+\par
+Then, $\Xi'' = \Xi' = \Xi$.
+\end{itemize}
+\end{enumerate}
+}
+\end{proof}
+\end{theorem}
