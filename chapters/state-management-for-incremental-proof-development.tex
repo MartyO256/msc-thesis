@@ -155,16 +155,17 @@ To approach this problem, some definitions are in order.
 
 A \textit{frame} is a lexical region of an \ac{AST} wherein variable declarations and references can be made.
 A \textit{scope} is a frame in which name resolution is uniform, meaning that references are resolved to the same declaration site irrespective of the \ac{AST} node in the scope.
-Whereas declarations can shadow each other within a frame, all declarations have to be distinct in scopes.
-A \textit{fully qualified identifier} $x_1.x_2.\cdots.x_n$ is a list of plain identifiers $x_1$, $x_2$, $\dots$, $x_n$ separated by dots denoting projection.
+Whereas declarations can shadow each other within a frame, all declarations have to be distinct in a scope.
+A \textit{fully qualified identifier} $x_1.x_2.\cdots.x_n$ is a list of plain identifiers $x_1$, $x_2$, $\dots$, $x_n$ separated by dots denoting projection out of a namespace.
 A \textit{referencing environment} in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
-In essence, a referencing environment provides a view of a signature for name resolution, and as such is restricted to one scope at a time.
+In essence, a referencing environment provides a window over a signature for name resolution, and as such is restricted to one scope at a time.
+
 The unified indexing phase is designed as a single sequential traversal of the external \ac{AST} to map it to the approximate \ac{AST}, using the referencing environment as visitor state.
 As \ac{AST} nodes are traversed, the referencing environment is updated by adding or removing identifiers in scope so that the resolution of identifiers is consistent with the language's specification.
 This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across different indexing contexts ($\Psi$, $\Delta$ and $\Gamma$).
-This includes name resolution under lambda-expressions and contexts in contextual \LF patterns, as well as distinguishing between pattern variables and bound identifiers.
+%This includes name resolution under lambda-expressions and contexts in contextual \LF patterns, as well as distinguishing between pattern variables and bound identifiers.
 All the while, indexing has to feature some backtracking mechanism to support incremental proof development in \Harpoon sessions.
-In the disambiguation phase, where a similar mapping occurs from the parser \ac{AST} to the external \ac{AST}, the visitor state has to additionally keep track of user-defined notations.
+It is also worth noting that in the disambiguation phase, where a similar mapping occurs from the parser \ac{AST} to the external \ac{AST}, the visitor state has to additionally keep track of user-defined notations.
 
 % What motivates the introduction of frames?
 
@@ -176,7 +177,7 @@ As such, name resolution is instead modelled and implemented using frames.
 
 % What kinds of frames will we deal with?
 
-Since \Beluga supports defining constants in modules, and pattern-matching in computation-level programs, three distinct kinds of frames are designed to operate differently in the way bindings are added to them:
+Since \Beluga supports defining constants in modules, and pattern-matching in computation-level programs, three distinct kinds of frames are designed to operate differently in the way bindings are looked up or added:
 \begin{enumerate}
 \item
 \textit{Plain frames}: this kind of frame does not have additional mechanisms.
@@ -473,7 +474,7 @@ On the other hand, the dictionaries speed up identifier lookups.
 Diagram of the referencing environment at hole \texttt{\verbhole{?h3}} from figure~\ref{figure:referencing-environment-example} as it is implemented in \Beluga~\texttt{v1.1} using dictionaries and stacks.
 The identifiers on the left are part of the toplevel module frame, and are each associated with a stack of bindings, with the most recent binding on the right end of the stack.
 The numbers \texttt{\#1}, \texttt{\#2}, ..., \texttt{\#7} denote the symbolic identifiers associated with the constants in the signature reconstruction store.
-The aliases introduced by opening module \texttt{Nat} are properly handled, such that constant \texttt{\#3} can be referenced either as \texttt{Nat.z} or \texttt{z} at that point in the signature.
+The aliases introduced by opening module \texttt{Nat} are handled properly, such that constant \texttt{\#3} can be referenced either as \texttt{Nat.z} or \texttt{z} at that point in the signature.
 }
 \label{figure:referencing-environment-implementation}
 \end{figure}
