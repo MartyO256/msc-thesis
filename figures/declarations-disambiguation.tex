@@ -12,7 +12,7 @@
 		}
 	}
 }{
-	\deduce{(\Xi^{\{t - 1\}}; \mathbb{M}^{\{t - 1\}} \vdash \ucorner{D_t} \rightsquigarrow_D D_t \dashv \Xi^{\{t\}}; \mathbb{M}^{\{t\}})_{t \in \{1, 2, \dots, n\}}}{\Xi^{\{0\}} = \Xi & \mathbb{M}^{\{0\}} = \cdot}
+	\deduce{(\Xi^{\{t - 1\}}; \mathbb{M}^{\{t - 1\}} \vdash \ucorner{D_t} \rightsquigarrow_D D_t \dashv \Xi^{\{t\}}; \mathbb{M}^{\{t\}})_{t \in \set{1, 2, \dots, n}}}{\Xi^{\{0\}} = \Xi & \mathbb{M}^{\{0\}} = \cdot}
 }
 \end{equation}
 
@@ -48,12 +48,12 @@
 		\splitdfrac{
 			\mathsf{LF} \; x : K = x_1 : A_1 \mid x_2 : A_2 \mid \dots \mid x_n : A_n; \dashv
 		}{
-			\Xi, x : \mathsf{LF}_{\mathsf{type}}, (x_t : \mathsf{LF}_{\mathsf{term}})_{t \in \{1, 2, \dots, n\}}; \mathbb{M}, x : \mathsf{LF}_{\mathsf{type}}, (x_t : \mathsf{LF}_{\mathsf{term}})_{t \in \{1, 2, \dots, n\}}
+			\Xi, x : \mathsf{LF}_{\mathsf{type}}, (x_t : \mathsf{LF}_{\mathsf{term}})_{t \in \set{1, 2, \dots, n}}; \mathbb{M}, x : \mathsf{LF}_{\mathsf{type}}, (x_t : \mathsf{LF}_{\mathsf{term}})_{t \in \set{1, 2, \dots, n}}
 		}
 	}
 }{
 	\deduce{
-		(\Xi, x : \mathsf{LF}_{\mathsf{type}} \vdash \ucorner{A_t} \rightsquigarrow_A A_t \dashv \Xi, x : \mathsf{LF}_{\mathsf{type}})_{t \in \{1, 2, \dots, n\}}
+		(\Xi, x : \mathsf{LF}_{\mathsf{type}} \vdash \ucorner{A_t} \rightsquigarrow_A A_t \dashv \Xi, x : \mathsf{LF}_{\mathsf{type}})_{t \in \set{1, 2, \dots, n}}
 	}{
 		\Xi \vdash \ucorner{K} \rightsquigarrow_K K \dashv \Xi
 	}

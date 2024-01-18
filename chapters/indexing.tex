@@ -25,7 +25,7 @@ Nameless \LF terms & $\tilde M, \tilde N$ & $\Coloneqq$ & $\iota \mid \tilde c \
 \end{tabular}
 \end{figure}
 
-\newcommand{\Hoare}[3]{\{#1\}\ #2\ \{#3\}}
+\newcommand{\Hoare}[3]{\set{#1}\ #2\ \set{#3}}
 \renewcommand{\Env}{\mathsf{Env}}
 \renewcommand{\Pop}{\operatorname{pop}}
 \newcommand{\Push}{\operatorname{push}}
@@ -34,9 +34,9 @@ Nameless \LF terms & $\tilde M, \tilde N$ & $\Coloneqq$ & $\iota \mid \tilde c \
 \renewcommand{\Lookup}{\operatorname{lookup}}
 \renewcommand{\Index}{\operatorname{index}}
 \newcommand{\Indexes}[3]{#1 \rightsquigarrow_{#2} #3}
-\newcommand{\IndexesKind}[2]{\Indexes{#1}{\text{K}}{#2}}
-\newcommand{\IndexesType}[2]{\Indexes{#1}{\text{A}}{#2}}
-\newcommand{\IndexesTerm}[2]{\Indexes{#1}{\text{M}}{#2}}
+\newcommand{\IndexesKind}[2]{\Indexes{#1}{{\normalfont\text{K}}}{#2}}
+\newcommand{\IndexesType}[2]{\Indexes{#1}{{\normalfont\text{A}}}{#2}}
+\newcommand{\IndexesTerm}[2]{\Indexes{#1}{{\normalfont\text{M}}}{#2}}
 \newcommand{\LFTerm}{\mathsf{LF}_{\mathsf{term}}}
 \newcommand{\LFTypeConst}{\mathsf{LF}_{\mathsf{type\ const}}}
 \newcommand{\LFTermConst}{\mathsf{LF}_{\mathsf{term\ const}}}
@@ -70,7 +70,7 @@ In the theoretic setting, indexing is defined with respect to an immutable repre
 \end{equation}
 \end{mdframed}
 
-\begin{mdframed}[frametitle={$\Xi \vdash \IndexesType{A}{\tilde A}$ : in the referencing environment $\Xi$, the \LF type $A$ is indexed as $\tilde A$}]
+\begin{mdframed}[frametitle={$\boxed{\Xi \vdash \IndexesType{A}{\tilde A}}$ : in the referencing environment $\Xi$, the \LF type $A$ is indexed as $\tilde A$}]
 \begin{equation}
 \infer{
 	\Xi \vdash \IndexesType{A \to B}{\tilde A \to \tilde B}
@@ -82,7 +82,7 @@ In the theoretic setting, indexing is defined with respect to an immutable repre
 
 \begin{equation}
 \infer{
-	\Xi \vdash \IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}. \tilde B}
+	\Xi \vdash \IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}
 }{
 	\Xi \vdash \IndexesType{A}{\tilde A}
 	& \Xi, x : \LFTerm \vdash \IndexesType{B}{\tilde B}
@@ -102,12 +102,12 @@ In the theoretic setting, indexing is defined with respect to an immutable repre
 	\Xi \vdash \IndexesType{A\ M_1\ M_2 \dots M_n}{\tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n}
 }{
 	\Xi \vdash \IndexesType{A}{\tilde A}
-	& \left(\Xi \vdash \IndexesTerm{M_k}{\tilde M_k}\right)_{k \in \{1, 2, \dots, n\}}
+	& \left(\Xi \vdash \IndexesTerm{M_k}{\tilde M_k}\right)_{k \in \set{1, 2, \dots, n}}
 }
 \end{equation}
 \end{mdframed}
 
-\begin{mdframed}[frametitle={$\Xi \vdash \IndexesTerm{M}{\tilde M}$ : in the referencing environment $\Xi$, the \LF term $M$ is indexed as $\tilde M$}]
+\begin{mdframed}[frametitle={$\boxed{\Xi \vdash \IndexesTerm{M}{\tilde M}}$ : in the referencing environment $\Xi$, the \LF term $M$ is indexed as $\tilde M$}]
 \begin{equation}
 \infer{
 	\Xi \vdash \IndexesTerm{x}{\iota}
@@ -138,7 +138,7 @@ In the theoretic setting, indexing is defined with respect to an immutable repre
 	\Xi \vdash \IndexesType{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}
 }{
 	\Xi \vdash \IndexesTerm{M}{\tilde M}
-	& \left(\Xi \vdash \IndexesTerm{N_k}{\tilde N_k}\right)_{k \in \{1, 2, \dots, n\}}
+	& \left(\Xi \vdash \IndexesTerm{N_k}{\tilde N_k}\right)_{k \in \set{1, 2, \dots, n}}
 }
 \end{equation}
 
@@ -153,11 +153,11 @@ In the theoretic setting, indexing is defined with respect to an immutable repre
 \end{mdframed}
 }
 
-In the implementation, indexing is defined with respect to a mutable referencing environment that is passed along for each computation.
-The possibility for a computation to mutate that state is reflected formally using Hoare logic.
+In the implementation, indexing is imperative and defined with respect to a mutable referencing environment that is passed along for each computation.
+The possibility for a computation to mutate that state is reflected formally using a Hoare-style specification.
 
 {\footnotesize
-\begin{mdframed}[frametitle={$\Hoare{P}{\IndexesKind{K}{\tilde K}}{Q}$ : the \LF kind $K$ is indexed as $\tilde K$ with precondition $P$ and postcondition $Q$}]
+\begin{mdframed}[frametitle={$\boxed{\Hoare{P}{\IndexesKind{K}{\tilde K}}{Q}}$ : the \LF kind $K$ is indexed as $\tilde K$ with precondition $P$ and postcondition $Q$}]
 \begin{equation}
 \infer{
 	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift(\Xi'')}
@@ -183,7 +183,7 @@ The possibility for a computation to mutate that state is reflected formally usi
 \end{equation}
 \end{mdframed}
 
-\begin{mdframed}[frametitle={$\Hoare{P}{\IndexesType{A}{\tilde A}}{Q}$ : the \LF type $A$ is indexed as $\tilde A$ with precondition $P$ and postcondition $Q$}]
+\begin{mdframed}[frametitle={$\boxed{\Hoare{P}{\IndexesType{A}{\tilde A}}{Q}}$ : the \LF type $A$ is indexed as $\tilde A$ with precondition $P$ and postcondition $Q$}]
 \begin{equation}
 \infer{
 	\Hoare{\Env = \Xi}{\IndexesType{A \to B}{\tilde A \to \tilde B}}{\Env = \Unshift_\Psi(\Xi'')}
@@ -215,12 +215,12 @@ The possibility for a computation to mutate that state is reflected formally usi
 	\Hoare{\Env = \Xi}{\IndexesType{A\ M_1\ M_2 \dots M_n}{\tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n}}{\Env = \Xi_n}
 }{
 	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi_0}
-	& \left(\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi_k}\right)_{k \in \{1, 2, \dots, n\}}
+	& \left(\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi_k}\right)_{k \in \set{1, 2, \dots, n}}
 }
 \end{equation}
 \end{mdframed}
 
-\begin{mdframed}[frametitle={$\Hoare{P}{\IndexesTerm{M}{\tilde M}}{Q}$ : the \LF term $M$ is indexed as $\tilde M$ with precondition $P$ and postcondition $Q$}]
+\begin{mdframed}[frametitle={$\boxed{\Hoare{P}{\IndexesTerm{M}{\tilde M}}{Q}}$ : the \LF term $M$ is indexed as $\tilde M$ with precondition $P$ and postcondition $Q$}]
 \begin{equation}
 \infer{
 	\Hoare{\Env = \Xi}{\IndexesTerm{x}{\iota}}{\Env = \Xi}
@@ -251,7 +251,7 @@ The possibility for a computation to mutate that state is reflected formally usi
 	\Hoare{\Env = \Xi}{\IndexesTerm{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}}{\Env = \Xi_n}
 }{
 	\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi_0}
-	& \left(\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi_k}\right)_{k \in \{1, 2, \dots, n\}}
+	& \left(\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi_k}\right)_{k \in \set{1, 2, \dots, n}}
 }
 \end{equation}
 
@@ -364,12 +364,12 @@ Case $\D = \infer{
 	\Hoare{\Env = \Xi}{\IndexesType{A\ M_1\ M_2 \dots M_n}{\tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n}}{\Env = \Xi_n}
 }{
 	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi_0}}{\D_0}
-	& \left(\deduce{\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi_k}}{\D_k}\right)_{k \in \{1, 2, \dots, n\}}
+	& \left(\deduce{\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi_k}}{\D_k}\right)_{k \in \set{1, 2, \dots, n}}
 }$.
 \par
 By the induction hypothesis on $\D_0$, $\Xi_0 = \Xi$.
 \par
-For each $k \in \{1, 2, \dots, n\}$, by the induction hypothesis on $\D_k$, $\Xi_k = \Xi_{k - 1}$.
+For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\Xi_k = \Xi_{k - 1}$.
 \par
 Then, $\Xi_n = \Xi_{n - 1} = \dots = \Xi_1 = \Xi_0 = \Xi$.
 \end{itemize}
@@ -409,12 +409,12 @@ Case $\D = \infer{
 	\Hoare{\Env = \Xi}{\IndexesTerm{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}}{\Env = \Xi_n}
 }{
 	\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi_0}}{\D_0}
-	& \left(\deduce{\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi_k}}{\D_k}\right)_{k \in \{1, 2, \dots, n\}}
+	& \left(\deduce{\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi_k}}{\D_k}\right)_{k \in \set{1, 2, \dots, n}}
 }$.
 \par
 By the induction hypothesis on $\D_0$, $\Xi_0 = \Xi$.
 \par
-For each $k \in \{1, 2, \dots, n\}$, by the induction hypothesis on $\D_k$, $\Xi_k = \Xi_{k - 1}$.
+For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\Xi_k = \Xi_{k - 1}$.
 \par
 Then, $\Xi_n = \Xi_{n - 1} = \dots = \Xi_1 = \Xi_0 = \Xi$.
 \item
