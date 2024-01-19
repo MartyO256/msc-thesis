@@ -27,12 +27,12 @@ Nameless \LF terms & $\tilde M, \tilde N$ & $\Coloneqq$ & $\iota \mid \tilde c \
 
 \newcommand{\Hoare}[3]{\set{#1}\ #2\ \set{#3}}
 \renewcommand{\Env}{\mathsf{Env}}
-\renewcommand{\Pop}{\operatorname{pop}}
-\newcommand{\Push}{\operatorname{push}}
-\newcommand{\Shift}{\operatorname{shift}}
-\newcommand{\Unshift}{\operatorname{unshift}}
-\renewcommand{\Lookup}{\operatorname{lookup}}
-\renewcommand{\Index}{\operatorname{index}}
+\renewcommand{\Pop}[3]{\operatorname{pop}_{#1}\left(#2; #3\right)}
+\newcommand{\Push}[3]{\operatorname{push}_{#1}\left(#2; #3\right)}
+\newcommand{\Shift}[2]{\operatorname{shift}_{#1}\left(#2\right)}
+\newcommand{\Unshift}[2]{\operatorname{unshift}_{#1}\left(#2\right)}
+\renewcommand{\Lookup}[2]{\operatorname{lookup}\left(#1; #2\right)}
+\renewcommand{\Index}[3]{\operatorname{index}_{#1}\left(#2; #3\right)}
 \newcommand{\Indexes}[3]{#1 \rightsquigarrow_{#2} #3}
 \newcommand{\IndexesKind}[2]{\Indexes{#1}{{\normalfont\text{K}}}{#2}}
 \newcommand{\IndexesType}[2]{\Indexes{#1}{{\normalfont\text{A}}}{#2}}
@@ -40,6 +40,26 @@ Nameless \LF terms & $\tilde M, \tilde N$ & $\Coloneqq$ & $\iota \mid \tilde c \
 \newcommand{\LFTerm}{\mathsf{LF}_{\mathsf{term}}}
 \newcommand{\LFTypeConst}{\mathsf{LF}_{\mathsf{type\ const}}}
 \newcommand{\LFTermConst}{\mathsf{LF}_{\mathsf{term\ const}}}
+
+The abstract data type of referencing environments $\Xi$ has the following operations:
+\begin{itemize}
+\item
+$\Push{\Psi}{x : \tau}{\Xi}$ adds the binding $x : \tau$ onto $\Xi$ as part of the indexing context $\Psi$.
+This additionally increments the size of $\Psi$.
+\item
+$\Pop{\Psi}{x}{\Xi}$ removes the latest binding of $x$ from $\Xi$ when it is part of the indexing context $\Psi$.
+This additionally decrements the size of $\Psi$.
+\item
+$\Shift{\Psi}{\Xi}$ increments the size of the indexing context $\Psi$ of $\Xi$.
+\item
+$\Unshift{\Psi}{\Xi}$ decrements the size of the indexing context $\Psi$ of $\Xi$.
+\item
+$\Lookup{x}{\Xi}$ is the latest binding $x : \tau$ associated with the identifier $x$ in $\Xi$.
+\item
+$\Index{\Psi}{x}{\Xi}$ is the de Bruijn index of $x$ in $\Xi$ with respect to the indexing context $\Psi$.
+\end{itemize}
+For a given $x$ and $\Psi$, the operation $f(\Xi)=\Pop{\Psi}{x}{\Xi}$ is the right inverse of $g(\Xi)=\Push{\Psi}{x : \tau}{\Xi}$.
+Likewise, for a given $\Psi$, the operation $f(\Xi)=\Unshift{\Psi}{\Xi}$ is the right inverse of $g(\Xi)=\Shift{\Psi}{\Xi}$.
 
 In the theoretic setting, indexing is defined with respect to an immutable representation of the referencing environment $\Xi$ as an association list.
 
@@ -93,7 +113,7 @@ In the theoretic setting, indexing is defined with respect to an immutable repre
 \infer{
 	\Xi \vdash \IndexesType{a}{\tilde a}
 }{
-	\Lookup(a; \Xi) = \tilde a : \LFTypeConst
+	\Lookup{a}{\Xi} = \tilde a : \LFTypeConst
 }
 \end{equation}
 
@@ -112,8 +132,8 @@ In the theoretic setting, indexing is defined with respect to an immutable repre
 \infer{
 	\Xi \vdash \IndexesTerm{x}{\iota}
 }{
-	\Lookup(x; \Xi) = x : \LFTerm
-	& \Index_\Psi(x; \Xi) = \iota
+	\Lookup{x}{\Xi} = x : \LFTerm
+	& \Index{\Psi}{x}{\Xi} = \iota
 }
 \end{equation}
 
@@ -121,7 +141,7 @@ In the theoretic setting, indexing is defined with respect to an immutable repre
 \infer{
 	\Xi \vdash \IndexesTerm{c}{\tilde c}
 }{
-	\Lookup(c; \Xi) = \tilde c : \LFTermConst
+	\Lookup{c}{\Xi} = \tilde c : \LFTermConst
 }
 \end{equation}
 
@@ -163,16 +183,16 @@ The possibility for a computation to mutate that state is reflected formally usi
 	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift(\Xi'')}
 }{
 	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}
-	& \Hoare{\Env = \Shift_\Psi(\Xi')}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}
+	& \Hoare{\Env = \Shift{\Psi}{\Xi'}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}
 }
 \end{equation}
 
 \begin{equation}
 \infer{
-	\Hoare{\Env = \Xi}{\IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A} \tilde K}}{\Env = \Pop_\Psi(x; \Xi'')}
+	\Hoare{\Env = \Xi}{\IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A} \tilde K}}{\Env = \Pop{\Psi}{x}{\Xi''}}
 }{
 	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}
-	& \Hoare{\Env = \Push_\Psi(x; \Xi')}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}
+	& \Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi'}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}
 }
 \end{equation}
 
@@ -186,19 +206,19 @@ The possibility for a computation to mutate that state is reflected formally usi
 \begin{mdframed}[frametitle={$\boxed{\Hoare{P}{\IndexesType{A}{\tilde A}}{Q}}$ : the \LF type $A$ is indexed as $\tilde A$ with precondition $P$ and postcondition $Q$}]
 \begin{equation}
 \infer{
-	\Hoare{\Env = \Xi}{\IndexesType{A \to B}{\tilde A \to \tilde B}}{\Env = \Unshift_\Psi(\Xi'')}
+	\Hoare{\Env = \Xi}{\IndexesType{A \to B}{\tilde A \to \tilde B}}{\Env = \Unshift{\Psi}{\Xi''}}
 }{
 	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}
-	& \Hoare{\Env = \Shift_\Psi(\Xi')}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}
+	& \Hoare{\Env = \Shift{\Psi}{\Xi'}}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}
 }
 \end{equation}
 
 \begin{equation}
 \infer{
-	\Hoare{\Env = \Xi}{\IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}}{\Env = \Pop_\Psi(x; \Xi'')}
+	\Hoare{\Env = \Xi}{\IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}}{\Env = \Pop{\Psi}{x}{\Xi''}}
 }{
 	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}
-	& \Hoare{\Env = \Push_\Psi(x; \Xi')}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}
+	& \Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi'}}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}
 }
 \end{equation}
 
@@ -206,7 +226,7 @@ The possibility for a computation to mutate that state is reflected formally usi
 \infer{
 	\Hoare{\Env = \Xi}{\IndexesType{a}{\tilde a}}{\Env = \Xi}
 }{
-	\Lookup(a; \Xi) = \tilde a : \LFTypeConst
+	\Lookup{a}{\Xi} = \tilde a : \LFTypeConst
 }
 \end{equation}
 
@@ -225,8 +245,8 @@ The possibility for a computation to mutate that state is reflected formally usi
 \infer{
 	\Hoare{\Env = \Xi}{\IndexesTerm{x}{\iota}}{\Env = \Xi}
 }{
-	\Lookup(x; \Xi) = x : \LFTerm
-	& \Index_\Psi(x; \Xi) = \iota
+	\Lookup{x}{\Xi} = x : \LFTerm
+	& \Index{\Psi}{x}{\Xi} = \iota
 }
 \end{equation}
 
@@ -234,15 +254,15 @@ The possibility for a computation to mutate that state is reflected formally usi
 \infer{
 	\Hoare{\Env = \Xi}{\IndexesTerm{c}{\tilde c}}{\Env = \Xi}
 }{
-	\Lookup(c; \Xi) = \tilde c : \LFTermConst
+	\Lookup{c}{\Xi} = \tilde c : \LFTermConst
 }
 \end{equation}
 
 \begin{equation}
 \infer{
-	\Hoare{\Env = \Xi}{\IndexesTerm{\lambda x. M}{\lambda\ \tilde M}}{\Env = \Pop_\Psi(x; \Xi')}
+	\Hoare{\Env = \Xi}{\IndexesTerm{\lambda x. M}{\lambda\ \tilde M}}{\Env = \Pop{\Psi}{x}{\Xi'}}
 }{
-	\Hoare{\Env = \Push_\Psi(x; \Xi)}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}
+	\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}
 }
 \end{equation}
 
@@ -285,31 +305,31 @@ By structural induction on $\D$:
 \begin{itemize}
 \item
 Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift_\Psi(\Xi'')}
+	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift{\Psi}{\Xi''}}
 }{
 	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
-	& \deduce{\Hoare{\Env = \Shift_\Psi(\Xi')}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}}{\D_2}
+	& \deduce{\Hoare{\Env = \Shift{\Psi}{\Xi'}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}}{\D_2}
 }$.
 \par
 By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\Xi'' = \Shift_\Psi(\Xi')$.
+By the induction hypothesis on $\D_2$, $\Xi'' = \Shift{\Psi}{\Xi'}$.
 \par
-Then, $\Unshift_\Psi(\Xi'') = \Unshift_\Psi(\Shift_\Psi(\Xi')) = \Xi' = \Xi$.
+Then, $\Unshift{\Psi}{\Xi''} = \Unshift{\Psi}{\Shift{\Psi}{\Xi'}} = \Xi' = \Xi$.
 
 \item
 Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A} \tilde K}}{\Env = \Pop_\Psi(x; \Xi'')}
+	\Hoare{\Env = \Xi}{\IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A} \tilde K}}{\Env = \Pop{\Psi}{x}{\Xi''}}
 }{
 	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
-	& \deduce{\Hoare{\Env = \Push_\Psi(x; \Xi')}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}}{\D_2}
+	& \deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi'}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}}{\D_2}
 }$.
 \par
 By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\Xi'' = \Push_\Psi(x; \Xi')$.
+By the induction hypothesis on $\D_2$, $\Xi'' = \Push{\Psi}{x : \LFTerm}{\Xi'}$.
 \par
-Then, $\Pop_\Psi(x; \Xi'') = \Pop_\Psi(x; \Push_\Psi(x; \Xi')) = \Xi' = \Xi$.
+Then, $\Pop{\Psi}{x}{\Xi''} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi'}} = \Xi' = \Xi$.
 
 \item
 Case $\D = \infer{
@@ -324,37 +344,37 @@ By structural induction on $\D$:
 \begin{itemize}
 \item
 Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesType{A \to B}{\tilde A \to \tilde B}}{\Env = \Unshift_\Psi(\Xi'')}
+	\Hoare{\Env = \Xi}{\IndexesType{A \to B}{\tilde A \to \tilde B}}{\Env = \Unshift{\Psi}{\Xi''}}
 }{
 	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
-	& \deduce{\Hoare{\Env = \Shift_\Psi(\Xi')}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}}{\D_2}
+	& \deduce{\Hoare{\Env = \Shift{\Psi}{\Xi'}}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}}{\D_2}
 }$.
 \par
 By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\Xi'' = \Shift_\Psi(\Xi')$.
+By the induction hypothesis on $\D_2$, $\Xi'' = \Shift{\Psi}{\Xi'}$.
 \par
-Then, $\Unshift_\Psi(\Xi'') = \Unshift_\Psi(\Shift_\Psi(\Xi')) = \Xi' = \Xi$.
+Then, $\Unshift{\Psi}{\Xi''} = \Unshift{\Psi}{\Shift{\Psi}{\Xi'}} = \Xi' = \Xi$.
 
 \item
 Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}}{\Env = \Pop_\Psi(x; \Xi'')}
+	\Hoare{\Env = \Xi}{\IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}}{\Env = \Pop{\Psi}{x}{\Xi''}}
 }{
 	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
-	& \deduce{\Hoare{\Env = \Push_\Psi(x; \Xi')}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}}{\D_2}
+	& \deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi'}}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}}{\D_2}
 }$.
 \par
 By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\Xi'' = \Push_\Psi(x; \Xi')$.
+By the induction hypothesis on $\D_2$, $\Xi'' = \Push{\Psi}{x : \LFTerm}{\Xi'}$.
 \par
-Then, $\Pop_\Psi(x; \Xi'') = \Pop_\Psi(x; \Push_\Psi(x; \Xi')) = \Xi' = \Xi$.
+Then, $\Pop{\Psi}{x}{\Xi''} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi'}} = \Xi' = \Xi$.
 
 \item 
 Case $\D = \infer{
 	\Hoare{\Env = \Xi}{\IndexesType{a}{\tilde a}}{\Env = \Xi}
 }{
-	\Lookup(a; \Xi) = \tilde a : \LFTypeConst
+	\Lookup{a}{\Xi} = \tilde a : \LFTypeConst
 }$.
 \par
 Holds trivially.
@@ -381,8 +401,8 @@ By structural induction on $\D$:
 Case $\D = \infer{
 	\Hoare{\Env = \Xi}{\IndexesTerm{x}{\iota}}{\Env = \Xi}
 }{
-	\Lookup(x; \Xi) = x : \LFTerm
-	& \Index_\Psi(x; \Xi) = \iota
+	\Lookup{x}{\Xi} = x : \LFTerm
+	& \Index{\Psi}{x}{\Xi} = \iota
 }$.
 \par
 Holds trivially.
@@ -390,20 +410,20 @@ Holds trivially.
 Case $\D = \infer{
 	\Hoare{\Env = \Xi}{\IndexesTerm{c}{\tilde c}}{\Env = \Xi}
 }{
-	\Lookup(c; \Xi) = \tilde c : \LFTermConst
+	\Lookup{c}{\Xi} = \tilde c : \LFTermConst
 }$.
 \par
 Holds trivially.
 \item
 Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesTerm{\lambda x. M}{\lambda\ \tilde M}}{\Env = \Pop_\Psi(x; \Xi')}
+	\Hoare{\Env = \Xi}{\IndexesTerm{\lambda x. M}{\lambda\ \tilde M}}{\Env = \Pop{\Psi}{x}{\Xi'}}
 }{
-	\deduce{\Hoare{\Env = \Push_\Psi(x; \Xi)}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}}{\D'}
+	\deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}}{\D'}
 }$.
 \par
-By the induction hypothesis on $\D'$, $\Xi' = \Push_\Psi(x; \Xi)$.
+By the induction hypothesis on $\D'$, $\Xi' = \Push{\Psi}{x : \LFTerm}{\Xi}$.
 \par
-Then, $\Pop_\Psi(x; \Xi') = \Pop_\Psi(x; \Push_\Psi(x; \Xi)) = \Xi$.
+Then, $\Pop{\Psi}{x}{\Xi'} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi}} = \Xi$.
 \item
 Case $\D = \infer{
 	\Hoare{\Env = \Xi}{\IndexesTerm{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}}{\Env = \Xi_n}
