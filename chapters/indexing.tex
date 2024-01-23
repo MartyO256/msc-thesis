@@ -295,7 +295,7 @@ The possibility for a computation to mutate that state is reflected formally usi
 \newcommand{\D}{\mathcal{D}}
 
 \begin{theorem}[Purity]
-Indexing an \LF kind, type or term using the Hoare logic formalism restores the referencing environment to its initial state.
+Indexing an \LF kind, type or term using the Hoare-style formalism restores the referencing environment to its initial state.
 \begin{enumerate}
 \item If $\Hoare{\Env = \Xi}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
 \item If $\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
