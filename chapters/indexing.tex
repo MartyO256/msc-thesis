@@ -45,21 +45,27 @@ The abstract data type of referencing environments $\Xi$ has the following opera
 \begin{itemize}
 \item
 $\Push{\Psi}{x : \tau}{\Xi}$ adds the binding $x : \tau$ onto $\Xi$ as part of the indexing context $\Psi$.
-This additionally increments the size of $\Psi$.
+This increments the size of $\Psi$.
 \item
-$\Pop{\Psi}{x}{\Xi}$ removes the latest binding of $x$ from $\Xi$ when it is part of the indexing context $\Psi$.
-This additionally decrements the size of $\Psi$.
+$\Pop{\Psi}{x}{\Xi}$ removes the latest binding of $x$ from $\Xi$, while assuming it is part of the indexing context $\Psi$.
+This decrements the size of $\Psi$.
 \item
-$\Shift{\Psi}{\Xi}$ increments the size of the indexing context $\Psi$ of $\Xi$.
+$\Shift{\Psi}{\Xi}$ increments the size of the indexing context $\Psi$ in $\Xi$.
 \item
-$\Unshift{\Psi}{\Xi}$ decrements the size of the indexing context $\Psi$ of $\Xi$.
+$\Unshift{\Psi}{\Xi}$ decrements the size of the indexing context $\Psi$ in $\Xi$.
 \item
 $\Lookup{x}{\Xi}$ is the latest binding $x : \tau$ associated with the identifier $x$ in $\Xi$.
 \item
 $\Index{\Psi}{x}{\Xi}$ is the de Bruijn index of $x$ in $\Xi$ with respect to the indexing context $\Psi$.
 \end{itemize}
-For a given $x$ and $\Psi$, the operation $f(\Xi)=\Pop{\Psi}{x}{\Xi}$ is the right inverse of $g(\Xi)=\Push{\Psi}{x : \tau}{\Xi}$.
-Likewise, for a given $\Psi$, the operation $f(\Xi)=\Unshift{\Psi}{\Xi}$ is the right inverse of $g(\Xi)=\Shift{\Psi}{\Xi}$.
+For a given variable identifier $x$ and indexing context $\Psi$, the operation $f(\Xi)=\Pop{\Psi}{x}{\Xi}$ is the right inverse of $g(\Xi)=\Push{\Psi}{x : \tau}{\Xi}$ such that
+\begin{equation*}
+\Pop{\Psi}{x}{\Push{\Psi}{x : \tau}{\Xi}} = \Xi.
+\end{equation*}
+Likewise, for a given $\Psi$, the operation $f(\Xi)=\Unshift{\Psi}{\Xi}$ is the right inverse of $g(\Xi)=\Shift{\Psi}{\Xi}$ such that
+\begin{equation*}
+\Unshift{\Psi}{\Shift{\Psi}{\Xi}} = \Xi.
+\end{equation*}
 
 In the theoretic setting, indexing is defined with respect to an immutable representation of the referencing environment $\Xi$ as an association list.
 
@@ -180,7 +186,7 @@ The possibility for a computation to mutate that state is reflected formally usi
 \begin{mdframed}[frametitle={$\boxed{\Hoare{P}{\IndexesKind{K}{\tilde K}}{Q}}$ : the \LF kind $K$ is indexed as $\tilde K$ with precondition $P$ and postcondition $Q$}]
 \begin{equation}
 \infer{
-	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift(\Xi'')}
+	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift{\Psi}{\Xi''}}
 }{
 	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}
 	& \Hoare{\Env = \Shift{\Psi}{\Xi'}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}
