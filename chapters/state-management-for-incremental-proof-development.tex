@@ -20,7 +20,7 @@
 
 This chapter presents implementation concerns with supporting incremental program development in \Beluga and \Harpoon.
 Some technical debt in those systems is highlighted to justify the reimplementation of the indexing phase.
-A formalism and an implementation of identifier resolution in \Beluga are presented to showcase how to efficiently and correctly support de Bruijn indices with multiple indexing contexts.
+A formalism and an implementation of identifier resolution for \Beluga are presented to showcase how to efficiently and correctly support de Bruijn indices with multiple indexing contexts.
 
 \section{Introduction}
 
@@ -28,8 +28,8 @@ A formalism and an implementation of identifier resolution in \Beluga are presen
 % In what way are state management and exception handling closely linked with respect to interactive proof sessions?
 
 Incremental program development is a broad and open problem in the implementation of interpreters and compilers.
-The main challenge with implementing such systems is state invalidation, where an edit on part of a program triggers changes elsewhere, both in the code the user wrote and in the interpreter analysing it.
-While reprocessing the affected parts of the code is a valid solution to guarantee soundness, this does not scale efficiently to large programs.
+The main challenge with implementing such systems is state invalidation, where an edit on part of a program causes changes elsewhere, both in the code the user wrote and in the state of the interpreter analysing it.
+While reprocessing the affected parts of the code from scratch is a valid solution to guarantee soundness, this does not scale efficiently to large programs.
 Structured editing obviates some of the issues with state invalidation and the propagation of changes in incremental development.
 Indeed, edit actions are scoped to a model of the program as opposed to the program's textual representation itself, which means they have a limited and controlled effect on the structured editor's state.
 Mechanisms can then be designed for the interpreter's state to improve its runtime performance in soundly responding to edit actions.
@@ -37,10 +37,10 @@ Mechanisms can then be designed for the interpreter's state to improve its runti
 % How do other systems supporting interactive proof sessions handle state management?
 
 Proof assistants providing interactivity through \acp{REPL} and tools for text editors each approach the problem of incremental development in unique ways tailored to their systems.
-For instance, constraint-based type systems require mechanisms to keep track of the effects of solving contraints, so that those effects can be undone in the event that type-checking fails for a given program.
+For instance, constraint-based type systems require mechanisms to keep track of the effects of solving said constraints, so that those effects can be undone in the event that type-checking fails for a given program.
 Likewise, context-switching between different parts of a program under edit requires updating the state to correctly reflect what identifiers are in scope, both for providing code completion hints and for performing identifier resolution in new terms.
 Furthermore, command histories may be implemented to support undoing and redoing edit actions, like in proof assistants since users may apply tactics that do not lead to a solution for a given subgoal.
-Additionally, subgoal may be arranged internally as a tree following the structure of a proof to allow navigating between holes.
+Additionally, incomplete subgoals may be arranged internally as a tree following the structure of a proof to allow navigating between holes.
 The successful implementation of these structured editing features hinges on careful management of recorded state to ensure soundness.
 
 The \Abella\footnote{\Abella version \texttt{2.0.8}}~\cite{baelde2014abella} interactive theorem prover has limited support for structurally editing proofs.
@@ -52,9 +52,9 @@ Indeed, constructing visiting states to other parts of the signature under edit 
 \Isabelle/\Isar\footnote{\Isabelle2023} implements a system of transitions between immutable state structures to support pure edit actions~\cite{wenzel2023isabelleimpl, wenzel2023isabelleisarref, wenzel2023isabellesys}.
 Indeed, most of that system's state, internally referred to as contexts~\cite{ballarin2006interpretation}, is implemented using immutable 2-3~trees to tabulate data, with each context holding a list of all its predecessor states.
 The definitions, proofs and terms in the buffer under edit are stored in such contexts.
-Undo operations and modification to the signature then proceed by rolling back the contexts to before the edit was done using the list of predecessors.
+Undo operations and modification to the signature then proceed by rolling back the contexts to before the edit was done using their lists of predecessors.
 Mutable references are leveraged to represent the global state of the kernel, though their usage is limited.
-This mutable data is split between synchronized and unsynchronized management strategies, the former adding mutual exclusion locks to references that hold mutable data.
+This mutable data is split between synchronized and unsynchronized management strategies, the former adding mutual exclusion locks to references that hold mutable data to enable safe concurrent computations.
 Overall, the extensive use of immutable data structures, coupled with synchronization for mutable data, results in degraded memory usage and runtime performance.
 Nonetheless, this system allows finer edit actions and ensures that cache invalidations are resolved consistently.
 
@@ -66,7 +66,7 @@ It is an agglomeration of all the data used in \Agda's processing pipeline, read
 This wholly captures the idea of a visiting state over declarations in an \Agda signature.
 The main issues when dealing with this type checking monad are performance overheads, and ensuring that state mutations are sound.
 To mitigate soundness issues, some interactions kinds have defined scopes to restrict their effect on the type checking state.
-In case of bugs arising during edit sessions, separate commands are available to the user to restore the state to earlier checkpoint or to entirely reload the current editor buffer.
+In case of bugs arising during edit sessions, separate commands are available to the user to restore the state to earlier checkpoints or to entirely reload the current editor buffer.
 
 % TODO: See if Coq has incremental development as well
 % TODO: See chapter 7 of Coq's manual: Proof Handling
@@ -82,11 +82,11 @@ Just like \Abella, \Isabelle/\Isar, \Coq and \Agda, undoable commands in \Harpoo
 Unlike \Abella though, undone commands can be redone, which allows users to move effortlessly forward and backward in the edit history.
 One feature that is unique to \Harpoon is the ability to efficiently checkout the proof state for incomplete theorems occurring anywhere in a \Beluga signature.
 This enables the development of proofs in a top-down fashion by first stating theorems and lemmas and then proving them, fully or partially, in any order that seems most productive.
-This is stronger than \Abella's and \Coq's subgoal deferring feature, which \Harpoon also supports, in that theorems may be declared with respect to different subsets of the signature.
+This is stronger than \Abella's and \Coq's subgoal deferring feature, which \Harpoon also supports, in that theorems may be declared with respect to different subsets of the signature in the same proof session.
 
 Unfortunately, case studies revealed that the implementation of \Harpoon's theorem-switching feature can lead to invalid \Beluga signatures when proof scripts developed out of order are translated into programs.
-Indeed, upon checking out an incomplete proof script, the signature would not be reverted back to the state at which that proof is declared.
-This effectively means that definitions occurring later in a proof session would appear in scope during interactive proof sessions.
+Indeed, upon checking out an incomplete proof script, the signature is not be reverted back to the state at which that proof is declared.
+This effectively means that definitions occurring later in a proof session appear in scope during interactive proof sessions.
 To soundly support switching between theorems, the \Beluga system requires a mechanism to rollback the referencing state to the point where theorems are declared.
 This prompted the reimplementation of name resolution in \Beluga and \Harpoon to support visiting states.
 
@@ -96,20 +96,20 @@ This prompted the reimplementation of name resolution in \Beluga and \Harpoon to
 
 As outlined in section~\ref{section:beluga-implementation}, the indexing phase of \Beluga's processing pipeline is responsible for converting external syntax trees to corresponding approximate syntax trees.
 Specifically, references to constants are replaced with their corresponding symbolic identifiers as defined in the signature reconstruction store, and variables are replaced with their corresponding de Bruijn indices.
-This allows for later phases of semantic analysis (such as type-checking and termination analysis) to efficiently look up constant definitions and resolve variables to their binders without having to nominally keep track of the referencing environment.
+This allows for later phases of semantic analysis (such as type-checking and termination analysis) to efficiently look up constant definitions and resolve variables to their binders without having to keep track of the identifiers in scope.
 In the implementation, not all variables are replaced with de Bruijn indices during indexing because binders for implicit parameters are not present in the \ac{AST}; these are introduced during the abstraction phase~\cite{germain2010implementation}.
 
 % What features are required of indexing?
 
 % What was the legacy implementation of indexing? Why did it require reimplementation?
 
-The legacy implementation of indexing was responsible for disambiguating the application of user-defined operators since it kept track of constants as they are introduced in \Beluga signatures.
-This disambiguation leveraged Dijkstra's shunting-yard algorithm as opposed to the recursive descent parsing algorithm presented in section~\ref{section:parsing-user-defined-operators}.
+The legacy implementation of indexing is additionally responsible for disambiguating the application of user-defined operators since that phase keeps track of constants as they are introduced in the signature.
+This disambiguation leverages Dijkstra's shunting-yard algorithm as opposed to the recursive descent parsing algorithm presented in section~\ref{section:parsing-user-defined-operators}.
 This responsibility has been moved to its own disambiguation phase, as presented in section~\ref{section:lexing-parsing-disambiguation}.
 While this refactoring could have been sufficient in simplifying the legacy implementation, it uncovered significant technical debt and issues having to do with the way identifiers are handled during indexing.
 
 The overarching store illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} records the constant declarations encountered during signature reconstruction.
-These declarations are arranged in tables, with one table per kind of constant declaration.
+These declarations are arranged in tables, with one table per kind of constant declaration, as illustrated in figure~\ref{figure:referencing-environment-architecture}.
 Variable declarations, on the other hand, are arranged in separate association lists.
 This means that there is no overlap between identifiers belonging to different kinds since they are not looked up in the same table or association list, which effectively creates distinct namespaces for them.
 For instance, \LF type-level and term-level constants have their own declaration tables, separate from computation-level type constants and constructors.
@@ -125,6 +125,15 @@ Indeed, one could introduce a meta-level variable with an \verb|mlam|-binder and
 This overloading would not translate well in proofs on paper since an identifier could be used to refer to two distinct objects at once.
 It also challenges the identifier scoping rules suggested by \Beluga's concrete syntax.
 
+\begin{figure}[htb]
+\centering
+\includegraphics{figures/referencing-environment-architecture.eps}
+\caption[Role of the referencing environment in \Beluga]{%
+Schema of the referencing environment structure as a mediator between the \Beluga signature and the reconstruction store for name resolution.
+}
+\label{figure:referencing-environment-architecture}
+\end{figure}
+
 Additionally, the legacy indexing algorithm is tightly coupled and implicitly dependent on the store of constants depicted in figure~\ref{figure:legacy-beluga-processing-pipeline}.
 This means that external mutations to that store affect the output of functions responsible for identifier resolution.
 As outlined in section~\ref{section:intro-state-management}, this design is only suitable for a single pass through the processing pipeline since the store's state is consistent with how the \ac{AST} is traversed.
@@ -139,11 +148,11 @@ In order to ensure soundness of incremental proof development with holes in proo
 The aforementioned incongruities in name resolution and tight coupling with the signature reconstruction store motivate the reimplementation of the indexing phase to use one unified namespace while ensuring that identifiers with different levels cannot be mixed.
 Without having types available at this stage of processing, the accidental feature of identifier overloading had to be discarded.
 
-\section{Unified Indexing}\label{section:indexing}
+\section{Uniform Indexing}\label{section:indexing}
 
-% What is unified indexing?
+% What is uniform indexing?
 
-Unified indexing is the conversion from a named \ac{AST} to a locally nameless \ac{AST} in a single pass and using a single lookup structure for all identifier kinds.
+Uniform indexing is the conversion from a named \ac{AST} to a locally nameless \ac{AST} in a single pass and using a single lookup structure for all identifier kinds.
 For \Beluga, this requires having a merged view of the declaration tables for constants and variables so as to uniformly know what identifiers are in scope at any given \ac{AST} node.
 In particular, variables identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together.
 To approach this problem, some definitions are in order.
@@ -160,7 +169,7 @@ A \textit{fully qualified identifier} $x_1.x_2.\cdots.x_n$ is a list of plain id
 A \textit{referencing environment} in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
 In essence, a referencing environment provides a window over a signature for name resolution, and as such is restricted to one scope at a time.
 
-The unified indexing phase is designed as a single sequential traversal of the external \ac{AST} to map it to the approximate \ac{AST}, using the referencing environment as visitor state.
+The uniform indexing phase is designed as a single sequential traversal of the external \ac{AST} to map it to the approximate \ac{AST}, using the referencing environment as visitor state.
 As \ac{AST} nodes are traversed, the referencing environment is updated by adding or removing identifiers in scope so that the resolution of identifiers is consistent with the language's specification.
 This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across different indexing contexts ($\Psi$, $\Delta$ and $\Gamma$).
 %This includes name resolution under lambda-expressions and contexts in contextual \LF patterns, as well as distinguishing between pattern variables and bound identifiers.
@@ -195,8 +204,8 @@ Because of automated reconstruction of meta-level abstractions in \Beluga, free 
 
 % TODO: Present some invariants to dealing with frames. Additions/subtractions to referencing environments only occur in the topmost/current frame
 
-The next subsections present two different ways of realising a referencing environment for \Beluga to support unified indexing.
-The first definition (section~\ref{section:formalising-unified-indexing}) is suitable for mechanized proofs, whereas the second (section~\ref{section:implementing-unified-indexing}) is used in the implementation as it is computationally more efficient.
+The next subsections present two different ways of realising a referencing environment for \Beluga to support uniform indexing.
+The first definition (section~\ref{section:formalising-uniform-indexing}) is suitable for mechanized proofs, whereas the second (section~\ref{section:implementing-uniform-indexing}) is used in the implementation as it is computationally more efficient.
 Both are presented here for the sake of completeness.
 
 \begin{figure}[H]
@@ -212,12 +221,12 @@ Both are presented here for the sake of completeness.
 \verbbf{rec} g : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h3};
 \end{Verbatim}
 \caption[Example \Beluga signature with holes]{%
-Example of a \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} and \texttt{\verbhole{?h3}}, used to showcase how a unified referencing environment is updated when dealing with namespaces.
+Example of a \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} and \texttt{\verbhole{?h3}}, used to showcase how a uniform referencing environment is updated when dealing with namespaces.
 }
 \label{figure:referencing-environment-example}
 \end{figure}
 
-\subsection{Formalising Unified Indexing}\label{section:formalising-unified-indexing}
+\subsection{Formalising Uniform Indexing}\label{section:formalising-uniform-indexing}
 
 In the theory, a referencing environment is an association list with delimiters for frames.
 Each entry in the list may itself point to a separate association list to support namespacing.
@@ -452,7 +461,7 @@ The translation $\Translates_{s}$ is split following the semantic classes of fig
 
 \pagebreak
 
-\subsection{Implementing Unified Indexing}\label{section:implementing-unified-indexing}
+\subsection{Implementing Uniform Indexing}\label{section:implementing-uniform-indexing}
 
 In the implementation, a referencing environment is a stack of frames.
 Each frame holds a tree of bindings, where each node is a stack of entries.
@@ -485,7 +494,7 @@ This is also replicated during pretty-printing to recover a textual representati
 Pretty-printing to \HTML further assigns IDs to constants so that references to them can be printed as hyperlinks.
 
 For indexing, data is required in the referencing environment to compute valid de Bruijn indices when variables are looked up.
-Counting up to the correct de Bruijn index by traversing the dictionaries and stacks in order of addition like is done in the formalism of section~\ref{section:formalising-unified-indexing} defeats the purpose of using dictionaries to speed up lookups.
+Counting up to the correct de Bruijn index by traversing the dictionaries and stacks in order of addition like is done in the formalism of section~\ref{section:formalising-uniform-indexing} defeats the purpose of using dictionaries to speed up lookups.
 Instead, as variables are added to the referencing environment, they are annotated with the size of the corresponding indexing context that immediately precedes their addition.
 This is achieved using a separate counter that keeps track of the indexing context size.
 These annotations effectively indicate the order of insertion into the indexing context.
