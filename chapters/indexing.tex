@@ -294,7 +294,7 @@ On the other hand, the mutable setting does not make any guarantee as to the sta
 This potentially allows insertions to occur in an unpredictable order, and for deletions to unintentionally remove bindings that appear in the initial referencing environment.
 This next theorem certifies that that is not the case: if a binding removal occurs, then it is immediately preceded by the addition of that binding.
 In fact, the referencing environment is restored to its initial state after successfully indexing an \LF object.
-In the event of a failure, the environment has at least the bindings of its initial state.
+In the event of a lookup failure, the environment has at least the bindings of its initial state.
 
 \newcommand{\D}{\mathcal{D}}
 \newcommand{\E}{\mathcal{E}}
@@ -381,7 +381,7 @@ By the induction hypothesis on $\D_2$, $\Xi'' = \Push{\Psi}{x : \LFTerm}{\Xi'}$.
 \par
 Then, $\Pop{\Psi}{x}{\Xi''} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi'}} = \Xi' = \Xi$.
 
-\item 
+\item
 Case $\D = \infer{
 	\Hoare{\Env = \Xi}{\IndexesType{a}{\tilde a}}{\Env = \Xi}
 }{
@@ -664,18 +664,38 @@ Then,
 .
 \end{equation*}
 
-\item 
+\item
 Case $\D = \infer{
 	\Xi \vdash \IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A}\ \tilde K}
 }{
 	\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\D_1}
 	& \deduce{\Xi, x : \LFTerm \vdash \IndexesKind{K}{\tilde K}}{\D_2}
 }$.
+\par
+By the induction hypothesis on $ \D_1 $, $ \deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1} $.
+\par
+By the induction hypothesis on $ \D_2 $, $ \deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesKind{K}{\tilde K}}{\Env = \Xi, x : \LFTerm}}{\E_2} $.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A} \tilde K}}{\Env = \Xi}
+}{
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A} \tilde K}}{\Env = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi}}}
+}{
+	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}
+	& \infer{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}{\IndexesKind{K}{\tilde K}}{\Env = \cdots}}{\deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesKind{K}{\tilde K}}{\Env = \Xi, x : \LFTerm}}{\E_2}}
+}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
 	\Xi \vdash \IndexesKind{\KWType}{\KWType}
 }{}$.
+\par
+$ \Hoare{\Env = \Xi}{\IndexesKind{\KWType}{\KWType}}{\Env = \Xi} $ holds trivially.
 \end{itemize}
 \item
 Assume $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\D}$.
@@ -717,7 +737,7 @@ Assume $\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\D}$.
 \par
 By structural induction on $\D$:
 \begin{itemize}
-\item 
+\item
 Case $\D = \infer{
 	\Xi \vdash \IndexesTerm{x}{\iota}
 }{
@@ -725,21 +745,21 @@ Case $\D = \infer{
 	& \deduce{\Index{\Psi}{x}{\Xi} = \iota}{\D_2}
 }$.
 
-\item 
+\item
 Case $\D = \infer{
 	\Xi \vdash \IndexesTerm{c}{\tilde c}
 }{
 	\deduce{\Lookup{c}{\Xi} = \tilde c : \LFTermConst}{\D'}
 }$.
 
-\item 
+\item
 Case $\D = \infer{
 	\Xi \vdash \IndexesTerm{\lambda x. M}{\lambda\ \tilde M}
 }{
 	\deduce{\Xi, x : \LFTerm \vdash \IndexesTerm{M}{\tilde M}}{\D'}
 }$.
 
-\item 
+\item
 Case $\D = \infer{
 	\Xi \vdash \IndexesType{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}
 }{
@@ -747,7 +767,7 @@ Case $\D = \infer{
 	& \left(\deduce{\Xi \vdash \IndexesTerm{N_k}{\tilde N_k}}{\D_k}\right)_{k \in \set{1, 2, \dots, n}}
 }$.
 
-\item 
+\item
 Case $\D = \infer{
 	\Xi \vdash \IndexesType{M : A}{\tilde M : \tilde A}
 }{
