@@ -289,188 +289,22 @@ The possibility for a computation to mutate that state is reflected formally usi
 }
 
 Neither formulation of the indexing algorithm is total since the identifier and index lookup operations fail for unbound identifiers.
-In the immutable setting, such failures are trivially recoverable.
+In the immutable setting, recovering from such failures is trivial since no effects are applied to the association list of bindings.
 On the other hand, the mutable setting does not make any guarantee as to the state of the referencing environment after a computation.
 This potentially allows insertions to occur in an unpredictable order, and for deletions to unintentionally remove bindings that appear in the initial referencing environment.
-This next theorem certifies that that is not the case: if a binding removal occurs, then it is immediately preceded by the addition of that binding.
+This next theorem certifies that that is not the case: if a binding removal occurs, then it is immediately preceded by the addition of that same binding.
+
 In fact, the referencing environment is restored to its initial state after successfully indexing an \LF object.
-In the event of a lookup failure, the environment has at least the bindings of its initial state.
+This means that in the event of a lookup failure, the environment has at least the bindings of its initial state.
+Hence, pushing a new frame onto the referencing environment and popping it in case of failure is a sufficient mechanism to undo any and all effects on the state.
+Additionally, since the ordering of add and remove operations is preserved, then it follows that de Bruijn indices computations in the mutable setting are correct.
 
 \newcommand{\D}{\mathcal{D}}
 \newcommand{\E}{\mathcal{E}}
 
-\begin{theorem}[Purity]
-Indexing an \LF kind, type or term using the Hoare-style formalism restores the referencing environment to its initial state when it succeeds.
-\begin{enumerate}
-\item If $\Hoare{\Env = \Xi}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
-\item If $\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
-\item If $\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
-\end{enumerate}
-\begin{proof}
-{\scriptsize
-By simultaneous induction:
-\begin{enumerate}
-\item
-Assume $\deduce{\Hoare{\Env = \Xi}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'}}{\D}$.
-By structural induction on $\D$:
-\begin{itemize}
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift{\Psi}{\Xi''}}
-}{
-	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
-	& \deduce{\Hoare{\Env = \Shift{\Psi}{\Xi'}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}}{\D_2}
-}$.
-\par
-By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
-\par
-By the induction hypothesis on $\D_2$, $\Xi'' = \Shift{\Psi}{\Xi'}$.
-\par
-Then, $\Unshift{\Psi}{\Xi''} = \Unshift{\Psi}{\Shift{\Psi}{\Xi'}} = \Xi' = \Xi$.
-
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A} \tilde K}}{\Env = \Pop{\Psi}{x}{\Xi''}}
-}{
-	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
-	& \deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi'}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi''}}{\D_2}
-}$.
-\par
-By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
-\par
-By the induction hypothesis on $\D_2$, $\Xi'' = \Push{\Psi}{x : \LFTerm}{\Xi'}$.
-\par
-Then, $\Pop{\Psi}{x}{\Xi''} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi'}} = \Xi' = \Xi$.
-
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesKind{\KWType}{\KWType}}{\Env = \Xi}
-}{}$.
-\par
-Holds trivially.
-\end{itemize}
-\item
-Assume $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D}$.
-By structural induction on $\D$:
-\begin{itemize}
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesType{A \to B}{\tilde A \to \tilde B}}{\Env = \Unshift{\Psi}{\Xi''}}
-}{
-	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
-	& \deduce{\Hoare{\Env = \Shift{\Psi}{\Xi'}}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}}{\D_2}
-}$.
-\par
-By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
-\par
-By the induction hypothesis on $\D_2$, $\Xi'' = \Shift{\Psi}{\Xi'}$.
-\par
-Then, $\Unshift{\Psi}{\Xi''} = \Unshift{\Psi}{\Shift{\Psi}{\Xi'}} = \Xi' = \Xi$.
-
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}}{\Env = \Pop{\Psi}{x}{\Xi''}}
-}{
-	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_1}
-	& \deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi'}}{\IndexesType{B}{\tilde B}}{\Env = \Xi''}}{\D_2}
-}$.
-\par
-By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
-\par
-By the induction hypothesis on $\D_2$, $\Xi'' = \Push{\Psi}{x : \LFTerm}{\Xi'}$.
-\par
-Then, $\Pop{\Psi}{x}{\Xi''} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi'}} = \Xi' = \Xi$.
-
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesType{a}{\tilde a}}{\Env = \Xi}
-}{
-	\Lookup{a}{\Xi} = \tilde a : \LFTypeConst
-}$.
-\par
-Holds trivially.
-
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesType{A\ M_1\ M_2 \dots M_n}{\tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n}}{\Env = \Xi_n}
-}{
-	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi_0}}{\D_0}
-	& \left(\deduce{\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi_k}}{\D_k}\right)_{k \in \set{1, 2, \dots, n}}
-}$.
-\par
-By the induction hypothesis on $\D_0$, $\Xi_0 = \Xi$.
-\par
-For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\Xi_k = \Xi_{k - 1}$.
-\par
-Then, inductively on $n$, $\Xi_n = \Xi_{n - 1} = \dots = \Xi_1 = \Xi_0 = \Xi$.
-\end{itemize}
-\item
-Assume $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}}{\D}$.
-By structural induction on $\D$:
-\begin{itemize}
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesTerm{x}{\iota}}{\Env = \Xi}
-}{
-	\Lookup{x}{\Xi} = x : \LFTerm
-	& \Index{\Psi}{x}{\Xi} = \iota
-}$.
-\par
-Holds trivially.
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesTerm{c}{\tilde c}}{\Env = \Xi}
-}{
-	\Lookup{c}{\Xi} = \tilde c : \LFTermConst
-}$.
-\par
-Holds trivially.
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesTerm{\lambda x. M}{\lambda\ \tilde M}}{\Env = \Pop{\Psi}{x}{\Xi'}}
-}{
-	\deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}}{\D'}
-}$.
-\par
-By the induction hypothesis on $\D'$, $\Xi' = \Push{\Psi}{x : \LFTerm}{\Xi}$.
-\par
-Then, $\Pop{\Psi}{x}{\Xi'} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi}} = \Xi$.
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesTerm{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}}{\Env = \Xi_n}
-}{
-	\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi_0}}{\D_0}
-	& \left(\deduce{\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi_k}}{\D_k}\right)_{k \in \set{1, 2, \dots, n}}
-}$.
-\par
-By the induction hypothesis on $\D_0$, $\Xi_0 = \Xi$.
-\par
-For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\Xi_k = \Xi_{k - 1}$.
-\par
-Then, inductively on $n$, $\Xi_n = \Xi_{n - 1} = \dots = \Xi_1 = \Xi_0 = \Xi$.
-\item
-Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesTerm{M : A}{\tilde M : \tilde A}}{\Env = \Xi''}
-}{
-	\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}}{\D_1}
-	& \deduce{\Hoare{\Env = \Xi'}{\IndexesType{A}{\tilde A}}{\Env = \Xi''}}{\D_2}
-}$.
-\par
-By the induction hypothesis on $\D_1$, $\Xi' = \Xi$.
-\par
-By the induction hypothesis on $\D_2$, $\Xi'' = \Xi'$.
-\par
-Then, $\Xi'' = \Xi' = \Xi$.
-\end{itemize}
-\end{enumerate}
-}
-\end{proof}
-\end{theorem}
-
-% TODO: By purity, argue that the de Bruijn index computation is correct since the order of push/pop and shift/unshift operations is consistent with association list semantics. The effects of push/pop and shift/unshift being changing the size of |\Psi| work correctly.
 
 \begin{theorem}[Equivalence]
-The formalisms for indexing in the immutable and mutable settings are equivalent.
+The formalisms for indexing with respect to the immutable and mutable representations of the referencing environment are equivalent.
 \begin{enumerate}
 \item $\Hoare{\Env = \Xi}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'}$ if and only if $\Xi \vdash \IndexesKind{K}{\tilde K}$ and $\Xi' = \Xi$.
 \item $\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}$ if and only if $\Xi \vdash \IndexesType{A}{\tilde A}$ and $\Xi' = \Xi$.
@@ -486,8 +320,6 @@ By simultaneous induction:
 \item
 Assume $\deduce{\Hoare{\Env = \Xi}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'}}{\D}$.
 \par
-By purity on $\D$, $\Xi' = \Xi$.
-\par
 By structural induction on $\D$:
 \begin{itemize}
 \item
@@ -498,13 +330,11 @@ Case $\D = \infer{
 	& \deduce{\Hoare{\Env = \Shift{\Psi}{\Xi''}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'''}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$.
+By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$ and $\Xi'' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Shift{\Psi}{\Xi''} \vdash \IndexesKind{K}{\tilde K}}{\E_2}$.
+By the induction hypothesis on $\D_2$, $\deduce{\Shift{\Psi}{\Xi''} \vdash \IndexesKind{K}{\tilde K}}{\E_2}$ and $\Xi''' = \Shift{\Psi}{\Xi''}$.
 \par
-By purity on $\D_1$, $\Xi'' = \Xi$.
-\par
-Then,
+Then, $\Xi' = \Unshift{\Psi}{\Xi'''} = \Unshift{\Psi}{\Shift{\Psi}{\Xi''}} = \Xi'' = \Xi$, and
 \begin{equation*}
 \infer{
 	\Xi \vdash \IndexesKind{A \to K}{\tilde A \to \tilde K}
@@ -524,9 +354,9 @@ Case $\D = \infer{
 \par
 By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$ and $\Xi'' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi''} \vdash \IndexesKind{K}{\tilde K}}{\E_2}$.
+By the induction hypothesis on $\D_2$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi''} \vdash \IndexesKind{K}{\tilde K}}{\E_2}$ and $\Xi''' = \Push{\Psi}{x : \LFTerm}{\Xi''}$.
 \par
-Then,
+Then, $\Xi' = \Pop{\Psi}{x}{\Xi'''} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi''}} = \Xi'' = \Xi$, and
 \begin{equation*}
 \infer{
 	\Xi \vdash \IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A}\ \tilde K}
@@ -546,8 +376,6 @@ $\Xi \vdash \IndexesKind{\KWType}{\KWType}$ holds trivially.
 \item
 Assume $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D}$.
 \par
-By purity on $\D$, $\Xi' = \Xi$.
-\par
 By structural induction on $\D$:
 \begin{itemize}
 \item
@@ -560,9 +388,9 @@ Case $\D = \infer{
 \par
 By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A \to B}{\tilde A \to \tilde B}}{\E_1}$ and $\Xi'' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Shift{\Psi}{\Xi''} \vdash \IndexesType{B}{\tilde B}}{\E_2}$.
+By the induction hypothesis on $\D_2$, $\deduce{\Shift{\Psi}{\Xi''} \vdash \IndexesType{B}{\tilde B}}{\E_2}$ and $\Xi''' = \Shift{\Psi}{\Xi''}$.
 \par
-Then,
+Then, $\Xi' = \Unshift{\Psi}{\Xi'''} = \Unshift{\Psi}{\Shift{\Psi}{\Xi''}} = \Xi'' = \Xi$, and
 \begin{equation*}
 \infer{
 	\Xi \vdash \IndexesType{A \to B}{\tilde A \to \tilde B}
@@ -586,9 +414,9 @@ Case $\D = \infer{
 \par
 By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$ and $\Xi'' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi''} \vdash \IndexesType{B}{\tilde B}}{\E_2}$.
+By the induction hypothesis on $\D_2$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi''} \vdash \IndexesType{B}{\tilde B}}{\E_2}$ and $\Xi''' = \Push{\Psi}{x : \LFTerm}{\Xi''}$.
 \par
-Then,
+Then, $\Xi' = \Pop{\Psi}{x}{\Xi'''} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi''}} = \Xi'' = \Xi$, and
 \begin{equation*}
 \infer{
 	\Xi \vdash \IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}
@@ -630,9 +458,7 @@ By the induction hypothesis on $\D_0$, $\deduce{\Xi \vdash \IndexesType{A}{\tild
 \par
 For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\deduce{\Xi_{k - 1} \vdash \IndexesTerm{M_k}{\tilde M_k}}{\E_k}$ and $\Xi_{k - 1} = \Xi_k$.
 \par
-Inductively on $k$, $\Xi_k = \Xi$ for each $k \in \set{1, 2, \dots, n}$.
-\par
-Then,
+Then, inductively on $n$, we have $\Xi_n = \Xi_{n - 1} = \cdots = \Xi_0 = \Xi$, and
 \begin{equation*}
 \infer{
 	\Xi \vdash \IndexesType{A\ M_1\ M_2 \dots M_n}{\tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n}
@@ -645,8 +471,6 @@ Then,
 \end{itemize}
 \item
 Assume $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}}{\D}$.
-\par
-By purity on $\D$, $\Xi' = \Xi$.
 \par
 By structural induction on $\D$:
 \begin{itemize}
@@ -691,9 +515,9 @@ Case $\D = \infer{
 	\deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi''}}{\D'}
 }$.
 \par
-By the induction hypothesis on $\D'$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi} \vdash \IndexesTerm{M}{\tilde M}}{\E'}$ and $\Xi'' = \Xi$.
+By the induction hypothesis on $\D'$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi} \vdash \IndexesTerm{M}{\tilde M}}{\E'}$ and $\Xi'' = \Push{\Psi}{x : \LFTerm}{\Xi}$.
 \par
-Then,
+Then, $\Xi' = \Pop{\Psi}{x}{\Xi''} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi}} = \Xi$, and
 \begin{equation*}
 \infer{
 	\Xi \vdash \IndexesTerm{\lambda x. M}{\lambda\ \tilde M}
@@ -718,9 +542,7 @@ By the induction hypothesis on $\D_0$, $\deduce{\Xi \vdash \IndexesTerm{M}{\tild
 \par
 For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\deduce{\Xi_{k - 1} \vdash \IndexesTerm{N_k}{\tilde N_k}}{\E_k}$ and $\Xi_k = \Xi_{k - 1}$.
 \par
-Inductively on $n$, $\Xi_n = \Xi_{n - 1} = \cdots = \Xi_0 = \Xi$.
-\par
-Then,
+Then, inductively on $n$, we have $\Xi_n = \Xi_{n - 1} = \cdots = \Xi_0 = \Xi$, and
 \begin{equation*}
 \infer{
 	\Xi \vdash \IndexesType{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}
@@ -742,7 +564,7 @@ By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesTerm{M}{\tild
 \par
 By the induction hypothesis on $\D_2$, $\deduce{\Xi'' \vdash \IndexesType{A}{\tilde A}}{\E_2}$ and $\Xi' = \Xi''$.
 \par
-Then,
+Then, $\Xi' = \Xi'' = \Xi$, and
 \begin{equation*}
 \infer{
 	\Xi \vdash \IndexesType{M : A}{\tilde M : \tilde A}
@@ -1038,3 +860,13 @@ Then,
 }
 \end{proof}
 \end{theorem}
+
+\begin{corollary}
+Successfully indexing an \LF kind, type or term using the Hoare-style algorithm specification restores the referencing environment to its initial state.
+That is,
+\begin{enumerate}
+\item If $\Hoare{\Env = \Xi}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
+\item If $\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
+\item If $\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
+\end{enumerate}
+\end{corollary}
