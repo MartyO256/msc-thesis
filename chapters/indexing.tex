@@ -60,7 +60,7 @@ $\Index{\Psi}{x}{\Xi}$ is the de Bruijn index of $x$ in $\Xi$ with respect to th
 \end{itemize}
 Popping a binding from the referencing environment is the inverse of pushing that binding, such that $\Pop{\Psi}{x}{\Push{\Psi}{x : \tau}{\Xi}} = \Xi$.
 Analogously, $\Unshift{\Psi}{\Shift{\Psi}{\Xi}} = \Xi$.
-Additionally, the environments constructed as $\Push{\Psi}{x : \LFTerm}{\Xi} $ and $ (\Xi, x : \LFTerm)$ are equivalent, and so are $\Shift{\Psi}{\Xi} $ and $ (\Xi, \_ : \LFTerm)$.
+Additionally, the environments constructed as $\Push{\Psi}{x : \LFTerm}{\Xi} $ and $ (\Xi, x : \LFTerm)$ are equivalent, and so are $\Shift{\Psi}{\Xi} $ and $ (\Xi, \_ : \LFTerm)$ since the \LF indexing context is only comprised of bindings for \LF terms.
 
 In the theoretic setting, indexing is defined with respect to an immutable representation of the referencing environment $\Xi$ as an association list.
 This algorithm is easy to implement, but comes at the expense of degraded runtime performance for lookups.
@@ -300,14 +300,14 @@ In the event of a lookup failure, the environment has at least the bindings of i
 \newcommand{\E}{\mathcal{E}}
 
 \begin{theorem}[Purity]
-Indexing an \LF kind, type or term using the Hoare-style formalism restores the referencing environment to its initial state.
+Indexing an \LF kind, type or term using the Hoare-style formalism restores the referencing environment to its initial state when it succeeds.
 \begin{enumerate}
 \item If $\Hoare{\Env = \Xi}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
 \item If $\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
 \item If $\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
 \end{enumerate}
 \begin{proof}
-{\footnotesize
+{\scriptsize
 By simultaneous induction:
 \begin{enumerate}
 \item
@@ -402,7 +402,7 @@ By the induction hypothesis on $\D_0$, $\Xi_0 = \Xi$.
 \par
 For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\Xi_k = \Xi_{k - 1}$.
 \par
-Then, $\Xi_n = \Xi_{n - 1} = \dots = \Xi_1 = \Xi_0 = \Xi$.
+Then, inductively on $n$, $\Xi_n = \Xi_{n - 1} = \dots = \Xi_1 = \Xi_0 = \Xi$.
 \end{itemize}
 \item
 Assume $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}}{\D}$.
@@ -447,7 +447,7 @@ By the induction hypothesis on $\D_0$, $\Xi_0 = \Xi$.
 \par
 For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\Xi_k = \Xi_{k - 1}$.
 \par
-Then, $\Xi_n = \Xi_{n - 1} = \dots = \Xi_1 = \Xi_0 = \Xi$.
+Then, inductively on $n$, $\Xi_n = \Xi_{n - 1} = \dots = \Xi_1 = \Xi_0 = \Xi$.
 \item
 Case $\D = \infer{
 	\Hoare{\Env = \Xi}{\IndexesTerm{M : A}{\tilde M : \tilde A}}{\Env = \Xi''}
@@ -478,7 +478,7 @@ The formalisms for indexing in the immutable and mutable settings are equivalent
 \end{enumerate}
 \begin{proof}
 By simultaneous induction, then structural induction, and appeals to the purity theorem.
-{\footnotesize
+{\scriptsize
 \begin{itemize}
 \item[$\Rightarrow$]
 By simultaneous induction:
@@ -522,11 +522,9 @@ Case $\D = \infer{
 	& \deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi''}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'''}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$.
+By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$ and $\Xi'' = \Xi$.
 \par
 By the induction hypothesis on $\D_2$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi''} \vdash \IndexesKind{K}{\tilde K}}{\E_2}$.
-\par
-By purity on $\D_1$, $\Xi'' = \Xi$.
 \par
 Then,
 \begin{equation*}
@@ -559,6 +557,24 @@ Case $\D = \infer{
 	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi''}}{\D_1}
 	& \deduce{\Hoare{\Env = \Shift{\Psi}{\Xi''}}{\IndexesType{B}{\tilde B}}{\Env = \Xi'''}}{\D_2}
 }$.
+\par
+By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A \to B}{\tilde A \to \tilde B}}{\E_1}$ and $\Xi'' = \Xi$.
+\par
+By the induction hypothesis on $\D_2$, $\deduce{\Shift{\Psi}{\Xi''} \vdash \IndexesType{B}{\tilde B}}{\E_2}$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Xi \vdash \IndexesType{A \to B}{\tilde A \to \tilde B}
+}{
+	\deduce{\Xi \vdash \IndexesType{A \to B}{\tilde A \to \tilde B}}{\E_1}
+	& \infer{
+		\Xi, \_ : \LFTerm \vdash \IndexesType{B}{\tilde B}
+	}{
+		\deduce{\Shift{\Psi}{\Xi} \vdash \IndexesType{B}{\tilde B}}{\E_2}
+	}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
@@ -567,6 +583,24 @@ Case $\D = \infer{
 	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi''}}{\D_1}
 	& \deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi''}}{\IndexesType{B}{\tilde B}}{\Env = \Xi'''}}{\D_2}
 }$.
+\par
+By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$ and $\Xi'' = \Xi$.
+\par
+By the induction hypothesis on $\D_2$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi''} \vdash \IndexesType{B}{\tilde B}}{\E_2}$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Xi \vdash \IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}
+}{
+	\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}
+	& \infer{
+		\Xi, x : \LFTerm \vdash \IndexesType{B}{\tilde B}
+	}{
+		\deduce{\Push{\Psi}{x : \LFTerm}{\Xi} \vdash \IndexesType{B}{\tilde B}}{\E_2}
+	}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
@@ -574,14 +608,40 @@ Case $\D = \infer{
 }{
 	\deduce{\Lookup{a}{\Xi} = \tilde a : \LFTypeConst}{\D'}
 }$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Xi \vdash \IndexesType{a}{\tilde a}
+}{
+	\deduce{\Lookup{a}{\Xi} = \tilde a : \LFTypeConst}{\D'}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
 	\Hoare{\Env = \Xi}{\IndexesType{A\ M_1\ M_2 \dots M_n}{\tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n}}{\Env = \Xi_n}
 }{
-	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi_0}}{\D_1}
+	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi_0}}{\D_0}
 	& \deduce{\left(\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi_k}\right)_{k \in \set{1, 2, \dots, n}}}{\D_2}
 }$.
+\par
+By the induction hypothesis on $\D_0$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_0}$ and $\Xi_0 = \Xi$.
+\par
+For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\deduce{\Xi_{k - 1} \vdash \IndexesTerm{M_k}{\tilde M_k}}{\E_k}$ and $\Xi_{k - 1} = \Xi_k$.
+\par
+Inductively on $k$, $\Xi_k = \Xi$ for each $k \in \set{1, 2, \dots, n}$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Xi \vdash \IndexesType{A\ M_1\ M_2 \dots M_n}{\tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n}
+}{
+	\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_0}
+	& \left(\deduce{\Xi \vdash \IndexesTerm{M_k}{\tilde M_k}}{\E_k}\right)_{k \in \set{1, 2, \dots, n}}
+}.
+\end{equation*}
+
 \end{itemize}
 \item
 Assume $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}}{\D}$.
@@ -597,6 +657,16 @@ Case $\D = \infer{
 	\deduce{\Lookup{x}{\Xi} = x : \LFTerm}{\D_1}
 	& \deduce{\Index{\Psi}{x}{\Xi} = \iota}{\D_2}
 }$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Xi \vdash \IndexesTerm{x}{\iota}
+}{
+	\deduce{\Lookup{x}{\Xi} = x : \LFTerm}{\D_1}
+	& \deduce{\Index{\Psi}{x}{\Xi} = \iota}{\D_2}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
@@ -604,6 +674,15 @@ Case $\D = \infer{
 }{
 	\deduce{\Lookup{c}{\Xi} = \tilde c : \LFTermConst}{\D'}
 }$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Xi \vdash \IndexesTerm{c}{\tilde c}
+}{
+	\deduce{\Lookup{c}{\Xi} = \tilde c : \LFTermConst}{\D'}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
@@ -611,22 +690,67 @@ Case $\D = \infer{
 }{
 	\deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi''}}{\D'}
 }$.
+\par
+By the induction hypothesis on $\D'$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi} \vdash \IndexesTerm{M}{\tilde M}}{\E'}$ and $\Xi'' = \Xi$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Xi \vdash \IndexesTerm{\lambda x. M}{\lambda\ \tilde M}
+}{
+	\infer{
+		\Xi, x : \LFTerm \vdash \IndexesTerm{M}{\tilde M}
+	}{
+		\deduce{\Push{\Psi}{x : \LFTerm}{\Xi} \vdash \IndexesTerm{M}{\tilde M}}{\E'}
+	}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
 	\Hoare{\Env = \Xi}{\IndexesTerm{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}}{\Env = \Xi_n}
 }{
-	\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi_0}}{\D_1}
+	\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi_0}}{\D_0}
 	& \left(\deduce{\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi_k}}{\D_k}\right)_{k \in \set{1, 2, \dots, n}}
 }$.
+\par
+By the induction hypothesis on $\D_0$, $\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\E_0}$ and $\Xi_0 = \Xi$.
+\par
+For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\deduce{\Xi_{k - 1} \vdash \IndexesTerm{N_k}{\tilde N_k}}{\E_k}$ and $\Xi_k = \Xi_{k - 1}$.
+\par
+Inductively on $n$, $\Xi_n = \Xi_{n - 1} = \cdots = \Xi_0 = \Xi$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Xi \vdash \IndexesType{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}
+}{
+	\deduce{\Xi_{k - 1} \vdash \IndexesTerm{N_k}{\tilde N_k}}{\E_k}
+	& \left(\deduce{\Xi \vdash \IndexesTerm{N_k}{\tilde N_k}}{\E_k}\right)_{k \in \set{1, 2, \dots, n}}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
-	\Hoare{\Env = \Xi}{\IndexesTerm{M : A}{\tilde M : \tilde A}}{\Env = \Xi'''}
+	\Hoare{\Env = \Xi}{\IndexesTerm{M : A}{\tilde M : \tilde A}}{\Env = \Xi'}
 }{
 	\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi''}}{\D_1}
-	& \deduce{\Hoare{\Env = \Xi''}{\IndexesType{A}{\tilde A}}{\Env = \Xi'''}}{\D_2}
+	& \deduce{\Hoare{\Env = \Xi''}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_2}
 }$.
+\par
+By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\E_1}$ and $\Xi'' = \Xi$.
+\par
+By the induction hypothesis on $\D_2$, $\deduce{\Xi'' \vdash \IndexesType{A}{\tilde A}}{\E_2}$ and $\Xi' = \Xi''$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Xi \vdash \IndexesType{M : A}{\tilde M : \tilde A}
+}{
+	\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\E_1}
+	& \deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_2}
+}.
+\end{equation*}
 \end{itemize}
 \end{enumerate}
 \item[$\Leftarrow$]
@@ -654,14 +778,13 @@ Then,
 \infer{
 	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Xi}
 }{
-\infer{
-	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift{\Psi}{\Shift{\Psi}{\Xi}}}
-}{
-	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}
-	& \infer{\Hoare{\Env = \Shift{\Psi}{\Xi}}{\IndexesKind{K}{\tilde K}}{\Env = \Shift{\Psi}{\Xi}}}{\deduce{\Hoare{\Env = \Xi, \_ : \LFTerm}{\IndexesKind{K}{\tilde K}}{\Env = \Xi, \_ : \LFTerm}}{\E_2}}
-}
-}
-.
+	\infer{
+		\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift{\Psi}{\Shift{\Psi}{\Xi}}}
+	}{
+		\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}
+		& \infer{\Hoare{\Env = \Shift{\Psi}{\Xi}}{\IndexesKind{K}{\tilde K}}{\Env = \Shift{\Psi}{\Xi}}}{\deduce{\Hoare{\Env = \Xi, \_ : \LFTerm}{\IndexesKind{K}{\tilde K}}{\Env = \Xi, \_ : \LFTerm}}{\E_2}}
+	}
+}.
 \end{equation*}
 
 \item
@@ -685,7 +808,7 @@ Then,
 	\Hoare{\Env = \Xi}{\IndexesKind{\Pi x{:}A. K}{\Pi_{\tilde A} \tilde K}}{\Env = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi}}}
 }{
 	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}
-	& \infer{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}{\IndexesKind{K}{\tilde K}}{\Env = \cdots}}{\deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesKind{K}{\tilde K}}{\Env = \Xi, x : \LFTerm}}{\E_2}}
+	& \infer{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}{\IndexesKind{K}{\tilde K}}{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}}{\deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesKind{K}{\tilde K}}{\Env = \Xi, x : \LFTerm}}{\E_2}}
 }
 }.
 \end{equation*}
@@ -708,6 +831,29 @@ Case $\D = \infer{
 	\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\D_1}
 	& \deduce{\Xi, \_ : \LFTerm \vdash \IndexesType{B}{\tilde B}}{\D_2}
 }$.
+\par
+By the induction hypothesis on $\D_1$, $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}$.
+\par
+By the induction hypothesis on $\D_2$, $\deduce{\Hoare{\Env = \Xi, \_ : \LFTerm}{\IndexesType{B}{\tilde B}}{\Env = \Xi, \_ : \LFTerm}}{\E_2}$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesType{A \to B}{\tilde A \to \tilde B}}{\Env = \Xi}
+}{
+	\infer{
+		\Hoare{\Env = \Xi}{\IndexesType{A \to B}{\tilde A \to \tilde B}}{\Env = \Unshift{\Psi}{\Shift{\Psi}{\Xi}}}
+	}{
+		\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}
+		& \infer{
+			\Hoare{\Env = \Shift{\Psi}{\Xi}}{\IndexesType{B}{\tilde B}}{\Env = \Shift{\Psi}{\Xi}}
+		}{
+			\deduce{\Hoare{\Env = \Xi, \_ : \LFTerm}{\IndexesType{B}{\tilde B}}{\Env = \Xi, \_ : \LFTerm}}{\E_2}
+		}
+	}
+}
+.
+\end{equation*}
 
 \item
 Case $\D = \infer{
@@ -716,6 +862,28 @@ Case $\D = \infer{
 	\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\D_1}
 	& \deduce{\Xi, x : \LFTerm \vdash \IndexesType{B}{\tilde B}}{\D_2}
 }$.
+\par
+By the induction hypothesis on $\D_1$, $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}$.
+\par
+By the induction hypothesis on $\D_2$, $\deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesType{B}{\tilde B}}{\Env = \Xi, x : \LFTerm}}{\E_2}$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}}{\Env = \Xi}
+}{
+	\infer{
+		\Hoare{\Env = \Xi}{\IndexesType{\Pi x{:}A. B}{\Pi_{\tilde A}\ \tilde B}}{\Env = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi}}}
+	}{
+		\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}
+		& \infer{
+			\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}{\IndexesType{B}{\tilde B}}{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}
+		}{
+			\deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesType{B}{\tilde B}}{\Env = \Xi, x : \LFTerm}}{\E_2}
+		}
+	}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
@@ -723,14 +891,38 @@ Case $\D = \infer{
 }{
 	\deduce{\Lookup{a}{\Xi} = \tilde a : \LFTypeConst}{\D'}
 }$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesType{a}{\tilde a}}{\Env = \Xi}
+}{
+	\deduce{\Lookup{a}{\Xi} = \tilde a : \LFTypeConst}{\D'}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
 	\Xi \vdash \IndexesType{A\ M_1\ M_2 \dots M_n}{\tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n}
 }{
-	\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\D_1}
+	\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\D_0}
 	& \left(\deduce{\Xi \vdash \IndexesTerm{M_k}{\tilde M_k}}{\D_k}\right)_{k \in \set{1, 2, \dots, n}}
 }$.
+\par
+By the induction hypothesis on $\D_0$, $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_0}$.
+\par
+For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi}}{\E_k}$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesType{A\ M_1\ M_2 \dots M_n}{\tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n}}{\Env = \Xi}
+}{
+	\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_0}
+	& \left(\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi}}{\E_k}\right)_{k \in \set{1, 2, \dots, n}}
+}.
+\end{equation*}
+
 \end{itemize}
 \item
 Assume $\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\D}$.
@@ -744,6 +936,16 @@ Case $\D = \infer{
 	\deduce{\Lookup{x}{\Xi} = x : \LFTerm}{\D_1}
 	& \deduce{\Index{\Psi}{x}{\Xi} = \iota}{\D_2}
 }$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{x}{\iota}}{\Env = \Xi}
+}{
+	\deduce{\Lookup{x}{\Xi} = x : \LFTerm}{\D_1}
+	& \deduce{\Index{\Psi}{x}{\Xi} = \iota}{\D_2}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
@@ -751,6 +953,15 @@ Case $\D = \infer{
 }{
 	\deduce{\Lookup{c}{\Xi} = \tilde c : \LFTermConst}{\D'}
 }$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{c}{\tilde c}}{\Env = \Xi}
+}{
+	\deduce{\Lookup{c}{\Xi} = \tilde c : \LFTermConst}{\D'}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
@@ -758,14 +969,47 @@ Case $\D = \infer{
 }{
 	\deduce{\Xi, x : \LFTerm \vdash \IndexesTerm{M}{\tilde M}}{\D'}
 }$.
+\par
+By the induction hypothesis on $\D'$, $\deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi, x : \LFTerm}}{\E'}$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{\lambda x. M}{\lambda\ \tilde M}}{\Env = \Xi}
+}{
+	\infer{
+		\Hoare{\Env = \Xi}{\IndexesTerm{\lambda x. M}{\lambda\ \tilde M}}{\Env = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi}}}
+	}{
+		\infer{
+		\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}{\IndexesTerm{M}{\tilde M}}{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}
+		}{
+			\deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi, x : \LFTerm}}{\E'}
+		}
+	}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
 	\Xi \vdash \IndexesType{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}
 }{
-	\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\D_1}
+	\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\D_0}
 	& \left(\deduce{\Xi \vdash \IndexesTerm{N_k}{\tilde N_k}}{\D_k}\right)_{k \in \set{1, 2, \dots, n}}
 }$.
+\par
+By the induction hypothesis on $\D_0$, $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi}}{\E_0}$.
+\par
+For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi}}{\E_k}$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{M\ N_1\ N_2 \dots N_n}{\tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n}}{\Env = \Xi}
+}{
+	\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi}}{\E_0}
+	& \left(\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi}}{\E_k}\right)_{k \in \set{1, 2, \dots, n}}
+}.
+\end{equation*}
 
 \item
 Case $\D = \infer{
@@ -774,6 +1018,20 @@ Case $\D = \infer{
 	\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\D_1}
 	& \deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\D_2}
 }$.
+\par
+By the induction hypothesis on $\D_1$, $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi}}{\E_1}$.
+\par
+By the induction hypothesis on $\D_2$, $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_2}$.
+\par
+Then,
+\begin{equation*}
+\infer{
+	\Hoare{\Env = \Xi}{\IndexesTerm{M : A}{\tilde M : \tilde A}}{\Env = \Xi}
+}{
+	\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi}}{\E_1}
+	& \deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_2}
+}.
+\end{equation*}
 \end{itemize}
 \end{enumerate}
 \end{itemize}
