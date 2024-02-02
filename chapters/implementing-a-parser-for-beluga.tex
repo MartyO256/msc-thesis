@@ -26,7 +26,7 @@ Otherwise, when parts of the data have been abstracted away, it is instead calle
 A program's textual representation is ambiguous with respect to a predefined set of parse rules if the program can be parsed into a parse forest, which is multiple parse trees~\cite{aho2007compilers}.
 By way of analogy, a sentence in a natural language is ambiguous if it can be interpreted in multiple valid ways with respect to its syntactic and grammatical rules.
 Since programming languages are tools for describing computerized systems, it is necessary that each valid written program has exactly one interpretation~\cite{aho2007compilers}.
-In the strictest of cases, this unicity of interpretation may be enforced at the level of the grammar and parser, such that all valid programs have exactly one inferable interpretation.
+In the strictest of cases, this unicity of interpretation may be enforced at the level of the grammar and parser, such that all syntactically valid programs have exactly one inferable interpretation.
 This is typically achieved using rules and syntactic conventions that prevent ambiguous programs from being ever written in the first place.
 
 Certain kinds of syntactic ambiguities are unavoidable in programming languages, and are frequently useful to the end user.
@@ -176,7 +176,7 @@ The projection out of a module acting as a namespace.
 \end{enumerate}
 
 This first usage of the dot operator proved particularly difficult to resolve when the operator was overloaded with projections out of namespaces.
-One approach to solve this issue is to replace the dot operator with a different syntax for accesses to a module's values and types.
+One approach to solve this issue is to replace the dot operator with a different syntax for accesses to a module's declarations.
 The solution that was ultimately put in place was to instead introduce two additional token kinds \synt{dot-identifier} and \synt{dot-integer} in the lexer for identifiers and numbers immediately prefixed by a dot.
 These token kinds were reserved to denote projections.
 During context-free parsing, wherever a dot is expected to not be part of a projection, these two token kinds would still be accepted, but a corresponding identifier or number token would be spliced in the input stream.
@@ -187,17 +187,17 @@ Thus, \Twelf-style \LF term-level and type-level constant declarations could be 
 
 Parsing of \Beluga signatures is achieved using $ \mathsf{LL(\infty)} $ parsing in pathological cases and $ \mathsf{LL(1)} $ parsing in the most frequent cases.
 This is implemented using the monadic parser combinator library introduced in \Beluga version \texttt{1.0}.
-Unlimited lookahead is enabled only in select cases, or if no input token has been consumed, which provides sufficient performance for parsing large \Beluga files.
+Unlimited lookahead is enabled only in select cases, or if no input token has been consumed, which performs efficiently enough for large \Beluga files.
 
 The main contribution made to the context-free parsing phase of \Beluga is the simplification of its grammar.
 Indeed, the legacy parser was designed following the grammars developed along signature reconstruction and type-checking algorithms, which introduced syntactic classes that ensure some properties always hold by construction for terms in the language.
-Specifically, the index level \LF of \Beluga is strongly-normalizing, and since reconstruction for \LF terms and types operates best with objects in canonical form, then it was decided that the user should only be able to write \LF terms and types in canonical form.
+Specifically, the index level \LF of \Beluga is strongly-normalizing, and \LF terms in canonical form cannot feature certain kinds of non-termination in term reduction, then it was decided that the user should only be able to write \LF terms and types in canonical form.
 This required that nonterminals be introduced for normal and neutral terms separately to mirror the syntax of figure~\ref{figure:internal-syntax}.
 Additionally, since \Beluga's type-checking algorithm is bidirectional, computation-level expressions were split into two syntactic classes, namely type-synthesizing expressions and type-checkable expressions, and this change was also reflected in the parser.
 Implementation efforts revealed however that these syntactic constraints are too stringent to be imposed during parsing.
 Indeed, they increased the complexity of the parser, made operator precedence rules opaque, and yielded poor syntax error messages to the user.
 This is because the pre-terms of \Beluga cannot be elegantly partitioned all at once by order of precedence, by whether they are neutral or normal, and by whether they synthesize a type or check against one.
-Those rules for parsing are too complex to be explained to newcomers to the language, and are also error-prone for developers.
+This partitioning is required for recursive descent parsing, but those parser rules are too complex to be explained to newcomers to the language, and are also error-prone for developers.
 The additional constraints further restrict the language recognized by the parser, which in turn prevents some syntactically invalid programs from being reported with more precision than simply identifying unexpected tokens.
 This is in part evidenced by the grammar in figure~\ref{figure:legacy-clf-parsing} and the example syntax error message in figure~\ref{figure:improved-syntax-error-message}.
 As such, the revised parser's grammar does not distinguish between neutral and normal terms, nor type-synthesizing and type-checkable expressions.
@@ -266,7 +266,7 @@ Unexpected token in stream
 \caption{%
 The syntax error raised during context-free parsing in the legacy parser implementation.
 Given the stricter grammar of \synt{clf-type} in figure~\ref{figure:legacy-clf-parsing}, it is true that the token \texttt{[} introducing the identity substitution is unexpected.
-However, the reason for this syntax error is not obvious given the error message, in part because the user unambiguously wrote a substitution.
+However, the reason for this error is not obvious from its message, in part because the user unambiguously wrote a substitution.
 }
 \end{subfigure}
 \par\bigskip
@@ -279,7 +279,7 @@ However, the reason for this syntax error is not obvious given the error message
 \end{Verbatim}
 \caption{%
 Improved syntax error message produced during the disambiguation phase instead of during context-free parsing.
-Since the grammar for \LF objects was relaxed to support non-canonical forms, the parser accepts the invalid substitution, and then disambiguation identifies that it should be rejected.
+Using a relaxed grammar for \LF objects to support non-canonical forms, the parser accepts the invalid substitution, and then the disambiguation phase identifies that it should be rejected.
 }
 \end{subfigure}
 \caption[Example of improved syntax error reporting]{%
@@ -288,13 +288,16 @@ Example of improved syntax error reporting using less stringent syntactic rules 
 \label{figure:improved-syntax-error-message}
 \end{figure}
 
-Besides the aforementioned simplifications to the grammar, the revised parser still had to support the syntax of \LF kinds, types and terms, which overloads operators.
-In fact, an \LF kind is syntactically indistinguishable from an \LF type in \Beluga until the very last operand to the arrow operator since kinds always end with $\mathbf{type}$ but types cannot.
+Besides the aforementioned simplifications to the grammar, the revised parser still has to support the syntax of \LF kinds, types and terms, which overloads operators.
+For instance, the $\to$ operator is overloaded for arrow kinds and types, and the syntaxes for $\Pi$-kinds and $\Pi$-types are the same in \Beluga.
+This means that an \LF kind is syntactically indistinguishable from an \LF type until a $\mathbf{type}$ kind is encountered as the very last operand since \LF kinds necessarily contain one.
 Unrestricted backtracking and infinite lookaheads are not suitable solutions to this disambiguation issue given that those expressions are the most frequent ones in \Beluga signatures.
-The implemented solution to this problem during context-free parsing is somewhat counterintuitive.
+
+The implemented solution to this sort of problem during context-free parsing is somewhat counterintuitive.
 The syntactic categories having common syntaxes that appear in ambiguous positions are merged into a single nonterminal in the grammar.
-We call this blurring the grammar since we effectively lose the distinction between syntactic categories during context-free parsing.
-This results in a grammar that is less restrictive than the initial ones, and so an additional phase of processing is required to recover a parser for the initial grammars.
+We call this blurring the grammar since we effectively lose the distinction between those merged syntactic categories during context-free parsing.
+This results in a grammar that accepts a wider range of expressions.
+Hence, an additional phase of processing is required to recover a parser for the initial grammars.
 Section~\ref{section:blurred-lf-syntax} provides an example of one such blurred grammar, obtained by merging the nonterminals \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} of section~\ref{section:syntax-lf} into one syntactic category, with corresponding nonterminal \synt{lf-object}.
 The context-sensitive disambiguation phase outlined in the next section is then tasked with recovering the original \LF kind, type or term corresponding to a parsed \LF object.
 We note that a similar technique was used in \Twelf since its shift-reduce parser could not perform disambiguation during parsing.
@@ -314,7 +317,7 @@ Specifically, it performs disambiguation of:
 
 Disambiguation of \Beluga programs requires that identifiers be resolved to their binding sites in order to determine their sort.
 This process statefully keeps track of the identifiers in scope at any given point during a traversal of the parser \ac{AST}.
-This referencing environment is implemented using a mutable state structure with auxiliary data to deal with patterns, modules and pragmas.
+This environment is implemented using a mutable state structure with auxiliary data to deal with patterns, modules and pragmas.
 Specifically, bindings during this phase are modelled using a stack of scopes, each of which contains a tree mapping fully qualified identifiers to minimal descriptions of what those identifiers are bound to (namely variables or constants).
 In particular, the referencing environment records the user-defined notation to use for any given identifier.
 This allows for fixity pragmas like in figure~\ref{figure:operator-pragmas} to be declared in namespaces, and to later be brought in scope when the namespace is opened.
@@ -326,8 +329,8 @@ We postpone the discussion on how the referencing environment is constructed and
 \section{Parsing User-Defined Operators}\label{section:parsing-user-defined-operators}
 
 In \Beluga, users may specify that identifiers should be used as operators in expression applications, as shown in figure~\ref{figure:operator-pragmas}, using \verb|--prefix|, \verb|--infix| or \verb|--postfix| pragmas.
-Prefix operators are right-associative, postfix operators are left-associative, and infix operators may be either left-associative, right-associative or non-associative.
-The priority of operations can be specified using integer precedence values.
+Prefix operators are unary and right-associative, postfix operators are unary and left-associative, and infix operators are binary and may be either left-associative, right-associative or non-associative.
+The priority of operations is specified using integer precedence values.
 This feature was ported over from \Twelf, and using the new parsing architecture, it was subsequently improved to support shadowing of operators by bound variables and other constants.
 As outlined below, the notation pragmas for user-defined operators in \Beluga are more restrictive than that of \Agda because \Beluga does not support mixfix operators~\cite{danielsson2008parsing}.
 
@@ -389,9 +392,9 @@ However, this design requires that operators cannot be overloaded, otherwise dis
 
 In \Beluga, at the precedence level of expression applications, there are four scenarios to disambiguate:
 \begin{enumerate}
-\item Prefix operators followed by their operand,
+\item Prefix operators followed by their operands,
 \item Left-associative, right-associative or non-associative infix operators preceded and followed by their operands,
-\item Postfix operators preceded by their operand, and
+\item Postfix operators preceded by their operands, and
 \item Juxtaposed expressions having no operator.
 \end{enumerate}
 
@@ -407,7 +410,7 @@ This parsing algorithm proceeds in the following steps:
 This is effectively the same principle as recursive descent parsing for a set of operators statically defined by the language's grammar, but instead implemented over a dynamic set of operators.
 This set is constructed using only those constants found in the \ac{AST} node for application.
 As such, this parsing algorithm for user-defined operators has $ O(n^3) $ runtime complexity, where $ n $ is the length of the list of parsemes.
-Figures~\ref{figure:user-defined-operators-initial-grammar}, \ref{figure:user-defined-operators-initial-grammar-scheme} and \ref{figure:user-defined-operators-final-grammar-scheme} progressively show how to obtain a grammar scheme to parse user-defined operators.
+Figures~\ref{figure:user-defined-operators-initial-grammar}, \ref{figure:user-defined-operators-initial-grammar-scheme} and \ref{figure:user-defined-operators-final-grammar-scheme} progressively show how to obtain an $\mathsf{LL}(1)$ grammar scheme to parse user-defined operators.
 In \Beluga \texttt{v1.1}, the parser is implemented following this last grammar scheme, and using monadic parser combinators just like in the context-free parsing phase.
 
 Coincidentally, the grammar scheme of figure~\ref{figure:user-defined-operators-initial-grammar-scheme} was used to reintroduce support for infix left and right arrow operators $\rightarrow$ and $\leftarrow$ in \LF types.
@@ -482,10 +485,10 @@ $ \angled{e}_{P + 1} $ & $ \Coloneqq $ & $ \mathbf{a}+ $
 \section{Discussion}
 
 Despite the bugfixes and new features, the revised parser architecture is not without its flaws.
-The additional requirement that parsing must produce an unambiguous \ac{AST} prevents the overloading of some syntax.
+The additional requirement that parsing must produce an unambiguous \ac{AST} without resorting to complex disambiguation mechanisms prevents the overloading of some syntax.
 In particular, meta-objects and meta-types for substitutions now have to be prefixed by \texttt{\$} to distinguish them from plain meta-objects and meta-types respectively.
 For the same reason, parameter meta-types have to be prefixed by \texttt{\#}.
-Furthermore, overloading of identifiers had to be discarded so that user-defined operators in applications may be disambiguated without type information.
+Furthermore, overloading of identifiers had to be discarded so that user-defined operators in applications may be disambiguated using only a lookup table.
 Those breaking changes to the syntax could have been avoided had further semantic analysis been introduced during the disambiguation phase, namely to perform type-driven disambiguation.
 Should \Beluga be extended to support multiple context variables in contexts, then this may be required.
 Likewise, should mixfix notations be a planned feature, then identifier overloading may need to be reintroduced with type-driven disambiguation since those notations typically require the reuse of names across different operators.
@@ -493,7 +496,7 @@ Likewise, should mixfix notations be a planned feature, then identifier overload
 Additionally, further blurring of the grammars in section~\ref{section:resolving-grammar-ambiguities} would be required to ensure that the context-free parsing phase does not have to perform infinite lookaheads.
 Indeed, there is a pathological case in parsing computation-level kinds and types where an unbounded lookahead is required because of an overlapping syntax between meta-level types and computation-level types.
 The performance impact of this lookahead has not been measured, but it appears to be negligible based on the performance of running the entire processing pipeline on the numerous examples that are part of the system's test suite.
-Nonetheless, the observation that additional grammar blurring is required to get from an $ \mathsf{LL}(\infty) $ parser to an $ \mathsf{LL}(1) $ parser for \Beluga begs the question whether there should only be one encompassing grammar in section~\ref{section:resolving-grammar-ambiguities}.
+Nonetheless, the observation that additional grammar blurring is required to get from an $ \mathsf{LL}(\infty) $ parser to an $ \mathsf{LL}(1) $ parser for \Beluga begs the question whether there should only be one encompassing non-terminal in the grammar of section~\ref{section:resolving-grammar-ambiguities}.
 This would make the language's grammar uniform, and allow for more flexibility in overloading syntactic constructs.
 However, since a parselet is required per precedence level in recursive descent parsing, and most static operators in \Beluga have distinct precedences, the resulting increase in the recursion depth for parsing could deteriorate the runtime performance of the parser.
 Arguably, such a design presents more opportunities to improve the precision of syntax error messages during disambiguation.

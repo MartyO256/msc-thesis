@@ -90,11 +90,11 @@ The semantic analysis process refines this \acs{AST} by performing type-directed
 
 As illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline}, the processing of a \Beluga signature starts with syntax analysis, which is comprised of a tokenization and parsing phase that converts the textual representation of the signature to an \ac{AST}, called the external \ac{AST}.
 The model for this \ac{AST} contains ambiguous nodes, meaning that some \ac{AST} node variants capture multiple parse trees.
-Specifically, the application of \LF type-level and term-level constants is represented as a list of parsemes.
-Parsing of signature-level declarations also features mixing/unmixing flags (auxiliary data types for bookkeeping) to postpone some elements of disambiguation to phases after context-free parsing.
+Specifically, the application of \LF type-level and term-level constants is represented as a list of parsemes, which effectively postpones the parsing of applications featuring user-defined operator notations.
+Parsing of signature-level declarations also features auxiliary data and routines for mixing or unmixing parsemes to delegate some disambiguation to phases after context-free parsing.
 
-Indexing in \Beluga is the process where the concrete syntax is elaborated to a locally nameless representation called the approximate syntax, wherein bound variables are replaced with their corresponding de Bruijn indices.
-As part of \Beluga's design for terse type declarations and programs, the computation of de Bruin indices for some free variables is postponed until the abstraction phase.
+Indexing in \Beluga is the process by which the concrete syntax is elaborated to a locally nameless representation called the approximate syntax, wherein bound variables are replaced with their corresponding de Bruijn indices.
+As part of \Beluga's design for terse type declarations and programs, the computation of de Bruijn indices for some free variables is postponed until the abstraction phase.
 Indexing is run after parsing, and is additionally responsible for disambiguating the juxtaposition of \LF parsemes at the precedence level of applications (which may contain user-defined operators), as well as disambiguating \LF types from terms and resolving constants.
 This design is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings to produce the referencing environment.
 Using the centralized store of declarations, some measure of identifier overloading is supported using a pre-defined order of lookups in the referencing environment based on the kind of identifier that is expected for a given \ac{AST} node.
@@ -108,7 +108,7 @@ Type-driven unmixing of overloaded syntactic forms occurs at the meta-level, whe
 The approximate \ac{AST} provides a disambiguated representation of the overall \Beluga signatures, which helps in keeping track of the various changes made during this complicated phase.
 
 A nearly complete internal \ac{AST} as defined in figure~\ref{figure:internal-syntax} is produced at the end of reconstruction.
-An abstraction phase~\cite{germain2010implementation} is run to abstract over free variables, which effectively introduces binders for implicit parameters.
+An abstraction phase~\cite{germain2010implementation} is run to abstract over free variables, which effectively introduces binders for implicit parameters, and unrolls the contexts of variables used during type-driven reconstruction..
 This phase completes the desugaring of \Beluga programs since it finishes the computation of de Bruijn indices for variables across all levels.
 The main technical challenge abstraction runs into is determining the order in which introduced binders must appear so that dependencies on terms are preserved in inferred dependent types.
 This includes identifying and handling circular dependencies in abstracted parameters.
@@ -121,7 +121,7 @@ Leftover and unresolved constraints that are still in the state after having ful
 
 The flow of data in the implementation of \Beluga is complex, like in most software systems.
 Starting with the indexing phase, data is shared between the phases of signature reconstruction using a global mutable store.
-This auxiliary data structure is a set of tables mapping constant identifiers to meta-data like in a relational database.
+This auxiliary data structure is a set of tables mapping constant identifiers to metadata, like in a relational database.
 Crucially, the referencing environment used during indexing is computed using this store.
 At any given point during the processing pipeline, the state of the store is valid since program units are processed sequentially.
 New program units may be safely appended afterwards in interactive sessions.

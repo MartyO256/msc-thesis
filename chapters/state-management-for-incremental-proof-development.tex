@@ -20,7 +20,7 @@
 
 This chapter presents implementation concerns with supporting incremental program development in \Beluga and \Harpoon.
 Some technical debt in those systems is highlighted to justify the reimplementation of the indexing phase.
-A formalism and an implementation of identifier resolution for \Beluga are presented to showcase how to efficiently and correctly support de Bruijn indices with multiple indexing contexts.
+A formalism and an implementation of identifier resolution for \Beluga are presented to showcase how to efficiently and correctly compute de Bruijn indices in an environment featuring multiple indexing contexts.
 
 \section{Introduction}
 
@@ -28,7 +28,7 @@ A formalism and an implementation of identifier resolution for \Beluga are prese
 % In what way are state management and exception handling closely linked with respect to interactive proof sessions?
 
 Incremental program development is a broad and open problem in the implementation of interpreters and compilers.
-The main challenge with implementing such systems is state invalidation, where an edit on part of a program causes changes elsewhere, both in the code the user wrote and in the state of the interpreter analysing it.
+The main challenge with implementing such systems is state invalidation, where editing part of a program causes changes elsewhere, both in the code the user wrote and in the state of the interpreter analysing it.
 While reprocessing the affected parts of the code from scratch is a valid solution to guarantee soundness, this does not scale efficiently to large programs.
 Structured editing obviates some of the issues with state invalidation and the propagation of changes in incremental development.
 Indeed, edit actions are scoped to a model of the program as opposed to the program's textual representation itself, which means they have a limited and controlled effect on the structured editor's state.
@@ -145,7 +145,7 @@ Indeed, since the store of constants is stuck at the state it ends up in after s
 This can lead to shadowing of constants required for the proof development.
 In order to ensure soundness of incremental proof development with holes in proof scripts located anywhere in a signature, it is necessary for indexing to be explicitly parameterized over the entire referencing environment as opposed to just the stores of variables.
 
-The aforementioned incongruities in name resolution and tight coupling with the signature reconstruction store motivate the reimplementation of the indexing phase to use one unified namespace while ensuring that identifiers with different levels cannot be mixed.
+The aforementioned incongruities in name resolution and tight coupling with the signature reconstruction store motivate the reimplementation of the indexing phase to use one uniform namespace while ensuring that identifiers with different levels cannot be mixed.
 Without having types available at this stage of processing, the accidental feature of identifier overloading had to be discarded.
 
 \section{Uniform Indexing}\label{section:indexing}
