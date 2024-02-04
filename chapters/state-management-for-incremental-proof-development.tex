@@ -95,7 +95,7 @@ This prompted the reimplementation of name resolution in \Beluga and \Harpoon to
 % What is indexing, more precisely?
 
 As outlined in section~\ref{section:beluga-implementation}, the indexing phase of \Beluga's processing pipeline is responsible for converting external syntax trees to corresponding approximate syntax trees.
-Specifically, references to constants are replaced with their corresponding symbolic identifiers as defined in the signature reconstruction store, and variables are replaced with their corresponding de Bruijn indices.
+Specifically, references to constants are replaced with their corresponding symbolic identifiers defined in the signature reconstruction store, and variables are replaced with their corresponding de Bruijn indices.
 This allows for later phases of semantic analysis (such as type-checking and termination analysis) to efficiently look up constant definitions and resolve variables to their binders without having to keep track of the identifiers in scope.
 In the implementation, not all variables are replaced with de Bruijn indices during indexing because binders for implicit parameters are not present in the \ac{AST}; these are introduced during the abstraction phase~\cite{germain2010implementation}.
 
@@ -105,13 +105,13 @@ In the implementation, not all variables are replaced with de Bruijn indices dur
 
 The legacy implementation of indexing is additionally responsible for disambiguating the application of user-defined operators since that phase keeps track of constants as they are introduced in the signature.
 This disambiguation leverages Dijkstra's shunting-yard algorithm as opposed to the recursive descent parsing algorithm presented in section~\ref{section:parsing-user-defined-operators}.
-This responsibility has been moved to its own disambiguation phase, as presented in section~\ref{section:lexing-parsing-disambiguation}.
+In the revised system, this responsibility has been moved to its own disambiguation phase, as presented in section~\ref{section:lexing-parsing-disambiguation}.
 While this refactoring could have been sufficient in simplifying the legacy implementation, it uncovered significant technical debt and issues having to do with the way identifiers are handled during indexing.
 
 The overarching store illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} records the constant declarations encountered during signature reconstruction.
 These declarations are arranged in tables, with one table per kind of constant declaration, as illustrated in figure~\ref{figure:referencing-environment-architecture}.
-Variable declarations, on the other hand, are arranged in separate association lists.
-This means that there is no overlap between identifiers belonging to different kinds since they are not looked up in the same table or association list, which effectively creates distinct namespaces for them.
+Variable declarations, on the other hand, are arranged separately in association lists.
+This guarantees that there is no overlap between identifiers referring to objects of different kinds since they are not looked up in the same table or association list, which effectively creates distinct namespaces for them.
 For instance, \LF type-level and term-level constants have their own declaration tables, separate from computation-level type constants and constructors.
 This design aims at ensuring that variables and constants originating from the \LF, meta or computation levels do not end up appearing in terms of a different level~\cite{germain2010implementation}.
 Unfortunately, without having a unique table representing an entire referencing environment, name resolution in the presence of shadowing proves obtuse and leads to unexpected results when coupled with overloading of identifiers.
@@ -119,9 +119,10 @@ Indeed, when a constant identifier is resolved during indexing, the declaration 
 As such, identifiers are not looked up with respect to the global order in which they are declared.
 Instead, they are looked up first with respect to the order of identifier kinds, and then by the declaration order within the table for that identifier kind.
 Consequently, parts of the referencing environment do not exist depending on the expected kind of variable or constant encountered in the \ac{AST}.
-As an example, it is impossible in \Beluga~\texttt{v1.0} for a computation-level coinductive type constant to shadow an inductive one simply because the declaration table for the former kind is always looked up after the declaration table for the latter kind.
-Counterintuitively, different parts of the referencing environment can also be interleaved in one program with this split table approach.
-Indeed, one could introduce a meta-level variable with an \verb|mlam|-binder and a computation-level variable with an \verb|fn|-binder, both using the same identifier, and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively because they effectively occupy different namespaces.
+For example, it is impossible in \Beluga~\texttt{v1.0} for a computation-level coinductive type constant to shadow an inductive one simply because the declaration table for the former kind is always looked up after the declaration table for the latter kind.
+Likewise, since identifiers at the meta-level and at the computation-level are kept separate, invalid references to computation-level objects in boxed terms are not detected as they are instead interpreted as free meta-variables.
+Counterintuitively, different parts of the referencing environment can also be interleaved in one program with this split table and association lists approach.
+Indeed, one can introduce a meta-level variable with an \verb|mlam|-binder and a computation-level variable with an \verb|fn|-binder, both using the same identifier, and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively because they effectively occupy different namespaces.
 This overloading would not translate well in proofs on paper since an identifier could be used to refer to two distinct objects at once.
 It also challenges the identifier scoping rules suggested by \Beluga's concrete syntax.
 
@@ -136,16 +137,16 @@ Schema of the referencing environment structure as a mediator between the \Belug
 
 Additionally, the legacy indexing algorithm is tightly coupled and implicitly dependent on the store of constants depicted in figure~\ref{figure:legacy-beluga-processing-pipeline}.
 This means that external mutations to that store affect the output of functions responsible for identifier resolution.
-As outlined in section~\ref{section:intro-state-management}, this design is only suitable for a single pass through the processing pipeline since the store's state is consistent with how the \ac{AST} is traversed.
-Indexing is only explicitly parameterized with respect those previously mentioned association lists for variable declarations.
-This allows \ac{REPL} sessions instantiated in the very last program declared in a \Beluga signature to stay consistent with identifier resolution during signature reconstruction.
-This also enables soundly navigating in \Harpoon between subgoals in a proof script, but only if it occurs last in the signature.
-Incremental proof development sessions instantiated on holes located anywhere else potentially result in invalid programs being generated.
+As outlined in section~\ref{section:intro-state-management}, this design is only suitable for a single pass through the processing pipeline since only then is the store's state is consistent with how the \ac{AST} is traversed.
+Indexing is only explicitly parameterized with respect to association lists for variable declarations.
+This allows \Harpoon and \ac{REPL} sessions instantiated in the very last program declared in a \Beluga signature to stay consistent with identifier resolution during signature reconstruction.
+Indeed, when navigating between to a different \Harpoon subgoal, the variable bindings introduced by the current subgoal can be discarded and replaced with those of the new subgoal.
+Incremental proof development sessions instantiated on holes located anywhere else but the last declaration in the signature may result in invalid programs being generated.
 Indeed, since the store of constants is stuck at the state it ends up in after signature reconstruction, constants declared later than those holes are incorrectly brought into scope.
 This can lead to shadowing of constants required for the proof development.
 In order to ensure soundness of incremental proof development with holes in proof scripts located anywhere in a signature, it is necessary for indexing to be explicitly parameterized over the entire referencing environment as opposed to just the stores of variables.
 
-The aforementioned incongruities in name resolution and tight coupling with the signature reconstruction store motivate the reimplementation of the indexing phase to use one uniform namespace while ensuring that identifiers with different levels cannot be mixed.
+The aforementioned incongruities in name resolution and tight coupling with the signature reconstruction store motivate the reimplementation of the indexing phase to use one uniform namespace while ensuring that identifiers from different domains cannot occur in terms in which they don't belong.
 Without having types available at this stage of processing, the accidental feature of identifier overloading had to be discarded.
 
 \section{Uniform Indexing}\label{section:indexing}
@@ -154,7 +155,7 @@ Without having types available at this stage of processing, the accidental featu
 
 Uniform indexing is the conversion from a named \ac{AST} to a locally nameless \ac{AST} in a single pass and using a single lookup structure for all identifier kinds.
 For \Beluga, this requires having a merged view of the declaration tables for constants and variables so as to uniformly know what identifiers are in scope at any given \ac{AST} node.
-In particular, variables identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together.
+In particular, variable identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together.
 To approach this problem, some definitions are in order.
 
 % What are frames?
@@ -165,6 +166,7 @@ To approach this problem, some definitions are in order.
 A \textit{frame} is a lexical region of an \ac{AST} wherein variable declarations and references can be made.
 A \textit{scope} is a frame in which name resolution is uniform, meaning that references are resolved to the same declaration site irrespective of the \ac{AST} node in the scope.
 Whereas declarations can shadow each other within a frame, all declarations have to be distinct in a scope.
+As such, shadowing with scopes is only supported by nesting.
 A \textit{fully qualified identifier} $x_1.x_2.\cdots.x_n$ is a list of plain identifiers $x_1$, $x_2$, $\dots$, $x_n$ separated by dots denoting projection out of a namespace.
 A \textit{referencing environment} in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
 In essence, a referencing environment provides a window over a signature for name resolution, and as such is restricted to one scope at a time.
@@ -181,8 +183,8 @@ It is also worth noting that in the disambiguation phase, where a similar mappin
 Every identifier declaration is allowed to shadow previous declarations in \Beluga.
 The only exception to this rule is that identifiers in mutually recursive declarations have to be unique.
 Everywhere else, constant and variable declarations introduce their own scope.
-This means that a scope graph~\cite{nameresolution} representation of name resolution for \Beluga programs is essentially a line graph, which is computationally inefficient.
-As such, name resolution is instead modelled and implemented using frames.
+This means that a scope graph~\cite{nameresolution} representation of name resolution for \Beluga programs is essentially a line graph, which is computationally inefficient for name resolution.
+As such, the referencing environment is instead modelled and implemented using frames.
 
 % What kinds of frames will we deal with?
 
@@ -203,6 +205,8 @@ Because of automated reconstruction of meta-level abstractions in \Beluga, free 
 \end{enumerate}
 
 % TODO: Present some invariants to dealing with frames. Additions/subtractions to referencing environments only occur in the topmost/current frame
+
+% TODO: Discard the two-sections approach to presenting indexing
 
 The next subsections present two different ways of realising a referencing environment for \Beluga to support uniform indexing.
 The first definition (section~\ref{section:formalising-uniform-indexing}) is suitable for mechanized proofs, whereas the second (section~\ref{section:implementing-uniform-indexing}) is used in the implementation as it is computationally more efficient.

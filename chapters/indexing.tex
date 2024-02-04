@@ -870,3 +870,12 @@ That is,
 \item If $\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}$, then $\Xi' = \Xi$.
 \end{enumerate}
 \end{corollary}
+
+%\begin{equation*}
+%\infer{
+%	\Hoare{\Env = \Xi}{\IndexesKind{A \to K}{\tilde A \to \tilde K}}{\Env = \Unshift{\Psi}{\Xi'''}}
+%}{
+%	\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}
+%	& \Hoare{\Xi' \equiv \Xi'', \Env = \Shift{\Psi}{\Xi''}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'''}
+%}
+%\end{equation*}
