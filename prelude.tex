@@ -50,6 +50,9 @@
 \newtheorem{theorem}{Theorem}
 \newtheorem*{corollary}{Corollary}
 
+\usepackage{thmtools}
+\usepackage{thm-restate}
+
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{stmaryrd}
@@ -124,3 +127,42 @@
   frametitlerule=true,
   frametitlefont={\normalfont},
 }
+
+\newcommand{\Hoare}[3]{\set{#1}\ #2\ \set{#3}}
+\newcommand{\Env}{\mathsf{Env}}
+\newcommand{\Pop}[3]{\operatorname{pop}_{#1}\left(#2; #3\right)}
+\newcommand{\Push}[3]{\operatorname{push}_{#1}\left(#2; #3\right)}
+\newcommand{\Shift}[2]{\operatorname{shift}_{#1}\left(#2\right)}
+\newcommand{\Unshift}[2]{\operatorname{unshift}_{#1}\left(#2\right)}
+\newcommand{\Lookup}[2]{\operatorname{lookup}\left(#1; #2\right)}
+\newcommand{\Index}[3]{\operatorname{index}_{#1}\left(#2; #3\right)}
+\newcommand{\Indexes}[3]{#1 \rightsquigarrow_{#2} #3}
+\newcommand{\IndexesKind}[2]{\Indexes{#1}{{\normalfont\text{K}}}{#2}}
+\newcommand{\IndexesType}[2]{\Indexes{#1}{{\normalfont\text{A}}}{#2}}
+\newcommand{\IndexesTerm}[2]{\Indexes{#1}{{\normalfont\text{M}}}{#2}}
+\newcommand{\LFTerm}{\mathsf{LF}_{\mathsf{term}}}
+\newcommand{\LFTypeConst}{\mathsf{LF}_{\mathsf{type\ const}}}
+\newcommand{\LFTermConst}{\mathsf{LF}_{\mathsf{term\ const}}}
+\newcommand{\Ctx}{\mathsf{Context}}
+\newcommand{\CompTerm}{\mathsf{Comp}_{\mathsf{term}}}
+\newcommand{\Frame}{\mathbb{F}}
+\newcommand{\Module}{\mathbb{M}}
+\newcommand{\KWType}{\mathbf{type}}
+\newcommand{\D}{\mathcal{D}}
+\newcommand{\E}{\mathcal{E}}
+
+%\newcommand{\private}[1]{#1_\downarrow}
+%\newcommand{\public}[1]{#1_\uparrow}
+%\newcommand{\Private}[1]{#1_\Downarrow}
+%\newcommand{\Public}[1]{#1_\Uparrow}
+%\newcommand{\Env}{\Xi}
+\newcommand{\Pattern}{\mathbb{P}}
+%\newcommand{\Entry}{\mathbb{E}}
+%\newcommand{\Var}{\mathbb{V}}
+%\newcommand{\Constant}{\mathbb{C}}
+\newcommand{\Fail}{\lightning}
+%\newcommand{\Lookup}[2]{\operatorname{lookup}\left[#1\right]\left(#2\right)}
+%\newcommand{\Index}{\operatorname{index}}
+%\newcommand{\Domain}{\operatorname{domain}}
+%\newcommand{\Pop}[2]{\operatorname{pop}\left[#1\right]\left(#2\right)}
+%\newcommand{\Translates}{\rightsquigarrow}
