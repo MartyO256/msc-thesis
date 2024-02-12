@@ -175,8 +175,9 @@ The stacks of bindings provide a means of recalling what earlier definitions wer
 Namespaces are handled uniformly since every binding may introduce one in the form of a subtree of bindings.
 The type of entry in a referencing environment is extensible, which allows for additional kinds of identifier references to be defined, and for data to be added to support different kinds of algorithms relying on the named \ac{AST}.
 
-\begin{figure}[htb]
+\begin{figure}[H]
 \centering
+{\footnotesize
 \begin{tabular}{lrcl}
 Referencing environment & $\Xi$ & $\Coloneqq$ & $ \cdot \mid \Xi; \mathcal{F} $\\
 Frame & $ \mathcal{F} $ & $ \Coloneqq $ & $ \Frame \mid \Module \mid \Pattern $\\
@@ -189,15 +190,69 @@ Entry stack & $ \mathcal{S} $ & $ \Coloneqq $ & $ \cdot \mid \mathcal{S}; (e, \B
 Entry & $ e $ & $ \Coloneqq $ & $ \cdots \mid (\LFTerm, |\Psi|) \mid (\Ctx, |\Delta|) \mid (\CompTerm, |\Gamma|) $\\
 &&& $ \phantom{\cdots} \mid (\LFTypeConst, \tilde a) \mid (\LFTermConst, \tilde c) $
 \end{tabular}
+}
 \caption[Definition of referencing environments for \Beluga programs.]{%
 Definition of referencing environments for \Beluga programs, assigning stacks of entries to identifiers with a stack of frames.
 }
 \label{figure:referencing-environment-definition}
 \end{figure}
 
+The entry stacks and bindings tree structures of figure~\ref{figure:referencing-environment-definition} can be flattened into an association list by keeping track of the insertion order for bindings.
+This is used for presentation purposes, with $[x_1 : \tau_1, x_2 : \tau_2, \cdots, x_n : \tau_n]_\Module$ denoting a module frame with bindings $x_1 : \tau_1$, $x_2 : \tau_2$, ..., $x_n : \tau_n$ like in figure~\ref{figure:example-reference-environment-formalism}.
+
+\begin{figure}
+\begin{subfigure}{\linewidth}
+\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1, numbers=left]
+\verbbf{module} Nat = \verbbf{struct}
+  \verbbf{LF} nat : \verbbf{type} =
+  | z : nat
+  | s : nat \makebox[1em]{→} nat;
+  \verbbf{rec} plus : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h1};
+\verbbf{end}
+\verbbf{rec} f : [ \makebox[1em]{⊢} Nat.nat] \makebox[1em]{→} [ \makebox[1em]{⊢} Nat.nat] = \verbhole{?h2};
+\verbprag{--open Nat.}
+\verbbf{rec} g : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h3};
+\end{Verbatim}
+\caption[Example \Beluga signature with holes]{%
+Example of a \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} and \texttt{\verbhole{?h3}}, used to showcase how a uniform referencing environment is updated when dealing with namespaces.
+}
+\label{figure:referencing-environment-example}
+\end{subfigure}
+\par\bigskip
+\begin{subfigure}{\linewidth}
+\newcommand{\Public}[1]{{#1}^*}
+\newcommand{\Private}[1]{#1}
+\begin{equation*}
+\begin{aligned}
+\Xi_{\texttt{\verbhole{?h1}}} &= \left[\dots\right]_\Module; \left[\Public{\mathsf{nat}} : \mathsf{LF}_{\mathsf{type\ const}}, \Public{\mathsf{z}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{s}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{plus}} : \mathsf{Prog}\right]_\Module\\
+\Xi_{\texttt{\verbhole{?h2}}} &= \left[\dots, \Public{\mathsf{Nat}} : \mathsf{Module}\left(\Public{\mathsf{nat}} : \_, \Public{\mathsf{z}} : \_, \Public{\mathsf{s}} : \_, \Public{\mathsf{plus}} : \_\right), \Public{\mathsf{f}} : \mathsf{Prog}\right]_\Module\\
+\Xi_{\texttt{\verbhole{?h3}}} &= \left[\dots, \Public{\mathsf{Nat}} : \_, \Public{\mathsf{f}} : \_, \Private{\mathsf{nat}} : \_, \Private{\mathsf{z}} : \_, \Private{\mathsf{s}} : \_, \Private{\mathsf{plus}} : \_, \Public{\mathsf{g}} : \mathsf{Prog}\right]_\Module
+\end{aligned}
+\end{equation*}
+\caption[Example referencing environments in the formalism]{%
+Example referencing environments $\Xi_{\texttt{\verbhole{?h1}}}$, $\Xi_{\texttt{\verbhole{?h2}}}$ and $\Xi_{\texttt{\verbhole{?h3}}}$ for the holes $\texttt{\verbhole{?h1}}$, $\texttt{\verbhole{?h2}}$ and $\texttt{\verbhole{?h3}}$ in figure~\ref{figure:referencing-environment-example}, denoted using association lists to illustrate the semantics of opening a module as in figure~\ref{figure:frames-addition-removal-definition}.
+Some annotations to the bindings are omitted for brevity.
+Bindings annotated with a star $*$ denote constants that are exported from the module.
+}
+\label{figure:example-reference-environment-formalism}
+\end{subfigure}
+\end{figure}%
+\begin{figure}\ContinuedFloat
+\includegraphics{figures/referencing-environment-implementation.eps}
+\caption[]{%
+Diagram of the referencing environment at hole \texttt{\verbhole{?h3}} from figure~\ref{figure:referencing-environment-example} as it is implemented in \Beluga~\texttt{v1.1} using dictionaries and stacks.
+The identifiers on the left are part of the toplevel module frame, and are each associated with a stack of bindings, with the most recent binding on the right end of the stack.
+The numbers \texttt{\#1}, \texttt{\#2}, ..., \texttt{\#7} denote the symbolic identifiers generated during indexing and associated with the constants in the signature reconstruction store.
+The aliases introduced by opening module \texttt{Nat} are handled properly, such that constant \texttt{\#3} can be referenced either as \texttt{Nat.z} or \texttt{z} at that point in the signature.
+}
+\label{figure:referencing-environment-implementation}
+\end{figure}
+
 % What kinds of frames will we deal with?
 
-Since \Beluga supports defining constants in modules, and pattern-matching in computation-level programs, three distinct kinds of frames are designed to operate differently in the way bindings are added or looked up:
+Since \Beluga supports defining constants in modules, and pattern-matching in computation-level programs, three distinct kinds of frames are designed to operate differently in the way bindings are added or looked up.
+Figure~\ref{figure:frames-addition-removal-definition} illustrates how these frames are added to and removed from referencing environments to support those features.
+
 \begin{enumerate}
 \item
 \textit{Plain frames} $\Frame$: this kind of frame does not have additional mechanisms.
@@ -238,7 +293,44 @@ $\operatorname{leave\_pattern}(\Xi; \Pattern) $ & $=$ & $ \Xi; \Bindings_{\text{
 Definition for adding and removing frames in referencing environments.
 This showcases in particular how indexing context sizes are carried over from outer frames, how constant declarations in modules kept track of, and how frames are constructed for pattern-matching body expressions.
 }
+\label{figure:frames-addition-removal-definition}
 \end{figure}
+
+\begin{table}
+\centering
+% TODO: FIXME: Deep pattern-matching, specific rules for patterns, fix rules to biding stacks, need to introduce different lookup functions for patterns
+\begin{tabular}{lcl|l}
+$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Xi}$ & $=$ & $\begin{cases}
+\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\mathcal{F}}\\
+\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Xi'}\\
+\Fail
+\end{cases}$ &  \begin{tabular}{l}
+$\Xi = (\Xi'; \mathcal{F}), x_1 \in \operatorname{domain}(\mathcal{F})$\\
+$\Xi = (\Xi'; \mathcal{F}), x_1 \notin \operatorname{domain}(\mathcal{F})$\\
+$\Xi = \cdot$
+\end{tabular}\\
+$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Frame}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $\Frame = \Bindings$\\
+$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Module}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $\Module = (\Bindings, \BindingsTree)$\\
+$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Pattern}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings_{\text{e}}}$ & $\Pattern = (\Bindings_{\text{e}}, \Bindings_{\text{p}})$\\
+$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}$ & $\Bindings = (\BindingsTree, |\Psi|, |\Delta|, |\Gamma|)$\\
+$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}$ & $=$ & $\begin{cases}
+\Lookup{x_2{.}\cdots{.}x_n}{\mathcal{S}_k}\\
+\Fail
+\end{cases}$ & \begin{tabular}{l}
+$\BindingsTree = \{x_i = \mathcal{S}_i\}_{i \in \set{1, 2, \dots, m}}$, $\exists k, x_k = x_1$\\
+$\BindingsTree = \{x_i = \mathcal{S}_i\}_{i \in \set{1, 2, \dots, m}}$, $\nexists k, x_k = x_1$
+\end{tabular}\\
+$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\mathcal{S}}$ & $=$ & $\begin{cases}
+\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}\\
+e\\
+\Fail
+\end{cases}$ & \begin{tabular}{l}
+$n > 1$, $\mathcal{S} = \mathcal{S}'; (e, \BindingsTree)$\\
+$n = 1$, $\mathcal{S} = \mathcal{S}'; (e, \BindingsTree)$\\
+$\mathcal{S} = \cdot$
+\end{tabular}
+\end{tabular}
+\end{table}
 
 In contrast with association lists, the use of dictionaries in the referencing environment means that the order of insertions for bindings is not readily available.
 This poses a problem for the computation of de Bruijn indices.
@@ -261,82 +353,6 @@ Variables in $\Psi'$ are annotated with the size of the \LF indexing context bef
 }
 \label{figure:lf-indexing}
 \end{figure}
-
-% TODO: Present some invariants to dealing with frames. Additions/subtractions to referencing environments only occur in the topmost/current frame
-
-
-%The next subsections present two different ways of realising a referencing environment for \Beluga to support uniform indexing.
-%The first definition (section~\ref{section:formalising-uniform-indexing}) is suitable for mechanized proofs, whereas the second (section~\ref{section:implementing-uniform-indexing}) is used in the implementation as it is computationally more efficient.
-%Both are presented here for the sake of completeness.
-
-\begin{figure}[H]
-\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1, numbers=left]
-\verbbf{module} Nat = \verbbf{struct}
-  \verbbf{LF} nat : \verbbf{type} =
-  | z : nat
-  | s : nat \makebox[1em]{→} nat;
-  \verbbf{rec} plus : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h1};
-\verbbf{end}
-\verbbf{rec} f : [ \makebox[1em]{⊢} Nat.nat] \makebox[1em]{→} [ \makebox[1em]{⊢} Nat.nat] = \verbhole{?h2};
-\verbprag{--open Nat.}
-\verbbf{rec} g : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h3};
-\end{Verbatim}
-\caption[Example \Beluga signature with holes]{%
-Example of a \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} and \texttt{\verbhole{?h3}}, used to showcase how a uniform referencing environment is updated when dealing with namespaces.
-}
-\label{figure:referencing-environment-example}
-\end{figure}
-
-%\subsection{Formalising Uniform Indexing}\label{section:formalising-uniform-indexing}
-%
-%In the theory, a referencing environment is an association list with delimiters for frames.
-%Each entry in the list may itself point to a separate association list to support namespacing.
-%Lookups in this environment proceed by simultaneously traversing the fully qualified identifier and the association list.
-%Shadowing is supported by the association lists since they are maintained in insertion order, and hence function as stacks.
-%
-%Referencing environments in \Beluga are formally specified in figure~\ref{figure:referencing-environment-definition}.
-%Identifiers denoted as $\Private{x}$ and $\Public{x}$ in a module frame denote private declarations and public declarations respectively.
-%Likewise, identifiers denoted as $\private{x}$ and $\public{x}$ in a pattern frame denote inner pattern-bound variables and pattern variables respectively.
-%When a variable in a pattern frame is both inner pattern-bound and a pattern variable, then it is denoted as $x_{\downarrow\uparrow}$.
-%The notation $\cdot_\Frame$, $\cdot_\Module$ and $\cdot_\Pattern$ is used to denote empty plain, module and pattern frames respectively when the distinction is important.
-%Similarly, declarations from a frame are enclosed in delimiters $\left[\cdot\right]_\Frame$, $\left[\cdot\right]_\Module$ and $\left[\cdot\right]_\Pattern$ in examples such as figure~\ref{figure:example-reference-environment-formalism}.
-%
-%\begin{figure}[htb]
-%\centering
-%\begin{tabular}{lrcl}
-%Referencing environment & $\Env$ & $\Coloneqq$ & $\cdot \mid \Env; \Frame \mid \Env; \Module \mid \Env; \Pattern$\\
-%Plain frame & $\Frame$ & $\Coloneqq$ & $\cdot \mid \Frame, x : \Var$\\
-%Module frame & $\Module$ & $\Coloneqq$ & $\cdot \mid \Module, \Private{x} : \Constant \mid \Module, \Public{x} : \Constant$\\
-%Pattern frame & $\Pattern$ & $\Coloneqq$ & $\cdot \mid \Pattern, \private{x} : \Var \mid \Pattern, \public{x} : \Var$\\
-%%Entry & $\Entry$ & $\Coloneqq$ & $ \Constant \mid \Var $\\
-%Constant & $ \Constant $ & $ \Coloneqq $ & $\mathsf{LF}_{\mathsf{type\ const}} \mid \mathsf{LF}_{\mathsf{term\ const}} \mid \mathsf{Module}\left(\overrightarrow{\Public{x} : \Constant}\right) \mid \cdots$\\
-%Variable & $ \Var $ & $ \Coloneqq $ & $ \mathsf{LF}_{\mathsf{term}} \mid \mathsf{Comp}_{\mathsf{term}} \mid \mathsf{Ctx} \mid \cdots $
-%\end{tabular}
-%\caption[Definition of referencing environments for indexing \Beluga signatures]{%
-%Definition of the structure of referencing environments for indexing \Beluga signatures.
-%Some variants for constants and variables have been omitted for brevity.
-%}
-%\label{figure:referencing-environment-definition}
-%\end{figure}
-%
-%\begin{figure}[H]
-%\begin{equation*}
-%\begin{aligned}
-%\Xi_{\texttt{\verbhole{?h1}}} &= \left[\dots\right]_\Module; \left[\Public{\mathsf{nat}} : \mathsf{LF}_{\mathsf{type\ const}}, \Public{\mathsf{z}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{s}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{plus}} : \mathsf{Prog}\right]_\Module\\
-%\Xi_{\texttt{\verbhole{?h2}}} &= \left[\dots, \Public{\mathsf{Nat}} : \mathsf{Module}\left(\Public{\mathsf{nat}} : \_, \Public{\mathsf{z}} : \_, \Public{\mathsf{s}} : \_, \Public{\mathsf{plus}} : \_\right), \Public{\mathsf{f}} : \mathsf{Prog}\right]_\Module\\
-%\Xi_{\texttt{\verbhole{?h3}}} &= \left[\dots, \Public{\mathsf{Nat}} : \_, \Public{\mathsf{f}} : \_, \Private{\mathsf{nat}} : \_, \Private{\mathsf{z}} : \_, \Private{\mathsf{s}} : \_, \Private{\mathsf{plus}} : \_, \Public{\mathsf{g}} : \mathsf{Prog}\right]_\Module
-%\end{aligned}
-%\end{equation*}
-%\caption[Example referencing environments in the formalism]{%
-%Example referencing environments $\Xi_{\texttt{\verbhole{?h1}}}$, $\Xi_{\texttt{\verbhole{?h2}}}$ and $\Xi_{\texttt{\verbhole{?h3}}}$ for the holes $\texttt{\verbhole{?h1}}$, $\texttt{\verbhole{?h2}}$ and $\texttt{\verbhole{?h3}}$ in figure~\ref{figure:referencing-environment-example} using the formal definitions of figure~\ref{figure:referencing-environment-definition}, illustrating the semantics of opening a module.
-%Some annotations to the bindings are omitted for brevity.
-%}
-%\label{figure:example-reference-environment-formalism}
-%\end{figure}
-
-% TODO: Present lookup and its quirks for patterns and namespaces
-% TODO: Define pop
-% TODO: Define filtering for de Bruijn index computation
 
 %\begin{figure}[htb]
 %\begin{subfigure}{\linewidth}
@@ -528,18 +544,6 @@ Example of a \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verb
 %If the traversal of the stack of frames fails or if no node in the tree of bindings can be found to match the fully qualified identifier, then the lookup fails.
 %The stack structures at the level of frames and entries allow for identifier shadowing.
 %On the other hand, the dictionaries speed up identifier lookups.
-
-\begin{figure}[htb]
-\centering
-\includegraphics{figures/referencing-environment-implementation.eps}
-\caption[Example referencing environment in the implementation]{%
-Diagram of the referencing environment at hole \texttt{\verbhole{?h3}} from figure~\ref{figure:referencing-environment-example} as it is implemented in \Beluga~\texttt{v1.1} using dictionaries and stacks.
-The identifiers on the left are part of the toplevel module frame, and are each associated with a stack of bindings, with the most recent binding on the right end of the stack.
-The numbers \texttt{\#1}, \texttt{\#2}, ..., \texttt{\#7} denote the symbolic identifiers associated with the constants in the signature reconstruction store.
-The aliases introduced by opening module \texttt{Nat} are handled properly, such that constant \texttt{\#3} can be referenced either as \texttt{Nat.z} or \texttt{z} at that point in the signature.
-}
-\label{figure:referencing-environment-implementation}
-\end{figure}
 
 Indexing of terms in a theoretic setting can be shown to be equivalent to its implementation counterpart.
 To achieve this, plain \LF kinds, types and terms are defined below, with $a$ and $c$ standing for type-level and term-level constants respectively.
