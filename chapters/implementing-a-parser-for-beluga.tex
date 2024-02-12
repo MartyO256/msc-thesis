@@ -2,9 +2,9 @@
 
 \newcommand{\prefix}{\mathsf{op}_{\text{prefix}}}
 \newcommand{\infix}{\mathsf{op}_{\text{infix}}}
-\newcommand{\infixl}{\mathsf{op}_{\text{infix}}^L}
-\newcommand{\infixr}{\mathsf{op}_{\text{infix}}^R}
-\newcommand{\infixn}{\mathsf{op}_{\text{infix}}^N}
+\newcommand{\infixl}{\mathsf{op}_{\text{infix}}^\text{L}}
+\newcommand{\infixr}{\mathsf{op}_{\text{infix}}^\text{R}}
+\newcommand{\infixn}{\mathsf{op}_{\text{infix}}^\text{N}}
 \newcommand{\postfix}{\mathsf{op}_{\text{postfix}}}
 
 This chapter presents an overview of parsing and explains the motivation behind the contributions made to \Beluga's and \Harpoon's parsing algorithms.
@@ -459,19 +459,19 @@ Similarly, $ \angled{\infixn}_p $, $ \angled{\infixr}_p $ and $ \angled{\infixl}
 \centering
 \begin{tabular}{rrl}
 $ \angled{e} $ & $ \Coloneqq $ & $ \angled{e}_1 $\\
-$ \angled{e}_p $ & $ \Coloneqq $ & $ \angled{\prefix}_p \; \angled{e_r}_p $\\
-& $ \mid $ & $ \angled{e}_{p + 1} \; \angled{e_t}_p $\\
-$ \angled{e_t}_p $ & $ \Coloneqq $ & $ \angled{\infixn}_p \; \angled{e}_{p + 1} $\\
-& $ \mid $ & $ \angled{\infixr}_p \; \angled{e_r}_p $\\
-& $ \mid $ & $ \angled{\infixl}_p \; \angled{e}_{p + 1} \; \angled{e_l}_p $\\
-& $ \mid $ & $ \angled{\postfix}_p \; \angled{e_l}_p $\\
+$ \angled{e}_p $ & $ \Coloneqq $ & $ \angled{\prefix}_p \; \angled{e_\text{R}}_p $\\
+& $ \mid $ & $ \angled{e}_{p + 1} \; \angled{e_\text{T}}_p $\\
+$ \angled{e_\text{T}}_p $ & $ \Coloneqq $ & $ \angled{\infixn}_p \; \angled{e}_{p + 1} $\\
+& $ \mid $ & $ \angled{\infixr}_p \; \angled{e_\text{R}}_p $\\
+& $ \mid $ & $ \angled{\infixl}_p \; \angled{e}_{p + 1} \; \angled{e_\text{L}}_p $\\
+& $ \mid $ & $ \angled{\postfix}_p \; \angled{e_\text{L}}_p $\\
 & $ \mid $ & $ \varepsilon $\\
-$ \angled{e_l}_p $ & $ \Coloneqq $ & $ \angled{\postfix}_p \angled{e_l}_p $\\
-& $ \mid $ & $ \angled{\infixl}_p \angled{e}_{p + 1} \angled{e_l}_p $\\
+$ \angled{e_\text{L}}_p $ & $ \Coloneqq $ & $ \angled{\postfix}_p \angled{e_\text{L}}_p $\\
+& $ \mid $ & $ \angled{\infixl}_p \angled{e}_{p + 1} \angled{e_\text{L}}_p $\\
 & $ \mid $ & $ \varepsilon $\\
-$ \angled{e_r}_p $ & $ \Coloneqq $ & $ \angled{\prefix}_p \angled{e_r}_p $\\
-& $ \mid $ & $ \angled{e}_{p + 1} \angled{e_r'}_p $\\
-$ \angled{e_r'}_p $ & $ \Coloneqq $ & $ \angled{\infixr}_p \angled{e_r}_p $\\
+$ \angled{e_\text{R}}_p $ & $ \Coloneqq $ & $ \angled{\prefix}_p \angled{e_\text{R}}_p $\\
+& $ \mid $ & $ \angled{e}_{p + 1} \angled{e_\text{R}'}_p $\\
+$ \angled{e_\text{R}'}_p $ & $ \Coloneqq $ & $ \angled{\infixr}_p \angled{e_\text{R}}_p $\\
 & $ \mid $ & $ \varepsilon $\\
 $ \angled{e}_{P + 1} $ & $ \Coloneqq $ & $ \mathbf{a}+ $
 \end{tabular}

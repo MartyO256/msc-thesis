@@ -148,40 +148,44 @@ To approach this problem, some definitions are in order.
 A \textit{frame} is a lexical region of an \ac{AST} wherein variable declarations and references can be made.
 A \textit{scope} is a frame in which name resolution is uniform, meaning that references are resolved to the same declaration site irrespective of the \ac{AST} node in the scope.
 Whereas declarations can shadow each other within a frame, all declarations have to be distinct in a scope.
-As such, shadowing with scopes is only supported by nesting.
+Because of this, shadowing with scopes is only supported by nesting.
 A \textit{fully qualified identifier} $x_1.x_2.\cdots.x_n$ is a list of plain identifiers $x_1$, $x_2$, $\dots$, $x_n$ separated by dots denoting projection out of a namespace.
 A \textit{referencing environment} in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
 In essence, a referencing environment provides a window over a signature for name resolution, and as such its state is restricted to representing one scope at a time.
 
-The uniform indexing phase is designed as a single sequential traversal of the external \ac{AST} to map it to the approximate \ac{AST}, using the referencing environment as visitor state.
+The uniform indexing phase is designed as a single sequential traversal of the external named \ac{AST} to map it to the approximate locally nameless \ac{AST}, using the referencing environment as visitor state.
 As \ac{AST} nodes are traversed, the referencing environment is updated by adding or removing identifiers in scope so that the resolution of identifiers is consistent with the language's specification.
 This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across different indexing contexts ($\Psi$, $\Delta$ and $\Gamma$).
 %This includes name resolution under lambda-expressions and contexts in contextual \LF patterns, as well as distinguishing between pattern variables and bound identifiers.
 All the while, indexing has to feature some backtracking mechanism to support incremental proof development in \Harpoon sessions.
 It is also worth noting that in the disambiguation phase, where a similar mapping occurs from the parser \ac{AST} to the external \ac{AST}, the visitor state has to additionally keep track of user-defined notations.
+This means that whichever structure is used to model referencing environments has to be extensible.
 
 % What motivates the introduction of frames?
 
 Every identifier declaration is allowed to shadow previous declarations in \Beluga.
 The only exception to this rule is that identifiers in mutually recursive declarations have to be unique.
-Everywhere else, constant and variable declarations introduce their own scope.
+Everywhere else, declarations for constants and variables introduce their own scope.
 This means that a scope graph~\cite{nameresolution} representation of name resolution for \Beluga programs is essentially a line graph, which is computationally inefficient for name resolution.
 As such, the referencing environment is instead modelled and implemented using frames as a basis.
 
-As illustrated in figure~\ref{figure:referencing-environment-definition}, a referencing environment is a stack of frames.
-Each frame holds a tree of bindings, wherein each node assigns a stack of entries and optionally a subtree to an identifier.
+Concretely, a referencing environment is a stack of frames, as illustrated in figure~\ref{figure:referencing-environment-definition}.
+Each frame holds a tree of bindings, wherein each node assigns to an identifier a stack of entries and optionally a subtree.
+The stacks of bindings provide a means of recalling what earlier definitions were assigned to identifiers as the traversal exits a scope.
+Namespaces are handled uniformly since every binding may introduce one in the form of a subtree of bindings.
+The type of entry in a referencing environment is extensible, which allows for additional kinds of identifier references to be defined, and for data to be added to support different kinds of algorithms relying on the named \ac{AST}.
 
 \begin{figure}[htb]
 \centering
 \begin{tabular}{lrcl}
 Referencing environment & $\Xi$ & $\Coloneqq$ & $ \cdot \mid \Xi; \mathcal{F} $\\
 Frame & $ \mathcal{F} $ & $ \Coloneqq $ & $ \Frame \mid \Module \mid \Pattern $\\
-Plain frame & $ \Frame $ & $ \Coloneqq $ & $ \mathbb{B} $\\
-Module frame & $ \Module $ & $ \Coloneqq $ & $ (\mathbb{B}, \mathcal{T}) $\\
-Pattern frame & $ \Pattern $ & $ \Coloneqq $ & $ (\mathbb{B}_{\text{p}}, \mathbb{B}_{\text{e}}) $\\
-Bindings & $ \mathbb{B} $ & $ \Coloneqq $ & $ (\mathcal{T}, |\Psi|, |\Delta|, |\Gamma|) $\\
-Binding tree & $ \mathcal{T} $ & $ \Coloneqq $ & $ \{x_i = \mathcal{S}_i\}_{i \in \set{1, 2, \dots, n}} $\\
-Entry stack & $ \mathcal{S} $ & $ \Coloneqq $ & $ \cdot \mid \mathcal{S}; (e, \mathcal{T}) $\\
+Plain frame & $ \Frame $ & $ \Coloneqq $ & $ \Bindings $\\
+Module frame & $ \Module $ & $ \Coloneqq $ & $ (\Bindings, \BindingsTree) $\\
+Pattern frame & $ \Pattern $ & $ \Coloneqq $ & $ (\Bindings_{\text{p}}, \Bindings_{\text{e}}) $\\
+Bindings & $ \Bindings $ & $ \Coloneqq $ & $ (\BindingsTree, |\Psi|, |\Delta|, |\Gamma|) $\\
+Binding tree & $ \BindingsTree $ & $ \Coloneqq $ & $ \{x_i = \mathcal{S}_i\}_{i \in \set{1, 2, \dots, n}} $\\
+Entry stack & $ \mathcal{S} $ & $ \Coloneqq $ & $ \cdot \mid \mathcal{S}; (e, \BindingsTree) $\\
 Entry & $ e $ & $ \Coloneqq $ & $ \cdots \mid (\LFTerm, |\Psi|) \mid (\Ctx, |\Delta|) \mid (\CompTerm, |\Gamma|) $\\
 &&& $ \phantom{\cdots} \mid (\LFTypeConst, \tilde a) \mid (\LFTermConst, \tilde c) $
 \end{tabular}
@@ -202,15 +206,39 @@ Plain frames are suitable for introducing multiple identifiers in such a way tha
 \textit{Module frames} $\Module$: constants added to this kind of frame are either private or public.
 Only public constant declarations are exported from the module they appear in when it is opened, in which case they are brought in scope.
 This ensures that constants and notations imported from external modules are not reexported when the module is opened elsewhere.
-To support this, when a constant binding is added to a module frame $(\mathbb{B}, \mathcal{T})$, it is added to both $\mathbb{B}$ for name resolution, and the tree of exported constants $\mathcal{T}$.
+To support this, when a constant binding is added to a module frame $(\Bindings, \BindingsTree)$, it is added to both $\Bindings$ for name resolution, and to the tree of exported constants $\BindingsTree$.
 \item
 \textit{Pattern frames} $\Pattern$: variables added to this kind of frame are inner pattern-bound or pattern variables.
-Inner pattern-bound variables are introduced by binders in the pattern.
+Inner pattern-bound variables are introduced by binders in the pattern, like $x$ in the lambda pattern $[ \vdash \mathsf{lam} (\textbackslash x. x)]$.
 Pattern variables on the other hand are free variables in the pattern, which become bound variables in the body of the match case.
-For a pattern frame $(\mathbb{B}_{\text{p}}, \mathbb{B}_{\text{e}})$, the bindings in $\mathbb{\text{p}}$ are used in the pattern being indexed, and the bindings in $\mathbb{B}_{\text{e}}$ are used for the body of the pattern-matching branch.
-This means that inner pattern-bound variables are added to $\mathbb{B}_{\text{p}}$, and free variables are added to $\mathbb{B}_{\text{e}}$.
+For a pattern frame $(\Bindings_{\text{p}}, \Bindings_{\text{e}})$, the bindings in $\Bindings_{\text{p}}$ are used in the pattern being indexed, and the bindings in $\Bindings_{\text{e}}$ are used for the body of the pattern-matching branch.
+This means that inner pattern-bound variables are added to $\Bindings_{\text{p}}$, and free variables are added to $\Bindings_{\text{e}}$.
 Because of the way meta-level abstractions are automatically reconstructed for patterns, free meta-variables are both inner pattern-bound and pattern variables.
+This allows duplicate occurrences of free meta-variables to occur in a pattern.
 \end{enumerate}
+
+\begin{figure}
+\centering
+\makebox[\textwidth][c]{%
+\begin{tabular}{lcll}
+$\operatorname{enter\_frame}(\Xi; \Frame) $ & $=$ & $ \Xi; \Frame; (\{\}, |\Psi|, |\Delta|, |\Gamma|)$ & $\Frame = (\_, |\Psi|, |\Delta|, |\Gamma|)$\\
+$\operatorname{enter\_frame}(\Xi; \Module) $ & $=$ & $ \Xi; \Module; (\{\}, |\Psi|, |\Delta|, |\Gamma|)$ & $\Module = ((\_, |\Psi|, |\Delta|, |\Gamma|), \_)$\\
+$\operatorname{leave\_frame}(\Xi; \Frame) $ & $=$ & $ \Xi $ & \\
+&&&\\
+$\operatorname{enter\_module}(\Xi; \Module) $ & $=$ & $ \Xi; \Module; ((\{\}, |\Psi|, |\Delta|, |\Gamma|), \{\})$ & $\Module = ((\_, |\Psi|, |\Delta|, |\Gamma|), \_)$\\
+$\operatorname{enter\_module}(\cdot) $ & $=$ & $ ((\{\}, 0, 0, 0), \{\})$ &\\
+$\operatorname{leave\_module}_x(\Xi; \Module) $ & $=$ & $ \Push{}{x : (\mathsf{Module}, \BindingsTree)}{\Xi} $ & $\Module = (\_, \BindingsTree)$\\
+&&&\\
+$\operatorname{enter\_pattern}(\Xi; \Frame) $ & $=$ & $ \Xi; \Frame; ((\{\}, 0, 0, 0), (\{\}, |\Psi|, |\Delta|, |\Gamma|))$ & $\Frame = (\_, |\Psi|, |\Delta|, |\Gamma|)$\\
+$\operatorname{enter\_pattern}(\Xi; \Module) $ & $=$ & $ \Xi; \Module; ((\{\}, 0, 0, 0), (\{\}, |\Psi|, |\Delta|, |\Gamma|))$ & $\Module = ((\_, |\Psi|, |\Delta|, |\Gamma|), \_)$\\
+$\operatorname{leave\_pattern}(\Xi; \Pattern) $ & $=$ & $ \Xi; \Bindings_{\text{e}}$ & $\Pattern = (\_, \Bindings_{\text{e}})$
+\end{tabular}%
+}
+\caption[Definition for adding and removing frames in referencing environments]{%
+Definition for adding and removing frames in referencing environments.
+This showcases in particular how indexing context sizes are carried over from outer frames, how constant declarations in modules kept track of, and how frames are constructed for pattern-matching body expressions.
+}
+\end{figure}
 
 In contrast with association lists, the use of dictionaries in the referencing environment means that the order of insertions for bindings is not readily available.
 This poses a problem for the computation of de Bruijn indices.
