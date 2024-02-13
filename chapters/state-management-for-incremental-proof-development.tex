@@ -101,7 +101,7 @@ Indeed, when a constant identifier is resolved during indexing, the declaration 
 As such, identifiers are not looked up with respect to the global order in which they are declared.
 Instead, they are looked up first with respect to the order of identifier kinds, and then by the declaration order within the table for that identifier kind.
 Consequently, parts of the referencing environment do not exist depending on the expected kind of variable or constant encountered in the \ac{AST}.
-For example, it is impossible in \Beluga~\texttt{v1.0} for a computation-level coinductive type constant to shadow an inductive one simply because the declaration table for the former kind is always looked up after the declaration table for the latter kind.
+For example, it is impossible in \Beluga~\texttt{v1.0} for -level coinductive type constant to shadow an inductive one simply because the declaration table for the former kind is always looked up after the declaration table for the latter kind.
 Likewise, since identifiers at the meta-level and at the computation-level are kept separate, invalid references to computation-level objects in boxed terms are not detected as they are instead interpreted as free meta-variables.
 Counterintuitively, different parts of the referencing environment can also be interleaved in one program with this split table and association lists approach.
 Indeed, one can introduce a meta-level variable with an \verb|mlam|-binder and a computation-level variable with an \verb|fn|-binder, both using the same identifier, and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively because they effectively occupy different namespaces.
@@ -191,7 +191,7 @@ Entry & $ e $ & $ \Coloneqq $ & $ \cdots \mid (\LFTerm, |\Psi|) \mid (\Ctx, |\De
 &&& $ \phantom{\cdots} \mid (\LFTypeConst, \tilde a) \mid (\LFTermConst, \tilde c) $
 \end{tabular}
 }
-\caption[Definition of referencing environments for \Beluga programs.]{%
+\caption[Definition of referencing environments for \Beluga programs]{%
 Definition of referencing environments for \Beluga programs, assigning stacks of entries to identifiers with a stack of frames.
 }
 \label{figure:referencing-environment-definition}
@@ -200,53 +200,7 @@ Definition of referencing environments for \Beluga programs, assigning stacks of
 The entry stacks and bindings tree structures of figure~\ref{figure:referencing-environment-definition} can be flattened into an association list by keeping track of the insertion order for bindings.
 This is used for presentation purposes, with $[x_1 : \tau_1, x_2 : \tau_2, \cdots, x_n : \tau_n]_\Module$ denoting a module frame with bindings $x_1 : \tau_1$, $x_2 : \tau_2$, ..., $x_n : \tau_n$ like in figure~\ref{figure:example-reference-environment-formalism}.
 
-\begin{figure}
-\begin{subfigure}{\linewidth}
-\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1, numbers=left]
-\verbbf{module} Nat = \verbbf{struct}
-  \verbbf{LF} nat : \verbbf{type} =
-  | z : nat
-  | s : nat \makebox[1em]{→} nat;
-  \verbbf{rec} plus : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h1};
-\verbbf{end}
-\verbbf{rec} f : [ \makebox[1em]{⊢} Nat.nat] \makebox[1em]{→} [ \makebox[1em]{⊢} Nat.nat] = \verbhole{?h2};
-\verbprag{--open Nat.}
-\verbbf{rec} g : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h3};
-\end{Verbatim}
-\caption[Example \Beluga signature with holes]{%
-Example of a \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} and \texttt{\verbhole{?h3}}, used to showcase how a uniform referencing environment is updated when dealing with namespaces.
-}
-\label{figure:referencing-environment-example}
-\end{subfigure}
-\par\bigskip
-\begin{subfigure}{\linewidth}
-\newcommand{\Public}[1]{{#1}^*}
-\newcommand{\Private}[1]{#1}
-\begin{equation*}
-\begin{aligned}
-\Xi_{\texttt{\verbhole{?h1}}} &= \left[\dots\right]_\Module; \left[\Public{\mathsf{nat}} : \mathsf{LF}_{\mathsf{type\ const}}, \Public{\mathsf{z}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{s}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{plus}} : \mathsf{Prog}\right]_\Module\\
-\Xi_{\texttt{\verbhole{?h2}}} &= \left[\dots, \Public{\mathsf{Nat}} : \mathsf{Module}\left(\Public{\mathsf{nat}} : \_, \Public{\mathsf{z}} : \_, \Public{\mathsf{s}} : \_, \Public{\mathsf{plus}} : \_\right), \Public{\mathsf{f}} : \mathsf{Prog}\right]_\Module\\
-\Xi_{\texttt{\verbhole{?h3}}} &= \left[\dots, \Public{\mathsf{Nat}} : \_, \Public{\mathsf{f}} : \_, \Private{\mathsf{nat}} : \_, \Private{\mathsf{z}} : \_, \Private{\mathsf{s}} : \_, \Private{\mathsf{plus}} : \_, \Public{\mathsf{g}} : \mathsf{Prog}\right]_\Module
-\end{aligned}
-\end{equation*}
-\caption[Example referencing environments in the formalism]{%
-Example referencing environments $\Xi_{\texttt{\verbhole{?h1}}}$, $\Xi_{\texttt{\verbhole{?h2}}}$ and $\Xi_{\texttt{\verbhole{?h3}}}$ for the holes $\texttt{\verbhole{?h1}}$, $\texttt{\verbhole{?h2}}$ and $\texttt{\verbhole{?h3}}$ in figure~\ref{figure:referencing-environment-example}, denoted using association lists to illustrate the semantics of opening a module as in figure~\ref{figure:frames-addition-removal-definition}.
-Some annotations to the bindings are omitted for brevity.
-Bindings annotated with a star $*$ denote constants that are exported from the module.
-}
-\label{figure:example-reference-environment-formalism}
-\end{subfigure}
-\end{figure}%
-\begin{figure}\ContinuedFloat
-\includegraphics{figures/referencing-environment-implementation.eps}
-\caption[]{%
-Diagram of the referencing environment at hole \texttt{\verbhole{?h3}} from figure~\ref{figure:referencing-environment-example} as it is implemented in \Beluga~\texttt{v1.1} using dictionaries and stacks.
-The identifiers on the left are part of the toplevel module frame, and are each associated with a stack of bindings, with the most recent binding on the right end of the stack.
-The numbers \texttt{\#1}, \texttt{\#2}, ..., \texttt{\#7} denote the symbolic identifiers generated during indexing and associated with the constants in the signature reconstruction store.
-The aliases introduced by opening module \texttt{Nat} are handled properly, such that constant \texttt{\#3} can be referenced either as \texttt{Nat.z} or \texttt{z} at that point in the signature.
-}
-\label{figure:referencing-environment-implementation}
-\end{figure}
+\subsection{Frames for Patterns and Modules}
 
 % What kinds of frames will we deal with?
 
@@ -272,9 +226,62 @@ Because of the way meta-level abstractions are automatically reconstructed for p
 This allows duplicate occurrences of free meta-variables to occur in a pattern.
 \end{enumerate}
 
-\begin{figure}
+\begin{figure}[H]
+\begin{subfigure}{\linewidth}
+\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1, numbers=left]
+\verbbf{module} Nat = \verbbf{struct}
+  \verbbf{LF} nat : \verbbf{type} =
+  | z : nat
+  | s : nat \makebox[1em]{→} nat;
+  \verbbf{rec} plus : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h1};
+\verbbf{end}
+\verbbf{rec} f : [ \makebox[1em]{⊢} Nat.nat] \makebox[1em]{→} [ \makebox[1em]{⊢} Nat.nat] = \verbhole{?h2};
+\verbprag{--open Nat.}
+\verbbf{rec} g : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h3};
+\end{Verbatim}
+\caption[Example \Beluga signature with holes]{%
+A \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} and \texttt{\verbhole{?h3}}, used to showcase how a uniform referencing environment is updated when dealing with namespaces.
+}
+\label{figure:referencing-environment-example}
+\end{subfigure}
+\par\bigskip
+\begin{subfigure}{\linewidth}
+\newcommand{\Public}[1]{{#1}^*}
+\newcommand{\Private}[1]{#1}
+\begin{equation*}
+\begin{aligned}
+\Xi_{\texttt{\verbhole{?h1}}} &= \left[\dots\right]_\Module; \left[\Public{\mathsf{nat}} : \mathsf{LF}_{\mathsf{type\ const}}, \Public{\mathsf{z}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{s}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{plus}} : \mathsf{Prog}\right]_\Module\\
+\Xi_{\texttt{\verbhole{?h2}}} &= \left[\dots, \Public{\mathsf{Nat}} : \left(\mathsf{Module}, \set{\mathsf{nat} : \_, \mathsf{z} : \_, \mathsf{s} : \_, \mathsf{plus} : \_}\right), \Public{\mathsf{f}} : \mathsf{Prog}\right]_\Module\\
+\Xi_{\texttt{\verbhole{?h3}}} &= \left[\dots, \Public{\mathsf{Nat}} : \_, \Public{\mathsf{f}} : \_, \Private{\mathsf{nat}} : \_, \Private{\mathsf{z}} : \_, \Private{\mathsf{s}} : \_, \Private{\mathsf{plus}} : \_, \Public{\mathsf{g}} : \mathsf{Prog}\right]_\Module
+\end{aligned}
+\end{equation*}
+\caption[Example referencing environments in the formalism]{%
+The referencing environments $\Xi_{\texttt{\verbhole{?h1}}}$, $\Xi_{\texttt{\verbhole{?h2}}}$ and $\Xi_{\texttt{\verbhole{?h3}}}$ for the holes $\texttt{\verbhole{?h1}}$, $\texttt{\verbhole{?h2}}$ and $\texttt{\verbhole{?h3}}$ in figure~\ref{figure:referencing-environment-example}, denoted using association lists to illustrate the semantics of opening a module as in figure~\ref{figure:frames-addition-removal-definition}.
+Some annotations to the bindings are omitted for brevity.
+Bindings annotated with an asterisk $*$ denote constants that are exported from the module.
+}
+\label{figure:example-reference-environment-formalism}
+\end{subfigure}
+\caption[Handling of modules in referencing environments]{Handling of modules in referencing environments.}
+\end{figure}%
+\begin{figure}\ContinuedFloat
+\begin{subfigure}{\linewidth}
+\includegraphics{figures/referencing-environment-implementation.eps}
+\caption[]{%
+Diagram of the referencing environment at hole \texttt{\verbhole{?h3}} from figure~\ref{figure:referencing-environment-example} as it is implemented in \Beluga~\texttt{v1.1} using dictionaries and stacks.
+The identifiers on the left are part of the toplevel module frame, and are each associated with a stack of bindings, with the most recent binding on the right end of the stack.
+The numbers \texttt{\#1}, \texttt{\#2}, ..., \texttt{\#7} denote the symbolic identifiers generated during indexing and associated with the constants in the signature reconstruction store.
+The aliases introduced by opening module \texttt{Nat} are handled properly, such that constant \texttt{\#3} can be referenced either as \texttt{Nat.z} or \texttt{z} at that point in the signature.
+}
+\label{figure:referencing-environment-implementation}
+\end{subfigure}
+\caption[]{Handling of modules in referencing environments (cont.).}
+\end{figure}
+
+\begin{figure}[H]
 \centering
 \makebox[\textwidth][c]{%
+{\footnotesize
 \begin{tabular}{lcll}
 $\operatorname{enter\_frame}(\Xi; \Frame) $ & $=$ & $ \Xi; \Frame; (\{\}, |\Psi|, |\Delta|, |\Gamma|)$ & $\Frame = (\_, |\Psi|, |\Delta|, |\Gamma|)$\\
 $\operatorname{enter\_frame}(\Xi; \Module) $ & $=$ & $ \Xi; \Module; (\{\}, |\Psi|, |\Delta|, |\Gamma|)$ & $\Module = ((\_, |\Psi|, |\Delta|, |\Gamma|), \_)$\\
@@ -289,6 +296,7 @@ $\operatorname{enter\_pattern}(\Xi; \Module) $ & $=$ & $ \Xi; \Module; ((\{\}, 0
 $\operatorname{leave\_pattern}(\Xi; \Pattern) $ & $=$ & $ \Xi; \Bindings_{\text{e}}$ & $\Pattern = (\_, \Bindings_{\text{e}})$
 \end{tabular}%
 }
+}
 \caption[Definition for adding and removing frames in referencing environments]{%
 Definition for adding and removing frames in referencing environments.
 This showcases in particular how indexing context sizes are carried over from outer frames, how constant declarations in modules kept track of, and how frames are constructed for pattern-matching body expressions.
@@ -296,41 +304,64 @@ This showcases in particular how indexing context sizes are carried over from ou
 \label{figure:frames-addition-removal-definition}
 \end{figure}
 
-\begin{table}
-\centering
-% TODO: FIXME: Deep pattern-matching, specific rules for patterns, fix rules to biding stacks, need to introduce different lookup functions for patterns
-\begin{tabular}{lcl|l}
-$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Xi}$ & $=$ & $\begin{cases}
-\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\mathcal{F}}\\
-\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Xi'}\\
-\Fail
-\end{cases}$ &  \begin{tabular}{l}
-$\Xi = (\Xi'; \mathcal{F}), x_1 \in \operatorname{domain}(\mathcal{F})$\\
-$\Xi = (\Xi'; \mathcal{F}), x_1 \notin \operatorname{domain}(\mathcal{F})$\\
-$\Xi = \cdot$
-\end{tabular}\\
-$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Frame}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $\Frame = \Bindings$\\
-$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Module}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $\Module = (\Bindings, \BindingsTree)$\\
-$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Pattern}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings_{\text{e}}}$ & $\Pattern = (\Bindings_{\text{e}}, \Bindings_{\text{p}})$\\
-$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}$ & $\Bindings = (\BindingsTree, |\Psi|, |\Delta|, |\Gamma|)$\\
-$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}$ & $=$ & $\begin{cases}
-\Lookup{x_2{.}\cdots{.}x_n}{\mathcal{S}_k}\\
-\Fail
-\end{cases}$ & \begin{tabular}{l}
-$\BindingsTree = \{x_i = \mathcal{S}_i\}_{i \in \set{1, 2, \dots, m}}$, $\exists k, x_k = x_1$\\
-$\BindingsTree = \{x_i = \mathcal{S}_i\}_{i \in \set{1, 2, \dots, m}}$, $\nexists k, x_k = x_1$
-\end{tabular}\\
-$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\mathcal{S}}$ & $=$ & $\begin{cases}
-\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}\\
-e\\
-\Fail
-\end{cases}$ & \begin{tabular}{l}
-$n > 1$, $\mathcal{S} = \mathcal{S}'; (e, \BindingsTree)$\\
-$n = 1$, $\mathcal{S} = \mathcal{S}'; (e, \BindingsTree)$\\
-$\mathcal{S} = \cdot$
-\end{tabular}
-\end{tabular}
-\end{table}
+\subsection{Operations on Referencing Environments}
+
+The abstract data type of referencing environments $\Xi$ has the following operations:
+\begin{itemize}
+\item
+$\Push{\Psi}{x : \tau}{\Xi}$ adds the binding $x : \tau$ onto $\Xi$ as part of the indexing context $\Psi$.
+This increments the size of $\Psi$.
+\item
+$\Pop{\Psi}{x}{\Xi}$ removes the latest binding of $x$ from $\Xi$, while assuming it is part of the indexing context $\Psi$.
+This decrements the size of $\Psi$.
+\item
+$\Shift{\Psi}{\Xi}$ increments the size of the indexing context $\Psi$ in $\Xi$.
+\item
+$\Unshift{\Psi}{\Xi}$ decrements the size of the indexing context $\Psi$ in $\Xi$.
+\item
+$\Lookup{x}{\Xi}$ is the latest binding $x : \tau$ associated with the identifier $x$ in $\Xi$.
+\item
+$\Index{\Psi}{x}{\Xi}$ is the de Bruijn index of $x$ in $\Xi$ with respect to the indexing context $\Psi$.
+\end{itemize}
+Popping a binding from the referencing environment is the inverse of pushing that binding, such that $\Pop{\Psi}{x}{\Push{\Psi}{x : \tau}{\Xi}} = \Xi$.
+Analogously, $\Unshift{\Psi}{\Shift{\Psi}{\Xi}} = \Xi$.
+Additionally, the environments constructed as $\Push{\Psi}{x : \LFTerm}{\Xi} $ and $ (\Xi, x : \LFTerm)$ are equivalent, and so are $\Shift{\Psi}{\Xi} $ and $ (\Xi, \_ : \LFTerm)$ since the \LF indexing context is only comprised of bindings for \LF terms.
+
+%\begin{table}
+%\centering
+%% TODO: FIXME: Deep pattern-matching, specific rules for patterns, fix rules to biding stacks, need to introduce different lookup functions for patterns
+%\begin{tabular}{lcl|l}
+%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Xi}$ & $=$ & $\begin{cases}
+%\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\mathcal{F}}\\
+%\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Xi'}\\
+%\Fail
+%\end{cases}$ &  \begin{tabular}{l}
+%$\Xi = (\Xi'; \mathcal{F}), x_1 \in \operatorname{domain}(\mathcal{F})$\\
+%$\Xi = (\Xi'; \mathcal{F}), x_1 \notin \operatorname{domain}(\mathcal{F})$\\
+%$\Xi = \cdot$
+%\end{tabular}\\
+%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Frame}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $\Frame = \Bindings$\\
+%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Module}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $\Module = (\Bindings, \BindingsTree)$\\
+%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Pattern}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings_{\text{e}}}$ & $\Pattern = (\Bindings_{\text{e}}, \Bindings_{\text{p}})$\\
+%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}$ & $\Bindings = (\BindingsTree, |\Psi|, |\Delta|, |\Gamma|)$\\
+%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}$ & $=$ & $\begin{cases}
+%\Lookup{x_2{.}\cdots{.}x_n}{\mathcal{S}_k}\\
+%\Fail
+%\end{cases}$ & \begin{tabular}{l}
+%$\BindingsTree = \{x_i = \mathcal{S}_i\}_{i \in \set{1, 2, \dots, m}}$, $\exists k, x_k = x_1$\\
+%$\BindingsTree = \{x_i = \mathcal{S}_i\}_{i \in \set{1, 2, \dots, m}}$, $\nexists k, x_k = x_1$
+%\end{tabular}\\
+%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\mathcal{S}}$ & $=$ & $\begin{cases}
+%\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}\\
+%e\\
+%\Fail
+%\end{cases}$ & \begin{tabular}{l}
+%$n > 1$, $\mathcal{S} = \mathcal{S}'; (e, \BindingsTree)$\\
+%$n = 1$, $\mathcal{S} = \mathcal{S}'; (e, \BindingsTree)$\\
+%$\mathcal{S} = \cdot$
+%\end{tabular}
+%\end{tabular}
+%\end{table}
 
 In contrast with association lists, the use of dictionaries in the referencing environment means that the order of insertions for bindings is not readily available.
 This poses a problem for the computation of de Bruijn indices.
@@ -342,7 +373,7 @@ Chiefly, this approach is scalable to arbitrarily many indexing contexts, provid
 Additionally, not having to actually construct $\Psi$, $\Delta$ and $\Gamma$ simplifies shifting contexts in cases like $\mathsf{const} = \lambda x.\lambda\_.\ x$ wherein the identifier introduced by a binder is omitted since it is unused in the abstraction's body.
 Indeed, it suffices to increase the indexing context's size to shift it, so there is no need to add an empty binding in the referencing environment.
 
-\begin{figure}[htb]
+\begin{figure}[H]
 \centering
 \includegraphics{figures/lf-indexing.eps}
 \caption[Example of de Bruijn indices computation with respect to a lookup table]{%
@@ -545,51 +576,38 @@ Variables in $\Psi'$ are annotated with the size of the \LF indexing context bef
 %The stack structures at the level of frames and entries allow for identifier shadowing.
 %On the other hand, the dictionaries speed up identifier lookups.
 
-Indexing of terms in a theoretic setting can be shown to be equivalent to its implementation counterpart.
-To achieve this, plain \LF kinds, types and terms are defined below, with $a$ and $c$ standing for type-level and term-level constants respectively.
+\subsection{Indexing \acs{LF} Kinds, Types and Terms}
+
+Using the definition for referencing environments in \Beluga, the indexing phase is defined inductively as a set of translations functions.
+These are of the form $\Xi \vdash \Indexes{e}{s}{\tilde e}$, with $e$ and $\tilde e$ being the input and output terms respectively.
+However, that specification of indexing assumes that $\Xi$ is implemented as an immutable data structure.
+To rectify this, a Hoare-style specification like $\Hoare{\Env = \Xi}{\Indexes{e}{s}{\tilde e}}{\Env = \Xi'}$ can be used instead, with $\Xi$ and $\Xi'$ being the initial and final states of the referencing environment.
+The translation $\Indexes{}{s}{}$ is split following the semantic classes of figure~\ref{figure:internal-syntax}, with $s$ being one of $K, A, M, U, C, \kappa, \tau, e$ and $i$, with the addition of $Mp, Cp$ and $p$ for \LF patterns, meta-object patterns and computation-level patterns respectively.
+This subsection focusses on indexing for \LF kinds, types and terms, and presents both styles of specifications $\Xi \vdash \Indexes{e}{s}{\tilde e}$ and $\Hoare{\Env = \Xi}{\Indexes{e}{s}{\tilde e}}{\Env = \Xi'}$, then demonstrates that they are equivalent.
+
+First, the definitions for plain \LF kinds, types and terms are recalled below, with $a$ and $c$ standing for type-level and term-level constants respectively.
 
 \begin{figure}[H]
 \centering
-\begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
+\begin{tabular}{p{5.3cm} >{\raggedleft}p{1cm} r l}
 Plain \LF kinds & $K$ & $\Coloneqq$ & $A \to K \mid \Pi x{:}A. K \mid \KWType$\\
 Plain \LF types & $A, B$ & $\Coloneqq$ & $A\to B \mid \Pi x{:}A. B \mid a \mid A\ M_1\ M_2 \dots M_n$\\
 Plain \LF terms & $M, N$ & $\Coloneqq$ & $x \mid c \mid \lambda x. M \mid M\ N_1\ N_2 \dots N_n \mid M : A$
 \end{tabular}
 \end{figure}
 
-Then, the nameless counterparts of these \LF kinds, types and terms are defined hereafter, with $\tilde a$ and $\tilde c$ denoting the symbolic identifier corresponding to the type constant $a$ and the term constant $c$, and $\iota$ corresponding to de Bruijn indices corresponding to variables $x$.
+Then, the nameless counterparts of these \LF kinds, types and terms are defined hereafter, with $\tilde a$ and $\tilde c$ denoting the symbolic identifier corresponding to the type and term constants $a$ and $c$ respectively, and $\iota$ denoting the de Bruijn indices corresponding to variables $x$.
 
 \begin{figure}[H]
 \centering
-\begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
+\begin{tabular}{p{5.3cm} >{\raggedleft}p{1cm} r l}
 Nameless \LF kinds & $\tilde K$ & $\Coloneqq$ & $\tilde A \to \tilde K \mid \Pi_{\tilde A}\ \tilde K \mid \KWType$\\
 Nameless \LF types & $\tilde A, \tilde B$ & $\Coloneqq$ & $\tilde A\to \tilde B \mid \Pi_{\tilde A}\ \tilde B \mid \tilde a \mid \tilde A\ \tilde M_1\ \tilde M_2 \dots \tilde M_n$\\
 Nameless \LF terms & $\tilde M, \tilde N$ & $\Coloneqq$ & $\iota \mid \tilde c \mid \lambda\ \tilde M \mid \tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n \mid \tilde M : \tilde A$
 \end{tabular}
 \end{figure}
 
-The abstract data type of referencing environments $\Xi$ has the following operations:
-\begin{itemize}
-\item
-$\Push{\Psi}{x : \tau}{\Xi}$ adds the binding $x : \tau$ onto $\Xi$ as part of the indexing context $\Psi$.
-This increments the size of $\Psi$.
-\item
-$\Pop{\Psi}{x}{\Xi}$ removes the latest binding of $x$ from $\Xi$, while assuming it is part of the indexing context $\Psi$.
-This decrements the size of $\Psi$.
-\item
-$\Shift{\Psi}{\Xi}$ increments the size of the indexing context $\Psi$ in $\Xi$.
-\item
-$\Unshift{\Psi}{\Xi}$ decrements the size of the indexing context $\Psi$ in $\Xi$.
-\item
-$\Lookup{x}{\Xi}$ is the latest binding $x : \tau$ associated with the identifier $x$ in $\Xi$.
-\item
-$\Index{\Psi}{x}{\Xi}$ is the de Bruijn index of $x$ in $\Xi$ with respect to the indexing context $\Psi$.
-\end{itemize}
-Popping a binding from the referencing environment is the inverse of pushing that binding, such that $\Pop{\Psi}{x}{\Push{\Psi}{x : \tau}{\Xi}} = \Xi$.
-Analogously, $\Unshift{\Psi}{\Shift{\Psi}{\Xi}} = \Xi$.
-Additionally, the environments constructed as $\Push{\Psi}{x : \LFTerm}{\Xi} $ and $ (\Xi, x : \LFTerm)$ are equivalent, and so are $\Shift{\Psi}{\Xi} $ and $ (\Xi, \_ : \LFTerm)$ since the \LF indexing context is only comprised of bindings for \LF terms.
-
-In the theoretic setting, indexing is defined with respect to an immutable representation of the referencing environment $\Xi$ as an association list.
+Indexing is first defined with respect to an immutable representation of the referencing environment $\Xi$ as an association list.
 This algorithm is easy to implement, but comes at the expense of degraded runtime performance for lookups.
 
 {\footnotesize
@@ -703,7 +721,7 @@ This algorithm is easy to implement, but comes at the expense of degraded runtim
 }
 
 In the implementation, indexing is imperative and defined with respect to a mutable referencing environment that is passed along for each computation.
-The possibility for a computation to mutate that state is reflected formally using a Hoare-style specification.
+The fact that computations may mutate that state is reflected formally using a Hoare-style specification.
 
 {\footnotesize
 \begin{mdframed}[frametitle={$\boxed{\Hoare{P}{\IndexesKind{K}{\tilde K}}{Q}}$ : the \LF kind $K$ is indexed as $\tilde K$ with precondition $P$ and postcondition $Q$}]
@@ -859,7 +877,8 @@ As such, it was easy to shift back to a mutable data structure and recover runti
 As a consequence, checking out incomplete proofs in \Harpoon involves reconstructing the referencing environment using the internal \ac{AST}'s representation of the signature.
 
 % TODO: Discuss scope graphs as an alternative to the formalism and implementation, argue this end up being the same as association lists because of telescopes
-%TODO: Discuss scope graphs, and how we would end up with association lists because we'd get a scope for each declaration (except recursive declarations)
+% TODO: Discuss scope graphs, and how we would end up with association lists because we'd get a scope for each declaration (except recursive declarations)
+% TODO: Reference structural editing for free using scope graphs, how the immutable list representation is suitable for live editing as opposed to compilation.
 
 From a programming language implementation standpoint, the revised indexing phase simplified the system's flow of information by decoupling it from the signature reconstruction store.
 This opens up multiple opportunities, including proper unit-testing of the referencing environment structure and indexing functions.
