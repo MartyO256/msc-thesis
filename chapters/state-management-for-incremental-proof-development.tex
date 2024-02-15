@@ -246,8 +246,6 @@ A \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} 
 \end{subfigure}
 \par\bigskip
 \begin{subfigure}{\linewidth}
-\newcommand{\Public}[1]{{#1}^*}
-\newcommand{\Private}[1]{#1}
 \begin{equation*}
 \begin{aligned}
 \Xi_{\texttt{\verbhole{?h1}}} &= \left[\dots\right]_\Module; \left[\Public{\mathsf{nat}} : \mathsf{LF}_{\mathsf{type\ const}}, \Public{\mathsf{z}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{s}} : \mathsf{LF}_{\mathsf{term\ const}}, \Public{\mathsf{plus}} : \mathsf{Prog}\right]_\Module\\
@@ -306,6 +304,9 @@ This showcases in particular how indexing context sizes are carried over from ou
 
 \subsection{Operations on Referencing Environments}
 
+The previous section described the introduction and elimination principles for frames.
+This section focusses on the operations on referencing environments specifically used in supporting the incremental indexing of \Beluga programs.
+
 The abstract data type of referencing environments $\Xi$ has the following operations:
 \begin{itemize}
 \item
@@ -322,10 +323,24 @@ $\Unshift{\Psi}{\Xi}$ decrements the size of the indexing context $\Psi$ in $\Xi
 $\Lookup{x}{\Xi}$ is the latest binding $x : \tau$ associated with the identifier $x$ in $\Xi$.
 \item
 $\Index{\Psi}{x}{\Xi}$ is the de Bruijn index of $x$ in $\Xi$ with respect to the indexing context $\Psi$.
+This only succeeds if $\Lookup{x}{\Xi}$ is a binding in $\Psi$.
 \end{itemize}
 Popping a binding from the referencing environment is the inverse of pushing that binding, such that $\Pop{\Psi}{x}{\Push{\Psi}{x : \tau}{\Xi}} = \Xi$.
 Analogously, $\Unshift{\Psi}{\Shift{\Psi}{\Xi}} = \Xi$.
 Additionally, the environments constructed as $\Push{\Psi}{x : \LFTerm}{\Xi} $ and $ (\Xi, x : \LFTerm)$ are equivalent, and so are $\Shift{\Psi}{\Xi} $ and $ (\Xi, \_ : \LFTerm)$ since the \LF indexing context is only comprised of bindings for \LF terms.
+
+The operations that add or remove bindings only affect the topmost frame in the referencing environment so as to respect the nesting structure of frames.
+The lookup and index operations, however, traverse the entire structure.
+Lookups are defined intuitively as successive lookups in frames, then lookups in trees of bindings, as illustrated in figure~\ref{figure:lookup-definition}.
+The exception to this rule has to do with lookups starting from pattern frames since variable declarations in external frames cannot be referenced in a pattern.
+
+\begin{figure}[H]
+% TODO:
+\caption[Definition of lookups in referencing environments]{%
+Definition of lookups in referencing environments.
+}
+\label{figure:lookup-definition}
+\end{figure}
 
 %\begin{table}
 %\centering
@@ -370,7 +385,7 @@ This recorded level can then be used to recover de Bruijn indices efficiently, a
 Indeed, if $x$ is a variable in the domain of the indexing context $\Psi'$, and $\Psi$ is the indexing context immediately before that declaration for $x$ was added, then $|\Psi'| > |\Psi|$, and the de Bruijn index of $x$ with respect to $\Psi'$ is $|\Psi'| - |\Psi|$.
 This is the same computation as subtracting the de Bruijn level of $x$ from the current abstraction depth~\cite{DEBRUIJN1972381, debruijnlevels1995}.
 Chiefly, this approach is scalable to arbitrarily many indexing contexts, provided that the context to use for a variable is known at its binding site.
-Additionally, not having to actually construct $\Psi$, $\Delta$ and $\Gamma$ simplifies shifting contexts in cases like $\mathsf{const} = \lambda x.\lambda\_.\ x$ wherein the identifier introduced by a binder is omitted since it is unused in the abstraction's body.
+Additionally, not having to actually construct $\Psi$, $\Delta$ and $\Gamma$ simplifies shifting contexts with $\Shift{\Psi}{\Xi}$ in cases like $\mathsf{const} = \lambda x.\lambda\_.\ x$ wherein the identifier introduced by a binder is omitted since it is unused in the abstraction's body.
 Indeed, it suffices to increase the indexing context's size to shift it, so there is no need to add an empty binding in the referencing environment.
 
 \begin{figure}[H]
@@ -876,9 +891,11 @@ Thankfully, the indexing phase's implementation was loosely coupled with the rep
 As such, it was easy to shift back to a mutable data structure and recover runtime performance comparable to that of the legacy implementation of \Beluga.
 As a consequence, checking out incomplete proofs in \Harpoon involves reconstructing the referencing environment using the internal \ac{AST}'s representation of the signature.
 
-% TODO: Discuss scope graphs as an alternative to the formalism and implementation, argue this end up being the same as association lists because of telescopes
+% TODO: Discuss scope graphs as an alternative to the formalism and implementation, argue this ends up being the same as association lists because of telescopes
 % TODO: Discuss scope graphs, and how we would end up with association lists because we'd get a scope for each declaration (except recursive declarations)
 % TODO: Reference structural editing for free using scope graphs, how the immutable list representation is suitable for live editing as opposed to compilation.
+
+% TODO: Maybe mentiton how the Hoare-style specification can be strengthened by having a notion of equivalence modulo the operations defined for it. That allows arbitrary non-conflicting effects to occur, but makes the inference rules verbose.
 
 From a programming language implementation standpoint, the revised indexing phase simplified the system's flow of information by decoupling it from the signature reconstruction store.
 This opens up multiple opportunities, including proper unit-testing of the referencing environment structure and indexing functions.

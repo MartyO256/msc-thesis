@@ -128,6 +128,13 @@
   frametitlefont={\normalfont},
 }
 
+\newcommand{\prefix}{\mathsf{op}_{\text{prefix}}}
+\newcommand{\infix}{\mathsf{op}_{\text{infix}}}
+\newcommand{\infixl}{\mathsf{op}_{\text{infix}}^\text{L}}
+\newcommand{\infixr}{\mathsf{op}_{\text{infix}}^\text{R}}
+\newcommand{\infixn}{\mathsf{op}_{\text{infix}}^\text{N}}
+\newcommand{\postfix}{\mathsf{op}_{\text{postfix}}}
+
 \newcommand{\Hoare}[3]{\set{#1}\ #2\ \set{#3}}
 \newcommand{\Env}{\mathsf{Env}}
 \newcommand{\Pop}[3]{\operatorname{pop}_{#1}\left(#2; #3\right)}
@@ -150,21 +157,9 @@
 \newcommand{\KWType}{\mathbf{type}}
 \newcommand{\D}{\mathcal{D}}
 \newcommand{\E}{\mathcal{E}}
-
-%\newcommand{\private}[1]{#1_\downarrow}
-%\newcommand{\public}[1]{#1_\uparrow}
-%\newcommand{\Private}[1]{#1_\Downarrow}
-%\newcommand{\Public}[1]{#1_\Uparrow}
-%\newcommand{\Env}{\Xi}
 \newcommand{\Pattern}{\mathbb{P}}
-%\newcommand{\Entry}{\mathbb{E}}
-%\newcommand{\Var}{\mathbb{V}}
-%\newcommand{\Constant}{\mathbb{C}}
 \newcommand{\Fail}{\lightning}
-%\newcommand{\Lookup}[2]{\operatorname{lookup}\left[#1\right]\left(#2\right)}
-%\newcommand{\Index}{\operatorname{index}}
-%\newcommand{\Domain}{\operatorname{domain}}
-%\newcommand{\Pop}[2]{\operatorname{pop}\left[#1\right]\left(#2\right)}
-%\newcommand{\Translates}{\rightsquigarrow}
 \newcommand{\Bindings}{\mathbb{B}}
 \newcommand{\BindingsTree}{\mathcal{T}}
+\newcommand{\Public}[1]{{#1}^*}
+\newcommand{\Private}[1]{#1}
