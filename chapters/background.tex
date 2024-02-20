@@ -4,7 +4,7 @@
 
 In \Beluga, theorems are encoded using contextual \LF, its index language, and proofs are encoded as programs.
 Logic propositions are represented as \LF type families with term-level constants parameterized by $\beta$-normal $\eta$-long \LF terms to construct witnesses for these propositions~\cite{nanevski2008contextual, foundation2008pientka, DBLP:journals/corr/abs-1009-2789}.
-To facilitate the implementation of semantic analysis, \LF terms are required to be encoded in normal form by the user.
+To facilitate the implementation of semantic analysis, and because \LF kinds, types and terms are strongly normalizing~\cite{harper1993framework}, they are required to be encoded in normal form by the user.
 \Beluga extends \LF to support explicit contexts and substitutions, which enables mechanized reasoning with respect to assumptions, like in proofs on paper~\cite{pientka2010programming}.
 This means that terms containing free variables can be manipulated and reasoned about explicitly in \Beluga.
 

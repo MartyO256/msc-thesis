@@ -199,6 +199,25 @@ Definition of referencing environments for \Beluga programs, assigning stacks of
 
 The entry stacks and bindings tree structures of figure~\ref{figure:referencing-environment-definition} can be flattened into an association list by keeping track of the insertion order for bindings.
 This is used for presentation purposes, with $[x_1 : \tau_1, x_2 : \tau_2, \cdots, x_n : \tau_n]_\Module$ denoting a module frame with bindings $x_1 : \tau_1$, $x_2 : \tau_2$, ..., $x_n : \tau_n$ like in figure~\ref{figure:example-reference-environment-formalism}.
+The set of toplevel identifiers for frames and binding trees is defined in figure~\ref{figure:definition-domain-frames}.
+Then, the right-to-left association list corresponding to a referencing environment $\Xi = \mathcal{F}_1; \mathcal{F}_2; \cdots; \mathcal{F}_n$ is $\Domain(\mathcal{F}_1) \oplus \Domain(\mathcal{F}_2) \oplus \cdots \oplus \Domain(\mathcal{F}_n)$ where $\oplus$ denotes concatenation.
+
+\begin{figure}
+\centering
+{\footnotesize
+\begin{tabular}{lcll}
+$\Domain(\Frame)$ & $=$ & $\Domain(\Bindings)$ & $\Frame = \Bindings$\\
+$\Domain(\Module)$ & $=$ & $\Domain(\Bindings)$ & $\Module = (\Bindings, \_)$\\
+$\Domain(\Pattern)$ & $=$ & $\Domain(\Bindings_{\text{p}})$ & $\Pattern = (\Bindings_{\text{p}}, \_)$\\
+$\Domain(\Bindings)$ & $=$ & $\Domain(\BindingsTree)$ & $\Bindings=(\BindingsTree, \_, \_, \_)$\\
+$\Domain(\BindingsTree)$ & $=$ & $\set{x_1, x_2, \dots, x_n}$ & $\BindingsTree = \set{x_i = \EntryStack_i}_{i \in \set{1, 2, \dots, n}}$
+\end{tabular}
+}
+\caption[Definition of the domain of frames]{%
+Definition of the $\Domain$ of frames in a \Beluga referencing environment.
+}
+\label{figure:definition-domain-frames}
+\end{figure}
 
 \subsection{Frames for Patterns and Modules}
 
@@ -215,12 +234,12 @@ Plain frames are suitable for introducing multiple identifiers in such a way tha
 \textit{Module frames} $\Module$: constants added to this kind of frame are either private or public.
 Only public constant declarations are exported from the module they appear in when it is opened, in which case they are brought in scope.
 This ensures that constants and notations imported from external modules are not reexported when the module is opened elsewhere.
-To support this, when a constant binding is added to a module frame $(\Bindings, \BindingsTree)$, it is added to both $\Bindings$ for name resolution, and to the tree of exported constants $\BindingsTree$.
+To support this, when a constant binding is added to a module frame $(\Bindings, \BindingsTree)$, it is added to both $\Bindings$ for name resolution, and to the tree of exported constants $\BindingsTree$ for opening modules.
 \item
 \textit{Pattern frames} $\Pattern$: variables added to this kind of frame are inner pattern-bound or pattern variables.
-Inner pattern-bound variables are introduced by binders in the pattern, like $x$ in the lambda pattern $[ \vdash \mathsf{lam} (\textbackslash x. x)]$.
+Inner pattern-bound variables are introduced by binders in the pattern, like $c$ and $x$ in the contextual lambda pattern $[c : \mathsf{tm} \rightarrow \mathsf{tm} \vdash \mathsf{lam} (\textbackslash x. c\; x)]$.
 Pattern variables on the other hand are free variables in the pattern, which become bound variables in the body of the match case.
-For a pattern frame $(\Bindings_{\text{p}}, \Bindings_{\text{e}})$, the bindings in $\Bindings_{\text{p}}$ are used in the pattern being indexed, and the bindings in $\Bindings_{\text{e}}$ are used for the body of the pattern-matching branch.
+For a pattern frame $(\Bindings_{\text{p}}, \Bindings_{\text{e}})$, the bindings in $\Bindings_{\text{p}}$ are used for name resolution in the pattern, whereas the bindings in $\Bindings_{\text{e}}$ are only used for name resolution in the body of the pattern-matching branch.
 This means that inner pattern-bound variables are added to $\Bindings_{\text{p}}$, and free variables are added to $\Bindings_{\text{e}}$.
 Because of the way meta-level abstractions are automatically reconstructed for patterns, free meta-variables are both inner pattern-bound and pattern variables.
 This allows duplicate occurrences of free meta-variables to occur in a pattern.
