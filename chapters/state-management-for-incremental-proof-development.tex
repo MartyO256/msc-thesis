@@ -199,18 +199,18 @@ Definition of referencing environments for \Beluga programs, assigning stacks of
 
 The entry stacks and bindings tree structures of figure~\ref{figure:referencing-environment-definition} can be flattened into an association list by keeping track of the insertion order for bindings.
 This is used for presentation purposes, with $[x_1 : \tau_1, x_2 : \tau_2, \cdots, x_n : \tau_n]_\Module$ denoting a module frame with bindings $x_1 : \tau_1$, $x_2 : \tau_2$, ..., $x_n : \tau_n$ like in figure~\ref{figure:example-reference-environment-formalism}.
-The set of toplevel identifiers for frames and binding trees is defined in figure~\ref{figure:definition-domain-frames}.
-Then, the right-to-left association list corresponding to a referencing environment $\Xi = \mathcal{F}_1; \mathcal{F}_2; \cdots; \mathcal{F}_n$ is $\Domain(\mathcal{F}_1) \oplus \Domain(\mathcal{F}_2) \oplus \cdots \oplus \Domain(\mathcal{F}_n)$ where $\oplus$ denotes concatenation.
+To illustrate which identifiers are introduced in scope by a frame, the set of toplevel identifiers for frames and binding trees is defined in figure~\ref{figure:definition-domain-frames}.
+%Then, the right-to-left association list corresponding to a referencing environment $\Xi = \mathcal{F}_1; \mathcal{F}_2; \cdots; \mathcal{F}_n$ is $\Domain(\mathcal{F}_1) \oplus \Domain(\mathcal{F}_2) \oplus \cdots \oplus \Domain(\mathcal{F}_n)$ where $\oplus$ denotes concatenation.
 
 \begin{figure}
 \centering
 {\footnotesize
 \begin{tabular}{lcll}
-$\Domain(\Frame)$ & $=$ & $\Domain(\Bindings)$ & $\Frame = \Bindings$\\
-$\Domain(\Module)$ & $=$ & $\Domain(\Bindings)$ & $\Module = (\Bindings, \_)$\\
-$\Domain(\Pattern)$ & $=$ & $\Domain(\Bindings_{\text{p}})$ & $\Pattern = (\Bindings_{\text{p}}, \_)$\\
-$\Domain(\Bindings)$ & $=$ & $\Domain(\BindingsTree)$ & $\Bindings=(\BindingsTree, \_, \_, \_)$\\
-$\Domain(\BindingsTree)$ & $=$ & $\set{x_1, x_2, \dots, x_n}$ & $\BindingsTree = \set{x_i = \EntryStack_i}_{i \in \set{1, 2, \dots, n}}$
+$\Domain(\Frame)$ & $=$ & $\Domain(\Bindings)$ & when $\Frame = \Bindings$\\
+$\Domain(\Module)$ & $=$ & $\Domain(\Bindings)$ & when $\Module = (\Bindings, \_)$\\
+$\Domain(\Pattern)$ & $=$ & $\Domain(\Bindings_{\text{p}})$ & when $\Pattern = (\Bindings_{\text{p}}, \_)$\\
+$\Domain(\Bindings)$ & $=$ & $\Domain(\BindingsTree)$ & when $\Bindings=(\BindingsTree, \_, \_, \_)$\\
+$\Domain(\BindingsTree)$ & $=$ & $\set{x_1, x_2, \dots, x_n}$ & when $\BindingsTree = \set{x_i = \EntryStack_i}_{i \in \set{1, 2, \dots, n}}$
 \end{tabular}
 }
 \caption[Definition of the domain of frames]{%
@@ -354,48 +354,31 @@ Lookups are defined intuitively as successive lookups in frames, then lookups in
 The exception to this rule has to do with lookups starting from pattern frames since variable declarations in external frames cannot be referenced in a pattern.
 
 \begin{figure}[H]
-% TODO:
+\centering
+{\footnotesize
+\makebox[\textwidth][c]{
+\begin{tabular}{lcl>{\raggedright\let\newline\\\arraybackslash\hspace{0pt}}p{5cm}}
+$ \Lookup{x_1.x_2.\cdots.x_n}{\Xi; \Frame} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Frame} $ & when $ x_1 \in \Domain(\Frame) $\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{\Xi; \Frame} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Xi} $ & when $ x_1 \notin \Domain(\Frame) $\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{\Xi; \Module} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Module} $ & when $ x_1 \in \Domain(\Module) $\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{\Xi; \Module} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Xi} $ & when $ x_1 \notin \Domain(\Module) $\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{\Xi; \Pattern} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Pattern} $ & when $ x_1 \in \Domain(\Pattern) $\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{\Xi; \Pattern} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Xi} $ & when $ x_1 \notin \Domain(\Pattern) $ and $ \Lookup{x_1.x_2.\cdots.x_n}{\Xi} $ is not a variable\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{\Frame} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Bindings} $ & when $ \Frame = \Bindings $\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{\Module} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Bindings} $ & when $ \Module = (\Bindings, \_) $\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{\Pattern} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Bindings_{\text{p}}} $ & when $ \Pattern = (\Bindings_{\text{p}}, \_) $\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{(\BindingsTree, \_, \_, \_)} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\BindingsTree} $ &\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{\set{y_i = \EntryStack_i}_{i \in \set{1, 2, \dots, m}}} $ & $ = $ & when $ \Lookup{x_2.x_3.\cdots.x_n}{\BindingsTree} $ & $ \exists i \in \set{1, 2, \dots, m}, x_i = y_i $ and $ \mathcal{S}_i = \cdots ; (\_, \BindingsTree) $\\
+$ \Lookup{x}{\set{y_i = \EntryStack_i}_{i \in \set{1, 2, \dots, m}}} $ & $ = $ & $ e $ & when $ \exists i \in \set{1, 2, \dots, m}, x = y_i $ and $ \mathcal{S}_i = \cdots ; (e, \_) $\\
+$ \Lookup{\_}{\_} $ & $ = $ & $ \Fail $ &
+\end{tabular}
+}
+}
 \caption[Definition of lookups in referencing environments]{%
 Definition of lookups in referencing environments.
 }
 \label{figure:lookup-definition}
 \end{figure}
-
-%\begin{table}
-%\centering
-%% TODO: FIXME: Deep pattern-matching, specific rules for patterns, fix rules to biding stacks, need to introduce different lookup functions for patterns
-%\begin{tabular}{lcl|l}
-%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Xi}$ & $=$ & $\begin{cases}
-%\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\mathcal{F}}\\
-%\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Xi'}\\
-%\Fail
-%\end{cases}$ &  \begin{tabular}{l}
-%$\Xi = (\Xi'; \mathcal{F}), x_1 \in \operatorname{domain}(\mathcal{F})$\\
-%$\Xi = (\Xi'; \mathcal{F}), x_1 \notin \operatorname{domain}(\mathcal{F})$\\
-%$\Xi = \cdot$
-%\end{tabular}\\
-%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Frame}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $\Frame = \Bindings$\\
-%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Module}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $\Module = (\Bindings, \BindingsTree)$\\
-%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Pattern}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings_{\text{e}}}$ & $\Pattern = (\Bindings_{\text{e}}, \Bindings_{\text{p}})$\\
-%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\Bindings}$ & $=$ & $\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}$ & $\Bindings = (\BindingsTree, |\Psi|, |\Delta|, |\Gamma|)$\\
-%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}$ & $=$ & $\begin{cases}
-%\Lookup{x_2{.}\cdots{.}x_n}{\mathcal{S}_k}\\
-%\Fail
-%\end{cases}$ & \begin{tabular}{l}
-%$\BindingsTree = \{x_i = \mathcal{S}_i\}_{i \in \set{1, 2, \dots, m}}$, $\exists k, x_k = x_1$\\
-%$\BindingsTree = \{x_i = \mathcal{S}_i\}_{i \in \set{1, 2, \dots, m}}$, $\nexists k, x_k = x_1$
-%\end{tabular}\\
-%$\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\mathcal{S}}$ & $=$ & $\begin{cases}
-%\Lookup{x_1{.}x_2{.}\cdots{.}x_n}{\BindingsTree}\\
-%e\\
-%\Fail
-%\end{cases}$ & \begin{tabular}{l}
-%$n > 1$, $\mathcal{S} = \mathcal{S}'; (e, \BindingsTree)$\\
-%$n = 1$, $\mathcal{S} = \mathcal{S}'; (e, \BindingsTree)$\\
-%$\mathcal{S} = \cdot$
-%\end{tabular}
-%\end{tabular}
-%\end{table}
 
 In contrast with association lists, the use of dictionaries in the referencing environment means that the order of insertions for bindings is not readily available.
 This poses a problem for the computation of de Bruijn indices.
@@ -419,112 +402,6 @@ Variables in $\Psi'$ are annotated with the size of the \LF indexing context bef
 \label{figure:lf-indexing}
 \end{figure}
 
-%\begin{figure}[htb]
-%\begin{subfigure}{\linewidth}
-%\begin{equation*}
-%\begin{aligned}
-%\Lookup{x}{\cdot} &= \Fail\\
-%\Lookup{x}{\Env; \cdot_\Frame} &= \Lookup{x}{\Env}\\
-%\Lookup{x}{\Env; \Frame, x : \Var} &= (x : \Var)\\
-%\Lookup{x}{\Env; \Frame, y : \Var} &= \Lookup{x}{\Env; \Frame} & x \neq y\\
-%\Lookup{x}{\Env; \cdot_\Module} &= \Lookup{x}{\Env}\\
-%\Lookup{x}{\Env; \Module, \Private{x} : \Constant} &= (x : \Constant)\\
-%\Lookup{x}{\Env; \Module, \Private{y} : \Constant} &= \Lookup{x}{\Env; \Module} & x \neq y\\
-%\Lookup{x}{\Env; \Module, \Public{x} : \Constant} &= (x : \Constant)\\
-%\Lookup{x}{\Env; \Module, \Public{y} : \Constant} &= \Lookup{x}{\Env; \Module} & x \neq y\\
-%\Lookup{x}{\Env; \Pattern, \private{x} : \Var} &= (x : \Var)\\
-%\Lookup{x}{\Env; \Pattern, \private{y} : \Var} &= \Lookup{x}{\Env; \Pattern} & x \neq y\\
-%\Lookup{x}{\Xi; \cdot_\Pattern} &= \begin{cases}
-%(x : \Constant) & \Lookup{x}{\Xi} = (x : \Constant)\\
-%\Fail & \Lookup{x}{\Xi} = (x : \Var)\\
-%\Fail & \Lookup{x}{\Xi} = \Fail
-%\end{cases}\\
-%\Lookup{x}{\overrightarrow{\cdot}} &= \Fail\\
-%\Lookup{x}{\overrightarrow{\Public{y} : \Constant}, x : \Constant} &= (x : \Constant)\\
-%\Lookup{x}{\overrightarrow{\Public{x} : \Constant}, y : \Constant} &= \Lookup{x}{\overrightarrow{\Public{x} : \Constant}} & x \neq y
-%\end{aligned}
-%\end{equation*}
-%\caption{%
-%Definition for looking up plain identifiers in referencing environments, with $\Fail$ denoting failure.
-%When the topmost frame is a pattern frame, looking up a variable fails if it is bound in a different frame.
-%}
-%\end{subfigure}
-%\caption[]{%
-%Formal definition of referencing environments for \Beluga, modelled as association lists (cont.).
-%}
-%\label{figure:definition-lookup-formal}
-%\end{figure}
-%
-%\begin{figure}\ContinuedFloat
-%\begin{subfigure}{\linewidth}
-%\begin{equation*}
-%\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Frame} =
-%\begin{cases}
-%\Lookup{x_1.x_2.\cdots.x_n}{\Env} & \Lookup{x_1}{\Frame} = \Fail\\
-%\Fail & \Lookup{x_1}{\Frame} \neq \Fail
-%\end{cases}
-%\end{equation*}
-%\caption{%
-%Definition for looking up fully qualified identifiers in plain frames.
-%}
-%\end{subfigure}
-%\begin{subfigure}{\linewidth}
-%\begin{equation*}
-%\begin{aligned}
-%\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Module, x_1 : \mathsf{Module}\left(\overrightarrow{\Public{x}:\Constant}\right)} &= \Lookup{x_2.\cdots.x_n}{\overrightarrow{\Public{x}:\Constant}}\\
-%\Lookup{x_1.x_2.\cdots.x_n}{\overrightarrow{\cdot}} &= \Fail\\
-%\Lookup{x_1.x_2.\cdots.x_n}{\overrightarrow{\Public{x}:\Constant}, y : \Constant} &= \Lookup{x_1.x_2.\cdots.x_n}{\overrightarrow{\Public{x}:\Constant}} & x_1 \neq y\\
-%\Lookup{x_1.x_2.\cdots.x_n}{\overrightarrow{\Public{y}:\Constant}, x_1: \mathsf{Module}\left(\overrightarrow{\Public{x}:\Constant}\right)} &= \Lookup{x_2.\cdots.x_n}{\overrightarrow{\Public{x}:\Constant}}
-%\end{aligned}
-%\end{equation*}
-%\caption{%
-%Definition for looking up fully qualified identifiers in module frames.
-%This amounts to simultaneously traversing the list of plain identifiers and the namespace structure in the referencing environment.
-%}
-%\end{subfigure}
-%\par\bigskip
-%\begin{subfigure}{\linewidth}
-%\begin{equation*}
-%\Lookup{x_1.x_2.\cdots.x_n}{\Env; \Pattern} =
-%\begin{cases}
-%\Lookup{x_1.x_2.\cdots.x_n}{\Env} & \Lookup{x_1}{\Pattern} = \Fail\\
-%\Fail & \Lookup{x_1}{\Pattern} \neq \Fail
-%\end{cases}
-%\end{equation*}
-%\caption{%
-%Definition for looking up fully qualified identifiers in pattern frames.
-%}
-%\end{subfigure}
-%\caption[]{%
-%Formal definition of referencing environments for \Beluga, modelled as association lists (cont.).
-%}
-%\end{figure}
-%
-%\begin{figure}\ContinuedFloat
-%\begin{subfigure}{\linewidth}
-%\begin{equation*}
-%\begin{aligned}
-%\Psi(\cdot) &= ()\\
-%\Psi(\Env; \cdot_\Frame) &= \Psi(\Env)\\
-%\Psi(\Env; \Frame, x : \mathsf{LF}_{\mathsf{term}}) &= \Psi(\Env; \Frame) \oplus (x : \mathsf{LF}_{\mathsf{term}})\\
-%\Psi(\Env; \Frame, x : \Var) &= \Psi(\Env; \Frame) & \Var \neq \mathsf{LF}_{\mathsf{term}}\\
-%\Psi(\Env; \cdot_\Module) &= \Psi(\Env)\\
-%\Psi(\Env; \Module) &= \Psi(\Env)\\
-%\Psi(\Env; \cdot_\Pattern) &= ()\\
-%\Psi(\Env; \Pattern, \private{x} : \mathsf{LF}_{\mathsf{term}}) &= \Psi(\Pattern) \oplus (x : \mathsf{LF}_{\mathsf{term}})\\
-%\Psi(\Env; \Pattern, \private{x} : \Var) &= \Psi(\Pattern) & \Var \neq \mathsf{LF}_{\mathsf{term}}
-%\end{aligned}
-%\end{equation*}
-%\caption{%
-%Definition of filtering a referencing environment to extract the \LF context.
-%The $\oplus$~operator denotes list concatenation.
-%}
-%\end{subfigure}
-%\caption[]{%
-%Formal definition of referencing environments for \Beluga, modelled as association lists (cont.).
-%}
-%\end{figure}
-%
 %Using the definition for referencing environments in \Beluga, the indexing phase is defined inductively as a set of translations functions.
 %These are of the form $\Xi \vdash e \Translates_{s} e' \dashv \Xi'$, with $\Xi$ and $\Xi'$ being the input and output referencing environments respectively, and $e$ and $e'$ being the input and output term.
 %This captures the notion that as a term is being indexed, data can be read from and written to the referencing environment.
