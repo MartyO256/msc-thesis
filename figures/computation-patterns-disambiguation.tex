@@ -1,5 +1,0 @@
-\noindent $ \boxed{\Xi_o; \Xi_i; \Xi_p \vdash \ucorner{P} \rightsquigarrow_P P' \dashv \Xi_o'; \Xi_i'; \Xi_p'} $ \quad The parser object $ \ucorner{P} $ is disambiguated to the computation-level pattern $ P' $ under the outer, inner and pattern disambiguation states $ \Xi_o $, $ \Xi_i $ and $ \Xi_p $ respectively, which produces the output outer, inner and pattern disambiguation states $ \Xi_o' $, $ \Xi_i' $ and $ \Xi_p' $ respectively.
-
-\begin{equation}
-\infer{\Xi_o; \Xi_i; \Xi_p \vdash \ucorner{\{ x : g \} P} \rightsquigarrow_P \{ x : g \} P \dashv \Xi_o; \Xi_i; \Xi_p'}{\deduce{\Xi_o; \Xi_i, x : \mathsf{Ctx}; \Xi_p, x : \mathsf{Ctx} \vdash \ucorner{P} \rightsquigarrow_P P \dashv \Xi_o; \Xi_i; \Xi_p'}{(g : \mathsf{Schema}) \in \Xi_o, \Xi_i & x \notin \Domain(\Xi_p)}}
-\end{equation}
