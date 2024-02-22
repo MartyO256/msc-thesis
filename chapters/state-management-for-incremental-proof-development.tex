@@ -316,7 +316,7 @@ $\operatorname{leave\_pattern}(\Xi; \Pattern) $ & $=$ & $ \Xi; \Bindings_{\text{
 }
 \caption[Definition for adding and removing frames in referencing environments]{%
 Definition for adding and removing frames in referencing environments.
-This showcases in particular how indexing context sizes are carried over from outer frames, how constant declarations in modules kept track of, and how frames are constructed for pattern-matching body expressions.
+This showcases in particular how indexing context sizes are carried over from outer frames, how constant declarations in modules are kept track of, and how frames are constructed for pattern-matching body expressions.
 }
 \label{figure:frames-addition-removal-definition}
 \end{figure}
@@ -348,10 +348,11 @@ Popping a binding from the referencing environment is the inverse of pushing tha
 Analogously, $\Unshift{\Psi}{\Shift{\Psi}{\Xi}} = \Xi$.
 Additionally, the environments constructed as $\Push{\Psi}{x : \LFTerm}{\Xi} $ and $ (\Xi, x : \LFTerm)$ are equivalent, and so are $\Shift{\Psi}{\Xi} $ and $ (\Xi, \_ : \LFTerm)$ since the \LF indexing context is only comprised of bindings for \LF terms.
 
-The operations that add or remove bindings only affect the topmost frame in the referencing environment so as to respect the nesting structure of frames.
+By design, the operations that add or remove bindings only affect the topmost frame in the referencing environment so as to respect the nesting structure of frames.
 The lookup and index operations, however, traverse the entire structure.
 Lookups are defined intuitively as successive lookups in frames, then lookups in trees of bindings, as illustrated in figure~\ref{figure:lookup-definition}.
 The exception to this rule has to do with lookups starting from pattern frames since variable declarations in external frames cannot be referenced in a pattern.
+Computing de Bruijn indices follows the same lookup procedure to stay consistent with identifier shadowing.
 
 \begin{figure}[H]
 \centering
@@ -368,7 +369,7 @@ $ \Lookup{x_1.x_2.\cdots.x_n}{\Frame} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{
 $ \Lookup{x_1.x_2.\cdots.x_n}{\Module} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Bindings} $ & when $ \Module = (\Bindings, \_) $\\
 $ \Lookup{x_1.x_2.\cdots.x_n}{\Pattern} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Bindings_{\text{p}}} $ & when $ \Pattern = (\Bindings_{\text{p}}, \_) $\\
 $ \Lookup{x_1.x_2.\cdots.x_n}{(\BindingsTree, \_, \_, \_)} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\BindingsTree} $ &\\
-$ \Lookup{x_1.x_2.\cdots.x_n}{\set{y_i = \EntryStack_i}_{i \in \set{1, 2, \dots, m}}} $ & $ = $ & when $ \Lookup{x_2.x_3.\cdots.x_n}{\BindingsTree} $ & $ \exists i \in \set{1, 2, \dots, m}, x_i = y_i $ and $ \mathcal{S}_i = \cdots ; (\_, \BindingsTree) $\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{\set{y_i = \EntryStack_i}_{i \in \set{1, 2, \dots, m}}} $ & $ = $ & $ \Lookup{x_2.x_3.\cdots.x_n}{\BindingsTree} $ & when $ \exists i \in \set{1, 2, \dots, m}, x_i = y_i $ and $ \mathcal{S}_i = \cdots ; (\_, \BindingsTree) $\\
 $ \Lookup{x}{\set{y_i = \EntryStack_i}_{i \in \set{1, 2, \dots, m}}} $ & $ = $ & $ e $ & when $ \exists i \in \set{1, 2, \dots, m}, x = y_i $ and $ \mathcal{S}_i = \cdots ; (e, \_) $\\
 $ \Lookup{\_}{\_} $ & $ = $ & $ \Fail $ &
 \end{tabular}
@@ -382,7 +383,7 @@ Definition of lookups in referencing environments.
 
 In contrast with association lists, the use of dictionaries in the referencing environment means that the order of insertions for bindings is not readily available.
 This poses a problem for the computation of de Bruijn indices.
-Thankfully, it suffices to keep track of the indexing context sizes $|\Psi|$, $|\Delta|$ and $|\Gamma|$ in each frame to record the de Bruijn level of variables as they are inserted in the environment.
+Thankfully, it suffices to keep track of the indexing context sizes $|\Psi|$, $|\Delta|$ and $|\Gamma|$ in each frame to record the de Bruijn level of variables as they are inserted in the environment, like in figure~\ref{figure:referencing-environment-definition}.
 This recorded level can then be used to recover de Bruijn indices efficiently, as illustrated in figure~\ref{figure:lf-indexing}.
 Indeed, if $x$ is a variable in the domain of the indexing context $\Psi'$, and $\Psi$ is the indexing context immediately before that declaration for $x$ was added, then $|\Psi'| > |\Psi|$, and the de Bruijn index of $x$ with respect to $\Psi'$ is $|\Psi'| - |\Psi|$.
 This is the same computation as subtracting the de Bruijn level of $x$ from the current abstraction depth~\cite{DEBRUIJN1972381, debruijnlevels1995}.
@@ -395,9 +396,9 @@ Indeed, it suffices to increase the indexing context's size to shift it, so ther
 \includegraphics{figures/lf-indexing.eps}
 \caption[Example of de Bruijn indices computation with respect to a lookup table]{%
 Computation of de Bruijn indices for the $\mathbf{S}$-combinator using indexing context sizes stored in the lookup table.
-The bindings of the \LF context $\Psi$ are included in the referencing environment $\Xi$.
+The \LF context $\Psi$'s bindings are included in the referencing environment $\Xi$.
 The expression $x\ z\ (y\ z)$ is indexed with respect to $\Psi'$ having $|\Psi| + 3$ entries since $x$, $y$ and $z$ are introduced by \LF~abstractions.
-Variables in $\Psi'$ are annotated with the size of the \LF indexing context before each of them was added.
+Variables in $\Xi'$ are annotated with the size of the \LF indexing context before each of them was added.
 }
 \label{figure:lf-indexing}
 \end{figure}
@@ -406,79 +407,7 @@ Variables in $\Psi'$ are annotated with the size of the \LF indexing context bef
 %These are of the form $\Xi \vdash e \Translates_{s} e' \dashv \Xi'$, with $\Xi$ and $\Xi'$ being the input and output referencing environments respectively, and $e$ and $e'$ being the input and output term.
 %This captures the notion that as a term is being indexed, data can be read from and written to the referencing environment.
 %The translation $\Translates_{s}$ is split following the semantic classes of figure~\ref{figure:internal-syntax}, with $s$ being one of $K, A, M, U, C, \kappa, \tau, e$ and $i$, with the addition of $Mp, Cp$ and $p$ for \LF patterns, meta-object patterns and computation-level patterns respectively.
-%
-%% TODO: Continue, and explain
-%
-%\begin{equation}
-%\infer{\Xi \vdash x \Translates_M \iota \dashv \Xi}{\Lookup{x}{\Xi} = (x : \mathsf{LF}_{\mathsf{term}}) & \Index_{\Psi(\Xi)}(x) = \iota}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{\Xi \vdash \lambda x. M \Translates_M \lambda\ M' \dashv \Pop{x}{\Xi'}
-%}{\Xi, x : \mathsf{LF}_{\mathsf{term}} \vdash M \Translates_M M' \dashv \Xi'}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{\Xi \vdash M\ N_1\ N_2\ \dots\ N_n \Translates_M \dashv M'\ N_1'\ N_2'\ \dots\ N_n' \dashv \Xi_n}{\Xi \vdash M \Translates_M M' \dashv \Xi_0 & (\Xi_{k - 1} \vdash N_k \Translates_M N_k' \dashv \Xi_k)_{1 \leq k \leq n}}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{
-%	\Xi \vdash [x_1, x_2, \dots, x_n \vdash M] \Translates_C [x_1, x_2, \dots, x_n \vdash M'] \dashv \Pop{x_1, x_2, \dots, x_n}{\Xi'}
-%}{
-%	\Xi; x_1, x_2, \dots, x_n \vdash M \Translates_M M' \dashv \Xi'
-%}
-%\end{equation}
-%
-%
-%\begin{equation}
-%\infer{\Xi; \Pattern \vdash x \Translates_p x \dashv \Xi; \Pattern, \public{x} : \mathsf{Comp}_{\mathsf{term}}}{\Lookup{x}{\Xi; \Pattern} = \Fail}
-%\end{equation}
-%
-%
-%
-%\begin{equation}
-%\infer{\Xi; \Pattern \vdash u \Translates_{Mp} u \dashv \Xi; \Pattern, u_{\downarrow\uparrow} : \mathsf{Meta}_{\mathsf{object}}}{\Lookup{u}{\Xi; \Pattern} = \Fail}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{\Xi; \Pattern \vdash u \Translates_{Mp} u \dashv \Xi; \Pattern}{\Lookup{u}{\Xi; \Pattern} = (u : \mathsf{Meta}_{\mathsf{object}})}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{\Xi; \Pattern \vdash x \Translates_{Mp} \iota \dashv \Xi; \Pattern}{\Lookup{x}{\Xi; \Pattern} = (x : \mathsf{LF}_{\mathsf{term}}) & \Index_{\Psi(\Xi; \Pattern)}(x) = \iota}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{\Xi; \Pattern \vdash \lambda x. M \Translates_{Mp} \lambda\ M' \dashv \Pop{x}{\Xi; \Pattern'}}{\Xi; \Pattern, \private{x} : \mathsf{LF}_{\mathsf{term}} \vdash M \Translates_{Mp} M' \dashv \Xi; \Pattern'}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{\Xi; \Pattern \vdash M\ N_1\ N_2\ \dots\ N_n \Translates_{Mp} \dashv M'\ N_1'\ N_2'\ \dots\ N_n' \dashv \Xi; \Pattern_n}{\Xi; \Pattern \vdash M \Translates_{Mp} M' \dashv \Xi; \Pattern_0 & (\Xi; \Pattern_{k - 1} \vdash N_k \Translates_{Mp} N_k' \dashv \Xi; \Pattern_k)_{1 \leq k \leq n}}
-%\end{equation}
-%
-%\begin{equation}
-%\infer{
-%	\Xi; \Pattern \vdash [x_1, x_2, \dots, x_n \vdash M_p] \Translates_{Cp} [x_1, x_2, \dots, x_n \vdash M_p'] \dashv \Pop{x_1, x_2, \dots, x_n}{\Xi; \Pattern'}
-%}{
-%	\Xi; \Pattern, x_{1\downarrow}, x_{2\downarrow}, \dots, x_{n\downarrow} \vdash M_p \Translates_{Mp} M_p' \dashv \Xi; \Pattern'
-%}
-%\end{equation}
-%
-%
-%
-%\begin{equation}
-%\infer{
-%	\Xi \vdash \mathbf{case}\ i\ \mathbf{of}\ \{p_k \Rightarrow e_k\}_{0\leq k \leq n} \Translates_e \mathbf{case}\ i'\ \mathbf{of}\ \{p_k' \Rightarrow e_k'\}_{0\leq k \leq n} \dashv \Xi'
-%}{
-%	\Xi \vdash i \Translates_i i' \dashv \Xi' &
-%	\left(\begin{matrix}\Xi'; \cdot_\Pattern \vdash p_k \Translates_p p_k' \dashv \Xi'; \Pattern_k \\
-%	\Pattern_k \mapsto \Frame_k \\
-%	\Xi'; \Frame_k \vdash e_k \Translates_e e_k' \dashv \Xi'; \Frame_k'\end{matrix}\right)_{0\leq k \leq n}
-%}
-%\end{equation}
-%
-%\pagebreak
+
 
 %A lookup for the definition bound to a fully qualified identifier in a referencing environment searches for the topmost frame whose tree of bindings contains the leading identifier in the fully qualified identifier.
 %Once that frame is found, then its tree of bindings is traversed following the rest of the list of identifiers that forms the fully qualified identifier.
@@ -489,14 +418,14 @@ Variables in $\Psi'$ are annotated with the size of the \LF indexing context bef
 
 \subsection{Indexing \acs{LF} Kinds, Types and Terms}
 
-Using the definition for referencing environments in \Beluga, the indexing phase is defined inductively as a set of translations functions.
-These are of the form $\Xi \vdash \Indexes{e}{s}{\tilde e}$, with $e$ and $\tilde e$ being the input and output terms respectively.
-However, that specification of indexing assumes that $\Xi$ is implemented as an immutable data structure.
+Using the definition for referencing environments in \Beluga, the indexing phase is defined inductively as a family of translations functions indexed by the input's syntactic class.
+These are of the form $\Xi \vdash \Indexes{e}{s}{\tilde e}$, with $e$ and $\tilde e$ being the input and output terms respectively, and $\Xi$ being the referencing environment.
+However, that style of specification implicitly assumes that $\Xi$ is implemented as an immutable data structure.
 To rectify this, a Hoare-style specification like $\Hoare{\Env = \Xi}{\Indexes{e}{s}{\tilde e}}{\Env = \Xi'}$ can be used instead, with $\Xi$ and $\Xi'$ being the initial and final states of the referencing environment.
 The translation $\Indexes{}{s}{}$ is split following the semantic classes of figure~\ref{figure:internal-syntax}, with $s$ being one of $K, A, M, U, C, \kappa, \tau, e$ and $i$, with the addition of $Mp, Cp$ and $p$ for \LF patterns, meta-object patterns and computation-level patterns respectively.
-This subsection focusses on indexing for \LF kinds, types and terms, and presents both styles of specifications $\Xi \vdash \Indexes{e}{s}{\tilde e}$ and $\Hoare{\Env = \Xi}{\Indexes{e}{s}{\tilde e}}{\Env = \Xi'}$, then demonstrates that they are equivalent.
+This subsection focusses on indexing for \LF kinds, types and terms, and presents both styles of specifications $\Xi \vdash \Indexes{e}{s}{\tilde e}$ and $\Hoare{\Env = \Xi}{\Indexes{e}{s}{\tilde e}}{\Env = \Xi'}$, then demonstrates their equivalence.
 
-First, the definitions for plain \LF kinds, types and terms are recalled below, with $a$ and $c$ standing for type-level and term-level constants respectively.
+First, the definitions for plain \LF kinds, types and terms are recalled below, with $a$ and $c$ standing for type-level and term-level constants respectively, and $x$ ranging over variables.
 
 \begin{figure}[H]
 \centering
@@ -507,7 +436,7 @@ Plain \LF terms & $M, N$ & $\Coloneqq$ & $x \mid c \mid \lambda x. M \mid M\ N_1
 \end{tabular}
 \end{figure}
 
-Then, the nameless counterparts of these \LF kinds, types and terms are defined hereafter, with $\tilde a$ and $\tilde c$ denoting the symbolic identifier corresponding to the type and term constants $a$ and $c$ respectively, and $\iota$ denoting the de Bruijn indices corresponding to variables $x$.
+Then, the nameless counterparts of these \LF kinds, types and terms are defined, with $\tilde a$ and $\tilde c$ denoting the symbolic identifier corresponding to the type and term constants $a$ and $c$ respectively, and $\iota$ ranging over de Bruijn indices corresponding to variables.
 
 \begin{figure}[H]
 \centering
@@ -751,8 +680,8 @@ This potentially allows insertions to occur in an unpredictable order, and for d
 This next theorem certifies that that is not the case: if a binding removal occurs, then it is immediately preceded by the addition of that same binding.
 
 In fact, the referencing environment is restored to its initial state after successfully indexing an \LF object.
-This means that in the event of a lookup failure, the environment has at least the bindings of its initial state.
-Hence, pushing a new frame onto the referencing environment and popping it in case of failure is a sufficient mechanism to undo any and all effects on the state.
+This means that in the event of a failure during indexing, the environment has at least the bindings of its initial state.
+Hence, pushing a new frame onto the referencing environment and popping it in case of failure is a sufficient mechanism to undo any and all effects on the state, which is paramount for incremental developments.
 Additionally, since the ordering of add and remove operations is preserved, then it follows that de Bruijn indices computations in the mutable setting are correct.
 
 \begin{restatable}[Equivalence]{theorem}{equivalencetheorem}\label{theorem:equivalence}
@@ -763,6 +692,10 @@ The formalisms for indexing with respect to the immutable and mutable representa
 \item $\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi'}$ if and only if $\Xi \vdash \IndexesTerm{M}{\tilde M}$ and $\Xi' = \Xi$.
 \end{enumerate}
 \end{restatable}
+
+\begin{proof}
+See appendix~\ref{chapter:indexing}.
+\end{proof}
 
 \begin{corollary}
 Successfully indexing an \LF kind, type or term using the Hoare-style algorithm specification restores the referencing environment to its initial state.
@@ -779,13 +712,13 @@ As part of the reimplementation of the indexing phase, the referencing environme
 Specifically, \acp{HAMT} were leveraged for the dictionaries mapping identifiers to stacks of bindings.
 The indexing functions were then implemented using the state monad so that derived states could be passed on to later operations.
 The motivation for using an immutable data structure was to get copies of the referencing environment for free during indexing.
-These copies could then be attached to proof declarations to allow rollbacks like in \Isabelle/\Isar with its context graphs.
+These copies could then be attached to proof declarations to allow state rollbacks like in \Isabelle/\Isar with its context graphs.
 In turn, checking out an incomplete theorem in \Harpoon would simply result in the referencing environment's copy being used for elaborating commands.
-Unfortunately, the increased number of memory allocations and the lack of contiguity in the memory layout for the referencing environment incurred a decrease in runtime performance by a factor of 10 for \Beluga's test suite.
+Unfortunately, the increased number of memory allocations, the overhead of insertions and removals in \acp{HAMT} and the lack of contiguity in the memory layout for the referencing environment incurred a decrease in runtime performance by a factor of roughly 10 for \Beluga's test suite.
 This meant that running the indexing phase on a signature would take more time than type-checking it.
 Thankfully, the indexing phase's implementation was loosely coupled with the representation of the referencing environment, and the state monad was used throughout.
-As such, it was easy to shift back to a mutable data structure and recover runtime performance comparable to that of the legacy implementation of \Beluga.
-As a consequence, checking out incomplete proofs in \Harpoon involves reconstructing the referencing environment using the internal \ac{AST}'s representation of the signature.
+This made it easy to substitute a mutable data structure for the referencing environment and recover runtime performance comparable to that of the legacy implementation of \Beluga.
+Consequently, checking out incomplete proofs in \Harpoon involves reconstructing the referencing environment using the internal \ac{AST}'s representation of the signature.
 
 % TODO: Discuss scope graphs as an alternative to the formalism and implementation, argue this ends up being the same as association lists because of telescopes
 % TODO: Discuss scope graphs, and how we would end up with association lists because we'd get a scope for each declaration (except recursive declarations)
