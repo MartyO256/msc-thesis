@@ -50,9 +50,12 @@ The main issues when dealing with this type checking monad are performance overh
 To mitigate soundness issues, some interactions kinds have defined scopes to restrict their effect on the type checking state.
 In case of bugs arising during edit sessions, separate commands are available to the user to restore the state to earlier checkpoints or to entirely reload the current editor buffer.
 
-% TODO: See if Coq has incremental development as well
-% TODO: See chapter 7 of Coq's manual: Proof Handling
-% TODO: Coq Vernac has a version control system (VCS) and uses immutable maps in its kernel for referencing environment (there are soundness bugs lurking in the module system.)
+\Coq and the \CoqIDE~\cite{Coq, bertot2013interactive} implement a state transaction machine to efficiently keep track of changes to proofs and their effects on the system's state.
+This is backed by a version control system whose design is inspired by \textsc{Git}.
+Internally, a \ac{DAG} is created and maintained to represent states as nodes and transactions (or differences) as edges.
+Committed changes to the state create branches in the version control system which can then be merged, deleted or checked out.
+The actual data to use at a given state in this system is reconstructed by traversing the \ac{DAG} from the root node to the target node while applying the effects encoded in each visited edge.
+Concretely, this version control system is used in \Coq's interactive environment when processing vernacular commands, including querying documents, starting proofs, stepping in a proof, and solving a subgoal.
 
 % What are the features desired for Harpoon and Beluga?
 % Why do those features help in incremental proof development?

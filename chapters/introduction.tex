@@ -42,7 +42,7 @@ Structural (or projectional) editing in programming language tooling is the func
 This is in contrast with plain text editors in which users may only edit textual representations of their programs, that then subsequently require parsing to be interpreted.
 The \Hazel~\cite{omar2017hazelnut, omar2019live} functional programming environment is a notable example of a structural editor in the functional programming community for its ability to dynamically provide type information as the user writes programs with holes.
 This is achieved using carefully designed semantics of moving a text-editing cursor in the concrete syntax and mapping its location to a node in the parsed \ac{AST}.
-When it comes to theorem provers, one example of structured editing is the \CoqIDE, which leverages the \Coq \XML protocol to interact with the proof system's kernel by way of messages.
+When it comes to theorem provers, one example of structured editing is the \CoqIDE, which leverages the \Coq \XML protocol and a state transaction system to interact with the proof system's kernel by way of messages.
 This is not too dissimilar to what is done with implementations of the language server protocol to provide advanced editing functionalities for programming languages.
 In essence, the main objectives for implementing structural editing are to enable and assist in the incremental development of programs.
 This is in contrast with incremental compilation, which focuses on recompiling minimal sets of programs when they are affected by changes to the source code, which is achieved using dependency analysis and careful handling of cache invalidations.
