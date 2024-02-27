@@ -19,9 +19,9 @@ Mechanisms can then be designed for the interpreter's state to improve its runti
 % How do other systems supporting interactive proof sessions handle state management?
 
 Proof assistants providing interactivity through \acp{REPL} and tools for text editors each approach the problem of incremental development in unique ways tailored to their systems.
-For instance, constraint-based type systems require mechanisms to keep track of the effects of solving said constraints, so that those effects can be undone in the event that type-checking fails for a given program.
+For instance, constraint-based type systems require mechanisms to keep track of the effects of solving said constraints so that those effects can be undone in the event that type-checking fails for a given program.
 Likewise, context-switching between different parts of a program under edit requires updating the state to correctly reflect what identifiers are in scope, both for providing code completion hints and for performing identifier resolution in new terms.
-Furthermore, command histories may be implemented to support undoing and redoing edit actions, like in proof assistants since users may apply tactics that do not lead to a solution for a given subgoal.
+Furthermore, command histories may be implemented to support undoing and redoing edit actions, which should be a necessary feature for proof assistants since users may apply tactics that do not lead to a solution for a given subgoal.
 Additionally, incomplete subgoals may be arranged internally as a tree following the structure of a proof to allow navigating between holes.
 The successful implementation of these structured editing features hinges on careful management of recorded state to ensure soundness.
 
@@ -47,10 +47,10 @@ This state includes global configuration parameters, scope information, user-def
 It is an agglomeration of all the data used in \Agda's processing pipeline, readily available as a function parameter as opposed to being represented using a global mutable data structure.
 This wholly captures the idea of a visiting state over declarations in an \Agda signature.
 The main issues when dealing with this type checking monad are performance overheads, and ensuring that state mutations are sound.
-To mitigate soundness issues, some interactions kinds have defined scopes to restrict their effect on the type checking state.
+To mitigate soundness issues, some interaction kinds have defined scopes to restrict their effect on the type checking state.
 In case of bugs arising during edit sessions, separate commands are available to the user to restore the state to earlier checkpoints or to entirely reload the current editor buffer.
 
-\Coq and the \CoqIDE~\cite{Coq, bertot2013interactive} implement a state transaction machine to efficiently keep track of changes to proofs and their effects on the system's state.
+\Coq\footnote{\Coq \texttt{v8.18.0}} and the \CoqIDE~\cite{Coq, bertot2013interactive} implement a state transaction machine to efficiently keep track of changes to proofs and their effects on the system's state.
 This is backed by a version control system whose design is inspired by \textsc{Git}.
 Internally, a \ac{DAG} is created and maintained to represent states as nodes and transactions (or differences) as edges.
 Committed changes to the state create branches in the version control system which can then be merged, deleted or checked out.
@@ -90,8 +90,8 @@ In the implementation, not all variables are replaced with de Bruijn indices dur
 
 The legacy implementation of indexing is additionally responsible for disambiguating the application of user-defined operators since that phase keeps track of constants as they are introduced in the signature.
 This disambiguation leverages Dijkstra's shunting-yard algorithm as opposed to the recursive descent parsing algorithm presented in section~\ref{section:parsing-user-defined-operators}.
-In the revised system, this responsibility has been moved to its own disambiguation phase, as presented in section~\ref{section:lexing-parsing-disambiguation}.
-While this refactoring could have been sufficient in simplifying the implementation, it uncovered significant technical debt and issues having to do with the way identifiers are handled during indexing.
+In the revised system, this responsibility has been moved to its own disambiguation phase, as presented in section~\ref{section:lexing-parsing-disambiguation}, which requires its own implementation of name resolution.
+While this refactoring could have been sufficient in simplifying the processing pipeline, it uncovered significant technical debt and issues having to do with the way identifiers are handled during indexing.
 
 The overarching store illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} records the constant declarations encountered during signature reconstruction.
 These declarations are arranged in tables, with one table per kind of constant declaration, as illustrated in figure~\ref{figure:referencing-environment-architecture}.
@@ -101,21 +101,21 @@ For instance, \LF type-level and term-level constants have their own declaration
 This design aims at ensuring that variables and constants originating from the \LF, meta or computation levels do not end up appearing in terms of a different level~\cite{germain2010implementation}.
 Unfortunately, without having a unique table representing an entire referencing environment, name resolution in the presence of shadowing proves obtuse and leads to unexpected results when coupled with overloading of identifiers.
 Indeed, when a constant identifier is resolved during indexing, the declaration tables in the store are looked up in a pre-defined order.
-As such, identifiers are not looked up with respect to the global order in which they are declared.
+As such, identifier lookups to not respect the global insertion order of constant and variable declarations.
 Instead, they are looked up first with respect to the order of identifier kinds, and then by the declaration order within the table for that identifier kind.
 Consequently, parts of the referencing environment do not exist depending on the expected kind of variable or constant encountered in the \ac{AST}.
-For example, it is impossible in \Beluga~\texttt{v1.0} for -level coinductive type constant to shadow an inductive one simply because the declaration table for the former kind is always looked up after the declaration table for the latter kind.
-Likewise, since identifiers at the meta-level and at the computation-level are kept separate, invalid references to computation-level objects in boxed terms are not detected as they are instead interpreted as free meta-variables.
+For example, it is impossible in \Beluga~\texttt{v1.0} for computation-level coinductive type constant to shadow an inductive one simply because the declaration table for the former kind is always looked up after the declaration table for the latter kind.
+Likewise, since identifiers at the meta-level and at the computation-level are kept separate, invalid references to computation-level objects in boxed terms are undetectable as they are instead systematically interpreted as free meta-variables.
 Counterintuitively, different parts of the referencing environment can also be interleaved in one program with this split table and association lists approach.
 Indeed, one can introduce a meta-level variable with an \verb|mlam|-binder and a computation-level variable with an \verb|fn|-binder, both using the same identifier, and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively because they effectively occupy different namespaces.
-This overloading would not translate well in proofs on paper since an identifier could be used to refer to two distinct objects at once.
+This overloading would not translate well in proofs on paper since that could result in an identifier being used to refer to two distinct objects in the same proof.
 It also challenges the identifier scoping rules suggested by \Beluga's concrete syntax.
 
 \begin{figure}[htb]
 \centering
 \includegraphics{figures/referencing-environment-architecture.eps}
 \caption[Role of the referencing environment in \Beluga]{%
-Schema of the referencing environment structure as a mediator between the \Beluga signature and the reconstruction store for name resolution.
+Diagram of the referencing environment structure as a mediator between the \Beluga signature and the reconstruction store for name resolution.
 }
 \label{figure:referencing-environment-architecture}
 \end{figure}
@@ -127,12 +127,12 @@ Indexing is only explicitly parameterized with respect to association lists for 
 This allows \Harpoon and \ac{REPL} sessions instantiated in the very last program declared in a \Beluga signature to stay consistent with identifier resolution during signature reconstruction.
 Indeed, when navigating between to a different \Harpoon subgoal, the variable bindings introduced by the current subgoal can be discarded and replaced with those of the new subgoal.
 Incremental proof development sessions instantiated on holes located anywhere else but the last declaration in the signature may result in invalid programs being generated.
-Indeed, since the store of constants is stuck at the state it ends up in after the signature is reconstructed, checking out those holes incorrectly brings later constants in scope.
+Since the store of constants is stuck at the state it ends up in after the signature is reconstructed, checking out those holes incorrectly brings later constants in scope.
 This can lead to shadowing of constants required for the proof development.
-In order to ensure soundness of incremental proof development with holes in proof scripts located anywhere in a signature, it is necessary for indexing to be explicitly parameterized over the entire referencing environment as opposed to just the stores of variables.
+In order to ensure soundness of incremental proof development with holes in proof scripts located anywhere in a signature, it is necessary for indexing to be explicitly parameterized over the entire referencing environment as opposed to just the stores for variables.
 
 The aforementioned incongruities in name resolution and tight coupling with the signature reconstruction store motivate the reimplementation of the indexing phase to use one uniform namespace while ensuring that identifiers from different domains cannot occur in terms in which they don't belong.
-Without having types available at this stage of processing, the accidental feature of identifier overloading had to be discarded.
+Without having types available at this stage of processing, the accidental feature of identifier overloading had to be discarded to avoid postponing ambiguous references to type-checking.
 
 \section{Uniform Indexing}\label{section:indexing}
 
@@ -151,13 +151,13 @@ To approach this problem, some definitions are in order.
 A \textit{frame} is a lexical region of an \ac{AST} wherein variable declarations and references can be made.
 A \textit{scope} is a frame in which name resolution is uniform, meaning that references are resolved to the same declaration site irrespective of the \ac{AST} node in the scope.
 Whereas declarations can shadow each other within a frame, all declarations have to be distinct in a scope.
-Because of this, shadowing with scopes is only supported by nesting.
+%Because of this, shadowing with scopes is only supported by nesting.
 A \textit{fully qualified identifier} $x_1.x_2.\cdots.x_n$ is a list of plain identifiers $x_1$, $x_2$, $\dots$, $x_n$ separated by dots denoting projection out of a namespace.
 A \textit{referencing environment} in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
 In essence, a referencing environment provides a window over a signature for name resolution, and as such its state is restricted to representing one scope at a time.
 
-The uniform indexing phase is designed as a single sequential traversal of the external named \ac{AST} to map it to the approximate locally nameless \ac{AST}, using the referencing environment as visitor state.
-As \ac{AST} nodes are traversed, the referencing environment is updated by adding or removing identifiers in scope so that the resolution of identifiers is consistent with the language's specification.
+%The uniform indexing phase is designed as a single sequential traversal of the external named \ac{AST} to map it to the approximate locally nameless \ac{AST}, using the referencing environment as visitor state.
+During indexing, the referencing environment is updated by adding or removing identifiers in scope as \ac{AST} nodes are traversed.
 This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across different indexing contexts ($\Psi$, $\Delta$ and $\Gamma$).
 %This includes name resolution under lambda-expressions and contexts in contextual \LF patterns, as well as distinguishing between pattern variables and bound identifiers.
 All the while, indexing has to feature some backtracking mechanism to support incremental proof development in \Harpoon sessions.
@@ -174,7 +174,7 @@ As such, the referencing environment is instead modelled and implemented using f
 
 Concretely, a referencing environment is a stack of frames, as illustrated in figure~\ref{figure:referencing-environment-definition}.
 Each frame holds a tree of bindings, wherein each node assigns to an identifier a stack of entries and optionally a subtree.
-The stacks of bindings provide a means of recalling what earlier definitions were assigned to identifiers as the traversal exits a scope.
+The stacks of bindings provide a means of recalling what earlier definitions were assigned to identifiers in the current frame as the traversal exits a scope.
 Namespaces are handled uniformly since every binding may introduce one in the form of a subtree of bindings.
 The type of entry in a referencing environment is extensible, which allows for additional kinds of identifier references to be defined, and for data to be added to support different kinds of algorithms relying on the named \ac{AST}.
 
@@ -188,7 +188,7 @@ Plain frame & $ \Frame $ & $ \Coloneqq $ & $ \Bindings $\\
 Module frame & $ \Module $ & $ \Coloneqq $ & $ (\Bindings, \BindingsTree) $\\
 Pattern frame & $ \Pattern $ & $ \Coloneqq $ & $ (\Bindings_{\text{p}}, \Bindings_{\text{e}}) $\\
 Bindings & $ \Bindings $ & $ \Coloneqq $ & $ (\BindingsTree, |\Psi|, |\Delta|, |\Gamma|) $\\
-Binding tree & $ \BindingsTree $ & $ \Coloneqq $ & $ \{x_i = \mathcal{S}_i\}_{i \in \set{1, 2, \dots, n}} $\\
+Binding tree & $ \BindingsTree $ & $ \Coloneqq $ & $ \set{x_i \mapsto \mathcal{S}_i}_{i \in \set{1, 2, \dots, n}} $\\
 Entry stack & $ \mathcal{S} $ & $ \Coloneqq $ & $ \cdot \mid \mathcal{S}; (e, \BindingsTree) $\\
 Entry & $ e $ & $ \Coloneqq $ & $ \cdots \mid (\LFTerm, |\Psi|) \mid (\Ctx, |\Delta|) \mid (\CompTerm, |\Gamma|) $\\
 &&& $ \phantom{\cdots} \mid (\LFTypeConst, \tilde a) \mid (\LFTermConst, \tilde c) $
@@ -205,7 +205,7 @@ This is used for presentation purposes, with $[x_1 : \tau_1, x_2 : \tau_2, \cdot
 To illustrate which identifiers are introduced in scope by a frame, the set of toplevel identifiers for frames and binding trees is defined in figure~\ref{figure:definition-domain-frames}.
 %Then, the right-to-left association list corresponding to a referencing environment $\Xi = \mathcal{F}_1; \mathcal{F}_2; \cdots; \mathcal{F}_n$ is $\Domain(\mathcal{F}_1) \oplus \Domain(\mathcal{F}_2) \oplus \cdots \oplus \Domain(\mathcal{F}_n)$ where $\oplus$ denotes concatenation.
 
-\begin{figure}
+\begin{figure}[H]
 \centering
 {\footnotesize
 \begin{tabular}{lcll}
@@ -213,7 +213,7 @@ $\Domain(\Frame)$ & $=$ & $\Domain(\Bindings)$ & when $\Frame = \Bindings$\\
 $\Domain(\Module)$ & $=$ & $\Domain(\Bindings)$ & when $\Module = (\Bindings, \_)$\\
 $\Domain(\Pattern)$ & $=$ & $\Domain(\Bindings_{\text{p}})$ & when $\Pattern = (\Bindings_{\text{p}}, \_)$\\
 $\Domain(\Bindings)$ & $=$ & $\Domain(\BindingsTree)$ & when $\Bindings=(\BindingsTree, \_, \_, \_)$\\
-$\Domain(\BindingsTree)$ & $=$ & $\set{x_1, x_2, \dots, x_n}$ & when $\BindingsTree = \set{x_i = \EntryStack_i}_{i \in \set{1, 2, \dots, n}}$
+$\Domain(\BindingsTree)$ & $=$ & $\set{x_1, x_2, \dots, x_n}$ & when $\BindingsTree = \set{x_i \mapsto \EntryStack_i}_{i \in \set{1, 2, \dots, n}}$
 \end{tabular}
 }
 \caption[Definition of the domain of frames]{%
@@ -238,12 +238,13 @@ Plain frames are suitable for introducing multiple identifiers in such a way tha
 Only public constant declarations are exported from the module they appear in when it is opened, in which case they are brought in scope.
 This ensures that constants and notations imported from external modules are not reexported when the module is opened elsewhere.
 To support this, when a constant binding is added to a module frame $(\Bindings, \BindingsTree)$, it is added to both $\Bindings$ for name resolution, and to the tree of exported constants $\BindingsTree$ for opening modules.
+This is illustrated in figure~\ref{figure:referencing-environment-modules}.
 \item
 \textit{Pattern frames} $\Pattern$: variables added to this kind of frame are inner pattern-bound or pattern variables.
-Inner pattern-bound variables are introduced by binders in the pattern, like $c$ and $x$ in the contextual lambda pattern $[c : \mathsf{tm} \rightarrow \mathsf{tm} \vdash \mathsf{lam} (\textbackslash x. c\; x)]$.
+Inner pattern-bound variables are introduced by binders in the pattern, like $c$ and $x$ in the contextual lambda term pattern $[c : \mathsf{tm} \rightarrow \mathsf{tm} \vdash \mathsf{lam} (\textbackslash x. c\; x)]$.
 Pattern variables on the other hand are free variables in the pattern, which become bound variables in the body of the match case.
 For a pattern frame $(\Bindings_{\text{p}}, \Bindings_{\text{e}})$, the bindings in $\Bindings_{\text{p}}$ are used for name resolution in the pattern, whereas the bindings in $\Bindings_{\text{e}}$ are only used for name resolution in the body of the pattern-matching branch.
-This means that inner pattern-bound variables are added to $\Bindings_{\text{p}}$, and free variables are added to $\Bindings_{\text{e}}$.
+This means that inner pattern-bound variables are added to $\Bindings_{\text{p}}$, and free pattern variables are added to $\Bindings_{\text{e}}$.
 Because of the way meta-level abstractions are automatically reconstructed for patterns, free meta-variables are both inner pattern-bound and pattern variables.
 This allows duplicate occurrences of free meta-variables to occur in a pattern.
 \end{enumerate}
@@ -262,7 +263,7 @@ This allows duplicate occurrences of free meta-variables to occur in a pattern.
 \verbbf{rec} g : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h3};
 \end{Verbatim}
 \caption[Example \Beluga signature with holes]{%
-A \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} and \texttt{\verbhole{?h3}}, used to showcase how a uniform referencing environment is updated when dealing with namespaces.
+A \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} and \texttt{\verbhole{?h3}}.
 }
 \label{figure:referencing-environment-example}
 \end{subfigure}
@@ -283,6 +284,7 @@ Bindings annotated with an asterisk $*$ denote constants that are exported from 
 \label{figure:example-reference-environment-formalism}
 \end{subfigure}
 \caption[Handling of modules in referencing environments]{Handling of modules in referencing environments.}
+\label{figure:referencing-environment-modules}
 \end{figure}%
 \begin{figure}\ContinuedFloat
 \begin{subfigure}{\linewidth}
@@ -372,8 +374,8 @@ $ \Lookup{x_1.x_2.\cdots.x_n}{\Frame} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{
 $ \Lookup{x_1.x_2.\cdots.x_n}{\Module} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Bindings} $ & when $ \Module = (\Bindings, \_) $\\
 $ \Lookup{x_1.x_2.\cdots.x_n}{\Pattern} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\Bindings_{\text{p}}} $ & when $ \Pattern = (\Bindings_{\text{p}}, \_) $\\
 $ \Lookup{x_1.x_2.\cdots.x_n}{(\BindingsTree, \_, \_, \_)} $ & $ = $ & $ \Lookup{x_1.x_2.\cdots.x_n}{\BindingsTree} $ &\\
-$ \Lookup{x_1.x_2.\cdots.x_n}{\set{y_i = \EntryStack_i}_{i \in \set{1, 2, \dots, m}}} $ & $ = $ & $ \Lookup{x_2.x_3.\cdots.x_n}{\BindingsTree} $ & when $ \exists i \in \set{1, 2, \dots, m}, x_i = y_i $ and $ \mathcal{S}_i = \cdots ; (\_, \BindingsTree) $\\
-$ \Lookup{x}{\set{y_i = \EntryStack_i}_{i \in \set{1, 2, \dots, m}}} $ & $ = $ & $ e $ & when $ \exists i \in \set{1, 2, \dots, m}, x = y_i $ and $ \mathcal{S}_i = \cdots ; (e, \_) $\\
+$ \Lookup{x_1.x_2.\cdots.x_n}{\set{y_i \mapsto \EntryStack_i}_{i \in \set{1, 2, \dots, m}}} $ & $ = $ & $ \Lookup{x_2.x_3.\cdots.x_n}{\BindingsTree} $ & when $ \exists i \in \set{1, 2, \dots, m}, x_i = y_i $ and $ \mathcal{S}_i = \cdots ; (\_, \BindingsTree) $\\
+$ \Lookup{x}{\set{y_i \mapsto \EntryStack_i}_{i \in \set{1, 2, \dots, m}}} $ & $ = $ & $ e $ & when $ \exists i \in \set{1, 2, \dots, m}, x = y_i $ and $ \mathcal{S}_i = \cdots ; (e, \_) $\\
 $ \Lookup{\_}{\_} $ & $ = $ & $ \Fail $ &
 \end{tabular}
 }
@@ -386,7 +388,7 @@ Definition of lookups in referencing environments.
 
 In contrast with association lists, the use of dictionaries in the referencing environment means that the order of insertions for bindings is not readily available.
 This poses a problem for the computation of de Bruijn indices.
-Thankfully, it suffices to keep track of the indexing context sizes $|\Psi|$, $|\Delta|$ and $|\Gamma|$ in each frame to record the de Bruijn level of variables as they are inserted in the environment, like in figure~\ref{figure:referencing-environment-definition}.
+Thankfully, it suffices to keep track of the indexing context sizes $|\Psi|$, $|\Delta|$ and $|\Gamma|$ in each frame to record the de Bruijn level of variables as they are inserted in the environment, like in figures~\ref{figure:referencing-environment-definition} and \ref{figure:frames-addition-removal-definition}.
 This recorded level can then be used to recover de Bruijn indices efficiently, as illustrated in figure~\ref{figure:lf-indexing}.
 Indeed, if $x$ is a variable in the domain of the indexing context $\Psi'$, and $\Psi$ is the indexing context immediately before that declaration for $x$ was added, then $|\Psi'| > |\Psi|$, and the de Bruijn index of $x$ with respect to $\Psi'$ is $|\Psi'| - |\Psi|$.
 This is the same computation as subtracting the de Bruijn level of $x$ from the current abstraction depth~\cite{DEBRUIJN1972381, debruijnlevels1995}.
@@ -452,6 +454,7 @@ Nameless \LF terms & $\tilde M, \tilde N$ & $\Coloneqq$ & $\iota \mid \tilde c \
 
 Indexing is first defined with respect to an immutable representation of the referencing environment $\Xi$ as an association list.
 This algorithm is easy to implement, but comes at the expense of degraded runtime performance for lookups.
+It is assumed that these computations take place in either a plain or module frame.
 
 {\footnotesize
 \begin{mdframed}[frametitle={$\boxed{\Xi \vdash \IndexesKind{K}{\tilde K}}$ : in the referencing environment $\Xi$, the \LF kind $K$ is indexed as $\tilde K$}]
@@ -564,7 +567,7 @@ This algorithm is easy to implement, but comes at the expense of degraded runtim
 }
 
 In the implementation, indexing is imperative and defined with respect to a mutable referencing environment that is passed along for each computation.
-The fact that computations may mutate that state is reflected formally using a Hoare-style specification.
+The fact that computations may mutate the state is reflected formally using a Hoare-style specification.
 
 {\footnotesize
 \begin{mdframed}[frametitle={$\boxed{\Hoare{P}{\IndexesKind{K}{\tilde K}}{Q}}$ : the \LF kind $K$ is indexed as $\tilde K$ with precondition $P$ and postcondition $Q$}]
@@ -679,13 +682,13 @@ The fact that computations may mutate that state is reflected formally using a H
 Neither formulation of the indexing algorithm is total since the identifier and index lookup operations fail for unbound identifiers.
 In the immutable setting, recovering from such failures is trivial since no effects are applied to the association list of bindings.
 On the other hand, the mutable setting does not make any guarantee as to the state of the referencing environment after a computation.
-This potentially allows insertions to occur in an unpredictable order, and for deletions to unintentionally remove bindings that appear in the initial referencing environment.
+This potentially allows insertions to occur in an unpredictable order, and for deletions to unintentionally remove bindings that appear in outer frames of the initial referencing environment.
 This next theorem certifies that that is not the case: if a binding removal occurs, then it is immediately preceded by the addition of that same binding.
 
 In fact, the referencing environment is restored to its initial state after successfully indexing an \LF object.
 This means that in the event of a failure during indexing, the environment has at least the bindings of its initial state.
 Hence, pushing a new frame onto the referencing environment and popping it in case of failure is a sufficient mechanism to undo any and all effects on the state, which is paramount for incremental developments.
-Additionally, since the ordering of add and remove operations is preserved, then it follows that de Bruijn indices computations in the mutable setting are correct.
+Additionally, since the ordering of add and remove operations is preserved, it follows that the computation of de Bruijn indices in the mutable setting are correct.
 
 \begin{restatable}[Equivalence]{theorem}{equivalencetheorem}\label{theorem:equivalence}
 The formalisms for indexing with respect to the immutable and mutable representations of the referencing environment are equivalent.
@@ -714,26 +717,19 @@ Successfully indexing an \LF kind, type or term using the Hoare-style algorithm 
 As part of the reimplementation of the indexing phase, the referencing environment was first designed using immutable data structures.
 Specifically, \acp{HAMT} were leveraged for the dictionaries mapping identifiers to stacks of bindings.
 The indexing functions were then implemented using the state monad so that derived states could be passed on to later operations.
-The motivation for using an immutable data structure was to get copies of the referencing environment for free during indexing.
-These copies could then be attached to proof declarations to allow state rollbacks like in \Isabelle/\Isar with its context graphs.
+Having copies of the referencing environment for free during indexing would have facilitated incremental development because they could be attached to proof declarations to allow state rollbacks like in \Isabelle/\Isar with its context graphs.
 In turn, checking out an incomplete theorem in \Harpoon would simply result in the referencing environment's copy being used for elaborating commands.
 Unfortunately, the increased number of memory allocations, the overhead of insertions and removals in \acp{HAMT} and the lack of contiguity in the memory layout for the referencing environment incurred a decrease in runtime performance by a factor of roughly 10 for \Beluga's test suite.
 This meant that running the indexing phase on a signature would take more time than type-checking it.
 Thankfully, the indexing phase's implementation was loosely coupled with the representation of the referencing environment, and the state monad was used throughout.
 This made it easy to substitute a mutable data structure for the referencing environment and recover runtime performance comparable to that of the legacy implementation of \Beluga.
-Consequently, checking out incomplete proofs in \Harpoon involves reconstructing the referencing environment using the internal \ac{AST}'s representation of the signature.
+Consequently, checking out incomplete proofs in \Harpoon now involves reconstructing the referencing environment using the internal \ac{AST}'s representation of the signature.
 
-% TODO: Discuss scope graphs as an alternative to the formalism and implementation, argue this ends up being the same as association lists because of telescopes
-% TODO: Discuss scope graphs, and how we would end up with association lists because we'd get a scope for each declaration (except recursive declarations)
-% TODO: Reference structural editing for free using scope graphs, how the immutable list representation is suitable for live editing as opposed to compilation.
-
-% TODO: Maybe mentiton how the Hoare-style specification can be strengthened by having a notion of equivalence modulo the operations defined for it. That allows arbitrary non-conflicting effects to occur, but makes the inference rules verbose.
-
-From a programming language implementation standpoint, the revised indexing phase simplified the system's flow of information by decoupling it from the signature reconstruction store.
+From a programming language implementation standpoint, the revised indexing phase simplifies the system's flow of information by decoupling it from the signature reconstruction store.
 This opens up multiple opportunities, including proper unit-testing of the referencing environment structure and indexing functions.
 Additionally, given \Beluga's design for signature-level declaration of constants, the indexing phase can be parallelized.
 This is because the body of a signature-level declaration is guaranteed not to export non-constant identifiers.
 This means that the referencing environment right before a signature-level can be constructed while disregarding most of the \ac{AST}.
 As such, the declarations in a signature can first be traversed to preallocate symbolic identifiers for toplevel constants and store them in a queue.
 Concurrent threads can then be assigned non-overlapping ranges of declarations to process, and the initial referencing environment for each can be constructed using only that queue.
-Should this isolation for signature-level declarations be extended to the later phases of processing, concurrently type-checking programs could improve \Beluga's performance.
+Should this isolation for signature-level declarations be extended to the later phases of processing, concurrently type-checking programs could improve \Beluga's performance in large mechanizations.
