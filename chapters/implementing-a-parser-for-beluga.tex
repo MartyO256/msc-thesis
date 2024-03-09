@@ -106,7 +106,7 @@ This complicated the processing pipeline since the semantics of a given \Beluga 
 % What are parser combinators? What are some well-known libraries for parser combinators? What are their limitations?
 
 As the \Beluga language grew, so did the complexity of its grammar, such that user errors output by the parser generated with \CamlpFour were deemed not sufficiently informative.
-Hence, \Beluga version \texttt{1.0} featured a new parser implemented using monadic parser combinators, which are higher-order functions for constructing top-down recursive descent parsers~\cite{Burge1975-BURRPT, hutton1996monadic, leijen2001parsec, generalparsercombs}.
+Hence, \Beluga version \texttt{1.0} featured a new parser implemented using monadic parser combinators, which are higher-order functions for constructing top-down recursive descent parsers~\cite{Burge1975-BURRPT, hutton1996monadic, leijen2001parsec, generalparsercombs, afroozeh2019practical}.
 They provide a more declarative way of constructing complex parsers than shift-reduce parsers.
 Indeed, the combination of smaller parsers (or parselets) in \OCaml using operators closely resembles grammar specifications using \acp{CFG}, which allows for fast prototyping and better readability of the implementation.
 As such, the intent of reworking \Beluga to use parser combinators was to improve error-reporting for the end user, and to improve the overall maintainability of the implementation for subsequent developers by making it more modular.
