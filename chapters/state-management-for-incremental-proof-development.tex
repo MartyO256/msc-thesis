@@ -107,8 +107,23 @@ Consequently, parts of the referencing environment do not exist depending on the
 For example, it is impossible in \Beluga~\texttt{v1.0} for computation-level coinductive type constant to shadow an inductive one simply because the declaration table for the former kind is always looked up after the declaration table for the latter kind.
 Likewise, since identifiers at the meta-level and at the computation-level are kept separate, invalid references to computation-level objects in boxed terms are undetectable as they are instead systematically interpreted as free meta-variables.
 Counterintuitively, different parts of the referencing environment can also be interleaved in one program with this split table and association lists approach.
-Indeed, one can introduce a meta-level variable with an \verb|mlam|-binder and a computation-level variable with an \verb|fn|-binder, both using the same identifier, and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively because they effectively occupy different namespaces.
-This overloading would not translate well in proofs on paper since that could result in an identifier being used to refer to two distinct objects in the same proof.
+Indeed, one can introduce a binder for a meta-level variable and another for a computation-level variable, both using the same identifier, and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively because they effectively occupy different namespaces.
+The contrived but valid example program \verb*|f| below illustrates this: the identifiers ${\color{red}{g}}$ and ${\color{magenta}{x}}$ are in $\Delta$, and ${\color{blue}{g}}$ and ${\color{teal}{x}}$ are in $\Gamma$ in such a way that the function's body uses both overloading meanings of those identifiers.
+This is admissible because only one namespace is made available at a time based on the computation-level or meta-level \ac{AST} node the identifier lies in.
+\begin{center}
+\begin{minipage}{\textwidth}
+\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
+{\verbbf{LF}} tm : {\verbbf{type}} = ...;
+{\verbbf{schema}} ctx = ...;
+{\verbbf{inductive}} Ex : {\verbbf{ctype}} = ...;
+
+{\verbbf{rec}} f : {\{g : ctx\}} -> [g |- tm] -> Ex -> Ex =
+  {\verbbf{mlam}} {\color{red}{g}} => {\verbbf{fn}} {\color{blue}{g}} => {\verbbf{fn}} {\color{teal}{x}} => {\verbbf{let}} [_ |- {\color{magenta}{x}}] = {\color{blue}{g}} {\verbbf{in}} f [{\color{red}{g}}] [{\color{red}{g}} |- {\color{magenta}{x}}] {\color{teal}{x}};
+
+\end{Verbatim}
+\end{minipage}
+\end{center}
+This overloading does not translate well in proofs on paper since that results in an identifier being used to refer to two distinct objects in the same proof.
 It also challenges the identifier scoping rules suggested by \Beluga's concrete syntax.
 
 \begin{figure}[htb]
@@ -125,8 +140,8 @@ This means that external mutations to that store affect the output of functions 
 As outlined in section~\ref{section:intro-state-management}, this design is only suitable for a single pass through the processing pipeline since only then is the store's state is consistent with how the \ac{AST} is traversed.
 Indexing is only explicitly parameterized with respect to association lists for variable declarations.
 This allows \Harpoon and \ac{REPL} sessions instantiated in the very last program declared in a \Beluga signature to stay consistent with identifier resolution during signature reconstruction.
-Indeed, when navigating between to a different \Harpoon subgoal, the variable bindings introduced by the current subgoal can be discarded and replaced with those of the new subgoal.
-Incremental proof development sessions instantiated on holes located anywhere else but the last declaration in the signature may result in invalid programs being generated.
+Indeed, when navigating to a different \Harpoon subgoal, the variable bindings introduced by the current subgoal can be discarded and replaced with those of the new subgoal.
+Incremental proof development sessions initiated on holes located anywhere else but the last declaration in the signature may result in invalid programs being generated.
 Since the store of constants is stuck at the state it ends up in after the signature is reconstructed, checking out those holes incorrectly brings later constants in scope.
 This can lead to shadowing of constants required for the proof development.
 In order to ensure soundness of incremental proof development with holes in proof scripts located anywhere in a signature, it is necessary for indexing to be explicitly parameterized over the entire referencing environment as opposed to just the stores for variables.
