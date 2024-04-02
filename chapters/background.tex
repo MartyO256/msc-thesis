@@ -15,13 +15,16 @@ A complete specification of signature-level declarations is provided in section~
 
 % TODO:
 
-Let $x$ range over identifiers, $c$ over constants, $X$ over meta-objects, $\psi$ over contexts and $g$ over context schemas.
+Let $x$ and $c$ range over computation-level variables and constants respectively, $X$ range over meta-object variables, $\psi$ over context variables and $g$ over context schemas.
 Figure~\ref{figure:internal-syntax} then provides an overview of \Beluga's core language.
 \LF kinds classify \LF types, which classify \LF terms.
 Likewise, computation-level kinds classify computation-level types, which classify computation-level expressions.
 \LF terms are broken down into normal and neutral terms, along with heads and spines, to syntactically enforce canonical forms.
+The notation $A \to K$ is used for the \LF kind $\Pi x{:}A. K$ when $x$ does not appear free in $K$.
+The notation $A \to B$ is defined analogously for \LF types.
 Since \Beluga's type system is bidirectional, the syntax of computation-level expressions is split into those for which a type can be inferred (type-synthesizing expressions), and those that can be checked against a type (type-checkable expressions).
 Meta-objects, classified by meta-types, can be embedded in the computation-level by way of boxes that simultaneously bind all variables from \LF contexts.
+% TODO: Also define Psi, Delta, Gamma
 
 % What's the point of meta-level constructs?
 
@@ -30,8 +33,8 @@ Meta-objects, classified by meta-types, can be embedded in the computation-level
 \begin{figure}
 \begin{subfigure}{\linewidth}
 \begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
-\LF kinds & $K$ & $\Coloneqq$ & $A \to K \mid \Pi x{:}A. K \mid \mathbf{type}$\\
-\LF types & $A, B$ & $\Coloneqq$ & $A\to B \mid \Pi x{:}A. B \mid P$\\
+\LF kinds & $K$ & $\Coloneqq$ & $\Pi x{:}A. K \mid \mathbf{type}$\\
+\LF types & $A, B$ & $\Coloneqq$ & $\Pi x{:}A. B \mid P$\\
 Atomic \LF types & $P$ & $\Coloneqq$ & $a \cdot S$\\
 \LF normal terms & $M$ & $\Coloneqq$ & $R \mid \lambda x. M$\\
 \LF neutral terms & $R$ & $\Coloneqq$ & $H \cdot S \mid u[\sigma]$\\
@@ -147,7 +150,7 @@ This problem of incremental program development arises in \Beluga and \Harpoon b
 % What is the key problem in incremental program development?
 
 Throughout syntactic and semantic analyses pipelines, data is accumulated during the processing of any given program unit.
-This data raises one of the main challenges in implementing incremental program development in that a program unit may only be revisited with the processing state it was defined in.
+This data raises one of the more challenging aspects in implementing incremental program development, and the main motivation for reworking \Beluga's processing pipeline: \textit{a program unit may only be revisited with the processing state it was defined in}.
 This means, for instance, that a procedure performing name lookups or mutations on an \ac{AST} at a given node may only do so using the variables and declarations in scope at that \ac{AST} node, just as the user does when editing the textual representation of that \ac{AST} node.
 As such, edit actions on an \ac{AST} must preserve its semantic correctness properties so that serializing and subsequently deserializing it produces the same \ac{AST} and processing state.
 

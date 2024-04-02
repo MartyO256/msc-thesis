@@ -2,15 +2,19 @@
 % !TeX TXS-program:compile = make
 % !TeX root = main.tex
 
-\documentclass[letter, 12pt, oneside]{report}
+\documentclass[12pt, oneside]{report}
 
 \input{prelude}
 
 \begin{document}
 
+\hypersetup{pageanchor=false}
+
 \include{partials/title-page}
 
 \clearpage
+
+\hypersetup{pageanchor=true}
 
 \pagenumbering{roman}
 

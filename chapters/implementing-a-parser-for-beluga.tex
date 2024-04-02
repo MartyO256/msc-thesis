@@ -55,15 +55,17 @@ These ambiguities are typically resolved by assigning a precedence level, a fixi
 \textit{Name-based ambiguities}: overloaded identifiers may be resolved to different binding sites depending on where they appear in an expression, and fall under different semantic categories as a consequence.
 For instance, in a dependently-typed language, type-level and term-level variables may be syntactically ambiguous, but they may have distinct syntaxes for binders.
 Semantic analysis of the \ac{AST} with respect to a symbol table is usually sufficient to disambiguate those cases.
-However overloading of identifiers in more advanced features, like user-defined mixfix operators~\cite{danielsson2008parsing}, pose additional challenge since identifiers may not be considered in isolation.
+However, overloading of identifiers coupled with more advanced features, like user-defined mixfix operators~\cite{danielsson2008parsing}, poses additional challenges since identifiers may not be considered in isolation.
 \item
 \textit{Type-based ambiguities}: the correct interpretation of an expression may only be determined once a type has been inferred for it, or if it is checked against a type.
 This does not refer to method overloading in object-oriented programming languages since the syntax for calling a method is not ambiguous.
 Rather, if the expression being parsed is an identifier, then a type-based ambiguity may be that that expression or a surrounding one falls into a different syntactic category based on the identifier's type or kind.
-For instance, the syntax $ (g, x : t) $ may denote a pair of terms, with the variable $ x $ being checked against the type $ t $, or it may denote the context $g$ with an added variable declaration $ x : t $.
-In this case, what $ (g, x : t) $ syntactically denotes depends on the type of $ g $.
+For instance, the syntax $ \texttt{(g, x : t)} $ may denote a pair of terms, with the variable $ \texttt{x} $ being checked against the type $ \texttt{t} $, or it may denote the context $ \texttt{g} $ with an added variable declaration $ \texttt{x : t} $.
+In this case, what $ \texttt{(g, x : t)} $ syntactically denotes depends on the type of $ \texttt{g} $.
 To solve such ambiguities, some type information may be provided by a symbol table if the type ascribed to an identifier is known at the declaration site.
 In general it is not practical to disambiguate expressions having type-based ambiguities before type-checking, especially when more intricate type inference algorithms need to be applied to determine the type of an identifier.
+Because of this, languages are typically designed to avoid type-based ambiguities.
+In the same way that is done in figure~\ref{figure:internal-syntax}, identifiers like $\psi$ can be reserved to always denote contexts, such that $\texttt{($\psi$, x : t)}$ is unambiguously a context.
 \end{enumerate}
 
 % What do ambiguities have to do with language design?
@@ -79,7 +81,7 @@ As the name suggests, parsers for \acp{CFL} does not require additional data in 
 This ensures that programs can scale and be readable by the user without having to fully know the context in which programs appear.
 That is, other code sections in a \ac{CFL} do not affect how a given code section is parsed.
 Static operator ambiguities as mentioned previously can be resolved by rewriting the grammar while keeping it context-free.
-The other two kinds of ambiguities however give rise to context-sensitive languages, or even strictly Turing-recognizable languages~\cite{chomsky1956three}.
+Name-based and type-based ambiguities however give rise to context-sensitive languages, or even strictly Turing-recognizable languages~\cite{chomsky1956three}.
 Context-sensitive languages necessitate additional data about the context in which parts of a program appear to correctly parse it.
 This typically means that some semantic analysis is required during parsing in order to complete the syntactic analysis.
 Consequently, the concrete syntax's design for a programming language is intrinsically linked with the algorithm required to parse it.
@@ -112,8 +114,12 @@ Indeed, the combination of smaller parsers (or parselets) in \OCaml using operat
 As such, the intent of reworking \Beluga to use parser combinators was to improve error-reporting for the end user, and to improve the overall maintainability of the implementation for subsequent developers by making it more modular.
 These objectives were largely met, and as a consequence \Harpoon was also implemented using that parsing framework.
 %However, one may argue that shifting from a parser generator implementation to parser combinators was detrimental to the system's maintainability since that discarded the benefits of static analyses of the language's grammar for ambiguities.
-Nonetheless, there is still room to improve in the way of user-friendly error messages to help newcomers get a better grasp of the language and its features.
-This further extends to how the language's syntax is specified.
+There is still room to improve in the way of user-friendly error messages to help newcomers get a better grasp of the language and its features.
+As discussed in the following sections, these shortcomings in error reporting are partly due to the extensive use of overlapping syntactic constructs.
+However, the more significant contributing factor is the stringent syntactic restrictions influenced by the internal workings of the processing pipeline.
+%This also applies to both the internal and user-facing documentation of \Beluga's syntax.
+
+\clearpage
 
 \section{\Beluga Lexing, Parsing and Disambiguation Phases}\label{section:lexing-parsing-disambiguation}
 
@@ -132,8 +138,9 @@ By accepting a wider range of programs during parsing, the subsequent disambigua
 By decoupling disambiguation from indexing, both phases now respect the single-responsibility principle, which in turn simplifies the information flow at the early stage of signature reconstruction.
 Dependency injection of mutable states is also introduced define clear boundaries on effects in the implementation of the disambiguation phase, which enables the development of structured editing procedures.
 \item
-\textit{Provide verifiably correct external \acp{AST} to enable debugging of signature reconstruction.}
+\textit{Provide unambiguous external \acp{AST} to enable debugging of signature reconstruction.}
 Since the disambiguated external \ac{AST} of a program fully captures the meaning of what the user wrote, then the internal \ac{AST} as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} is no longer the only unambiguous data representation for programs in \Beluga.
+This clear boundary in the system allows for isolated testing of the parser, and provides a point of comparison with the internal syntax \ac{AST} output from signature reconstruction.
 \end{enumerate}
 
 A complete specification of \Beluga's and \Harpoon's syntax is provided in appendix~\ref{chapter:grammar} to facilitate future changes to the language, and to provide documentation to the end user.
@@ -169,12 +176,15 @@ The projection out of a module acting as a namespace.
 \end{enumerate}
 
 This first usage of the dot operator proved particularly difficult to resolve when the operator was overloaded with projections out of namespaces.
-One approach to solve this issue is to replace the dot operator with a different syntax for accesses to a module's declarations.
+One approach to solve this issue is to use a different operator for accessing members of modules, which deviates from how \textsc{ML}-style languages are designed.
 The solution that was ultimately put in place was to instead introduce two additional token kinds \synt{dot-identifier} and \synt{dot-integer} in the lexer for identifiers and numbers immediately prefixed by a dot.
 These token kinds were reserved to denote projections.
 During context-free parsing, wherever a dot is expected to not be part of a projection, these two token kinds would still be accepted, but a corresponding identifier or number token would be spliced in the input stream.
 This effectively means that whitespace cannot follow a dot operator used for projection.
 Thus, \Twelf-style \LF term-level and type-level constant declarations could be parsed in \Beluga, provided that the trailing dot is followed by whitespace.
+
+This token insertion solution had to be introduced to preserve backward compatibility in the parser, specifically for that \Twelf-style of constant declarations.
+In general, it is inadvisable to mutate the stream of tokens during parsing, especially in the presence of unbounded backtracking since those insertions may have to be reverted.
 
 \subsection{Parsing}
 
@@ -194,7 +204,7 @@ This partitioning is required for recursive descent parsing, but those parser ru
 The additional constraints further restrict the language recognized by the parser, which in turn prevents some syntactically invalid programs from being reported with more precision than simply identifying unexpected tokens.
 This is in part evidenced by the grammar in figure~\ref{figure:legacy-clf-parsing} and the example syntax error message in figure~\ref{figure:improved-syntax-error-message}.
 As such, the revised parser's grammar does not distinguish between neutral and normal terms, nor type-synthesizing and type-checkable expressions.
-This greatly broadens the scope of programs accepted by the parser, which in turn allows for later phases of processing to report and reject non-canonical terms.
+This greatly broadens the scope of programs accepted by the parser, which in turn allows for later phases of processing to report and reject non-canonical terms with greater flexibility for error-reporting.
 
 \begin{figure}[H]
 \begin{grammar}
@@ -280,6 +290,8 @@ Example of improved syntax error reporting using less stringent syntactic rules 
 }
 \label{figure:improved-syntax-error-message}
 \end{figure}
+
+\clearpage
 
 Besides the aforementioned simplifications to the grammar, the revised parser still has to support the syntax of \LF kinds, types and terms, which overloads operators.
 For instance, the $\to$ operator is overloaded for arrow kinds and types, and the syntaxes for $\Pi$-kinds and $\Pi$-types are the same in \Beluga.
