@@ -108,10 +108,9 @@ For example, it is impossible in \Beluga~\texttt{v1.0} for computation-level coi
 Likewise, since identifiers at the meta-level and at the computation-level are kept separate, invalid references to computation-level objects in boxed terms are undetectable as they are instead systematically interpreted as free meta-variables.
 Counterintuitively, different parts of the referencing environment can also be interleaved in one program with this split table and association lists approach.
 Indeed, one can introduce a binder for a meta-level variable and another for a computation-level variable, both using the same identifier, and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively because they effectively occupy different namespaces.
-The contrived but valid example program \verb*|f| below illustrates this: the identifiers ${\color{red}{g}}$ and ${\color{magenta}{x}}$ are in $\Delta$, and ${\color{blue}{g}}$ and ${\color{teal}{x}}$ are in $\Gamma$ in such a way that the function's body uses both overloading meanings of those identifiers.
-This is admissible because only one namespace is made available at a time based on the computation-level or meta-level \ac{AST} node the identifier lies in.
-\begin{center}
-\begin{minipage}{\textwidth}
+The contrived but valid example program \verb*|f| below illustrates this: the colour-coded identifiers ${\color{red}{g}}$ and ${\color{magenta}{x}}$ are in $\Delta$, and ${\color{blue}{g}}$ and ${\color{teal}{x}}$ are in $\Gamma$, in such a way that the function's body uses both overloaded meanings of those identifiers.
+This is admissible because only one namespace is made available at a time based on the variant of \ac{AST} node the identifier lies in.
+\bigskip
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
 {\verbbf{LF}} tm : {\verbbf{type}} = ...;
 {\verbbf{schema}} ctx = ...;
@@ -119,12 +118,21 @@ This is admissible because only one namespace is made available at a time based 
 
 {\verbbf{rec}} f : {\{g : ctx\}} -> [g |- tm] -> Ex -> Ex =
   {\verbbf{mlam}} {\color{red}{g}} => {\verbbf{fn}} {\color{blue}{g}} => {\verbbf{fn}} {\color{teal}{x}} => {\verbbf{let}} [_ |- {\color{magenta}{x}}] = {\color{blue}{g}} {\verbbf{in}} f [{\color{red}{g}}] [{\color{red}{g}} |- {\color{magenta}{x}}] {\color{teal}{x}};
-
 \end{Verbatim}
-\end{minipage}
-\end{center}
 This overloading does not translate well in proofs on paper since that results in an identifier being used to refer to two distinct objects in the same proof.
 It also challenges the identifier scoping rules suggested by \Beluga's concrete syntax.
+An error message as in the following should be raised instead to ensure proper lexical scoping of variable declarations.
+\bigskip
+\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
+\verbpbf{File "example.bel", line 6, column 52:}  
+6 |  mlam g => fn g => fn x => let [_ |- x] = g in f [g] [g |- x] x;
+                                                      \verbrbf{^}             
+\verbrbf{Error:} Expected a context variable.
+    \verbpbf{File "example.bel", line 6, column 16:}
+    6 |  mlam g => fn g => fn x => let [_ |- x] = g in f [g] [g |- x] x;
+                      \verbrbf{^}                                                 
+    \verbrbf{Error:} g is a bound computation variable.
+\end{Verbatim}
 
 \begin{figure}[htb]
 \centering
@@ -146,6 +154,8 @@ Since the store of constants is stuck at the state it ends up in after the signa
 This can lead to shadowing of constants required for the proof development.
 In order to ensure soundness of incremental proof development with holes in proof scripts located anywhere in a signature, it is necessary for indexing to be explicitly parameterized over the entire referencing environment as opposed to just the stores for variables.
 
+% TODO: Add example?
+
 The aforementioned incongruities in name resolution and tight coupling with the signature reconstruction store motivate the reimplementation of the indexing phase to use one uniform namespace while ensuring that identifiers from different domains cannot occur in terms in which they don't belong.
 Without having types available at this stage of processing, the accidental feature of identifier overloading had to be discarded to avoid postponing ambiguous references to type-checking.
 
@@ -155,8 +165,11 @@ Without having types available at this stage of processing, the accidental featu
 
 Uniform indexing is the conversion from a named \ac{AST} to a locally nameless \ac{AST} in a single pass and using a single lookup structure for all identifier kinds.
 For \Beluga, this requires having a merged view of the declaration tables for constants and variables so as to uniformly know what identifiers are in scope at any given \ac{AST} node.
-In particular, variable identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together.
+In particular, variable identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together for name resolution.
 To approach this problem, some definitions are in order.
+
+% TODO: State more prominently, not just in the text.
+% TODO: But the variables in \Psi, \Delta and \Gamma are still treated separately during type reconstruction, type-checking...
 
 % What are frames?
 % What are scopes?
@@ -256,7 +269,7 @@ To support this, when a constant binding is added to a module frame $(\Bindings,
 This is illustrated in figure~\ref{figure:referencing-environment-modules}.
 \item
 \textit{Pattern frames} $\Pattern$: variables added to this kind of frame are inner pattern-bound or pattern variables.
-Inner pattern-bound variables are introduced by binders in the pattern, like $c$ and $x$ in the contextual lambda term pattern $[c : \mathsf{tm} \rightarrow \mathsf{tm} \vdash \mathsf{lam} (\textbackslash x. c\; x)]$.
+Inner pattern-bound variables are introduced by binders in the pattern, like $c$ and $x$ in the contextual lambda term pattern $[c : \mathsf{tm} \rightarrow \mathsf{tm} \vdash \mathsf{lam} (\backslash x. c\; x)]$.
 Pattern variables on the other hand are free variables in the pattern, which become bound variables in the body of the match case.
 For a pattern frame $(\Bindings_{\text{p}}, \Bindings_{\text{e}})$, the bindings in $\Bindings_{\text{p}}$ are used for name resolution in the pattern, whereas the bindings in $\Bindings_{\text{e}}$ are only used for name resolution in the body of the pattern-matching branch.
 This means that inner pattern-bound variables are added to $\Bindings_{\text{p}}$, and free pattern variables are added to $\Bindings_{\text{e}}$.

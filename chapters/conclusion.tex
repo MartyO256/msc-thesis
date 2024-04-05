@@ -16,6 +16,14 @@ Fresh name generation is currently unsound in the implementation of \Beluga.
 This has consequences with program synthesis, both for the conversion of \Harpoon proof scripts to \Beluga programs and for error-reporting.
 % TODO: Expand, argue we need something akin to Agda's type-checking monad
 
+The key lessons learned from these reimplementation efforts are:
+
+\begin{enumerate}
+\item Keep the syntax accepted during context-free parsing simple and rely on subsequent processing phases to disambiguate complex syntax overloading and enforce additional syntactic restrictions.
+\item Avoid the common programming pitfall of relying on global mutable data to capture the processor's state.
+\item Keep mechanisms like name resolution simple and intuitive.
+\end{enumerate}
+
 \section{Future Work}
 
 % TODO: Enable knowledge-based development with proper documentation (language specification for the parser is one step towards that goal)
