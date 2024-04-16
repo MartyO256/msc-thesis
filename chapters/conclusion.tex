@@ -4,7 +4,57 @@
 
 \section{Evaluation}
 
-% TODO: Run Beluga v1 and Beluga v1.1 tests on different machines (i9-12900k, i7-3770k, whatever laptop, RAM speeds and disk speeds, deltas in percentage, repeated runs), comment on the runtime performance and memory usage (likely some increased runtime overhead, less memory usage, highlight that the test suites are different from v1 to v1.1 [syntax updates make them technically easier to parse], but also highlight that referencing environments are constructed twice). Present as a table with percentage deltas from v1 to v1.1
+
+% hyperfine --warmup 3 --runs 15 "opam exec ./TEST"
+% hyperfine --warmup 3 --runs 15 "opam exec ./TEST.sh"
+
+%i9-12900k v1.0
+%Benchmark 1: opam exec ./TEST
+%  Time (mean ± σ):      8.412 s ±  0.133 s    [User: 6.677 s, System: 1.642 s]
+%  Range (min … max):    8.139 s …  8.640 s    15 runs
+
+%i9-12900k v1.1
+%Benchmark 1: opam exec ./TEST.sh
+%  Time (mean ± σ):      8.045 s ±  0.126 s    [User: 6.106 s, System: 1.839 s]
+%  Range (min … max):    7.821 s …  8.256 s    15 runs
+
+%i5-1135G7 v1.0
+%Benchmark 1: opam exec ./TEST
+%  Time (mean ± σ):      8.863 s ±  0.089 s    [User: 7.508 s, System: 1.239 s]
+%  Range (min … max):    8.766 s …  9.087 s    15 runs
+
+%i5-1135G7 v1.1
+%Benchmark 1: opam exec ./TEST.sh
+%  Time (mean ± σ):      8.343 s ±  0.087 s    [User: 6.573 s, System: 1.657 s]
+%  Range (min … max):    8.165 s …  8.459 s    15 runs
+
+%i7-3770k v1.0
+%Benchmark 1: opam exec ./TEST
+%  Time (mean ± σ):      16.237 s ±  0.041 s    [User: 14.828 s, System: 1.481 s]
+%  Range (min … max):    16.177 s …  16.321 s    15 runs
+
+%i7-3770k v1.1
+%Benchmark 1: opam exec ./TEST.sh
+%  Time (mean ± σ):      14.830 s ±  0.041 s    [User: 13.025 s, System: 1.879 s]
+%  Range (min … max):    14.776 s …  14.894 s    15 runs
+
+\begin{figure}
+\centering
+\begin{tabular}{lccc}
+System & \Beluga \texttt{v1.0} runtime (\si{\second}) & \Beluga \texttt{v1.1} runtime & Difference (\si{\percent})\\
+System 1\footnotemark & \SI{8.412(0.133)}{} & \SI{8.045(0.126)}{} & \SI{-4.36(2.18)}{}\\
+System 2\footnotemark & \SI{8.863(0.089)}{} & \SI{8.343(0.087)}{} & \SI{-5.87(1.41)}{}\\
+System 3\footnotemark & \SI{16.237(0.041)}{} & \SI{14.830(0.041)}{} & \SI{-8.67(0.36)}{}
+\end{tabular}
+\caption[Runtime performance improvement from \Beluga \texttt{v1.0} to \Beluga \texttt{v1.1}]{%
+Runtime performance improvement from \Beluga \texttt{v1.0} to \Beluga \texttt{v1.1}.
+These benchmarks are the average of 15 runs, with 3 warmup runs, on the set of examples testable in both versions with minor adjustments.
+Those adjustments are limited to addressing the syntactic changes to meta-objects and coinductive observation applications.
+}
+\end{figure}
+\footnotetext[1]{Run on an Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark} i9-12900K processor}
+\footnotetext[2]{Run on an Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark} i5-1135G7 processor}
+\footnotetext[3]{Run on an Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark} i7-3770K processor}
 
 Properly defining referencing environments and implementing indexing with respect to them is a step in the right direction.
 There are still many implementation challenges ahead in order to fully support structural editing of \Beluga programs and \Harpoon proofs.
