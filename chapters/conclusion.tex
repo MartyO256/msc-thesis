@@ -4,6 +4,7 @@
 
 \section{Evaluation}
 
+As established in chapters~\ref{chapter:parsing-reimplementation} and \ref{chapter:indexing-reimplementation}, the parsing and indexing phases of \Beluga had to be reimplemented to improve its usability and to rectify soundness issues in incremental proof developments.
 
 % hyperfine --warmup 3 --runs 15 "opam exec ./TEST"
 % hyperfine --warmup 3 --runs 15 "opam exec ./TEST.sh"
@@ -48,8 +49,9 @@ System 3\footnotemark & \SI{16.237(0.041)}{} & \SI{14.830(0.041)}{} & \SI{-8.67(
 \end{tabular}
 \caption[Runtime performance improvement from \Beluga \texttt{v1.0} to \Beluga \texttt{v1.1}]{%
 Runtime performance improvement from \Beluga \texttt{v1.0} to \Beluga \texttt{v1.1}.
-These benchmarks are the average of 15 runs, with 3 warmup runs, on the set of examples testable in both versions with minor adjustments.
+These runtimes are the average of 15 runs, with 3 warmup runs, on the set of examples testable in both versions with minor adjustments.
 Those adjustments are limited to addressing the syntactic changes to meta-objects and coinductive observation applications.
+The project was compiled using the same version of its dependencies in all cases.
 }
 \end{figure}
 \footnotetext[1]{Run on an Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark} i9-12900K processor}

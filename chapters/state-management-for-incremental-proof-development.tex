@@ -1,4 +1,4 @@
-\chapter{Indexing for Incremental Proof Development}
+\chapter{Indexing for Incremental Proof Development}\label{chapter:indexing-reimplementation}
 
 This chapter presents implementation concerns with supporting incremental program development in \Beluga and \Harpoon.
 Some technical debt in those systems is highlighted to justify the reimplementation of the indexing phase.
@@ -121,7 +121,7 @@ This is admissible because only one namespace is made available at a time based 
 \end{Verbatim}
 This overloading does not translate well in proofs on paper since that results in an identifier being used to refer to two distinct objects in the same proof.
 It also challenges the identifier scoping rules suggested by \Beluga's concrete syntax.
-An error message as in the following should be raised instead to ensure proper lexical scoping of variable declarations.
+An error message like the following one should be raised instead to ensure proper lexical scoping of variable declarations.
 \bigskip
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
 \verbpbf{File "example.bel", line 6, column 52:}  
@@ -164,9 +164,25 @@ Without having types available at this stage of processing, the accidental featu
 % What is uniform indexing?
 
 Uniform indexing is the conversion from a named \ac{AST} to a locally nameless \ac{AST} in a single pass and using a single lookup structure for all identifier kinds.
-For \Beluga, this requires having a merged view of the declaration tables for constants and variables so as to uniformly know what identifiers are in scope at any given \ac{AST} node.
-In particular, variable identifiers in the \LF context ($\Psi$), the meta-level context ($\Delta$), and the computation-level context ($\Gamma$), which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together for name resolution.
-To approach this problem, some definitions are in order.
+By parameterizing procedures dealing with named binders to use such a lookup structure, we can resolve the soundness issue with holes in programs by explicitly managing the state of that structure to correctly reflect what identifiers are in scope.
+For \Beluga, implementing this requires having a merged view of the declaration tables for constants and variables so as to uniformly know what identifiers are in scope at any given \ac{AST} node.
+In particular, variable identifiers in the \LF context, the meta-level context, and the computation-level context as illustrated in figure~\ref{figure:indexing-contexts}, which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together for name resolution.
+Subsequent passes of the processing pipeline such as type reconstruction and type-checking may still safely treat those contexts as separate entities using the locally nameless \ac{AST}.
+To solve the problem of uniform indexing, some definitions are in order.
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{lcll}
+\LF contexts & $\Psi$ & $\Coloneqq$ & $\cdot \mid \Psi, x : A $\\
+Meta-level contexts & $\Delta$ & $\Coloneqq$ & $\cdot \mid \Delta, X : U $\\
+Computation-level context & $\Gamma$ & $\Coloneqq$ & $\cdot \mid \Gamma, x : \tau$
+\end{tabular}
+\caption[Indexing contexts in \Beluga]{%
+Definition of the indexing contexts in \Beluga, with respect to which variables are indexed as de Bruijn indices.
+This builds upon the definitions of figure~\ref{figure:internal-syntax}.
+}
+\label{figure:indexing-contexts}
+\end{figure}
 
 % TODO: State more prominently, not just in the text.
 % TODO: But the variables in \Psi, \Delta and \Gamma are still treated separately during type reconstruction, type-checking...
@@ -205,6 +221,9 @@ Each frame holds a tree of bindings, wherein each node assigns to an identifier 
 The stacks of bindings provide a means of recalling what earlier definitions were assigned to identifiers in the current frame as the traversal exits a scope.
 Namespaces are handled uniformly since every binding may introduce one in the form of a subtree of bindings.
 The type of entry in a referencing environment is extensible, which allows for additional kinds of identifier references to be defined, and for data to be added to support different kinds of algorithms relying on the named \ac{AST}.
+
+For indexing specifically, the entries are annotated with labels for the various kinds of declarations in \Beluga signatures (i.e., $\LFTerm$, $\Ctx$, $\CompTerm$, $\LFTypeConst$, $\LFTermConst$, ...), as well as indexing context sizes $|\Psi|$, $|\Delta|$ and $|\Gamma|$ for variables, and symbolic identifiers $\tilde a$ and $\tilde c$ for constants in the signature reconstruction store.
+Indexing context sizes are also kept track of in the structure for bindings to support computing de Bruijn indices.
 
 \begin{figure}[H]
 \centering
@@ -291,7 +310,7 @@ This allows duplicate occurrences of free meta-variables to occur in a pattern.
 \verbbf{rec} g : [ \makebox[1em]{⊢} nat] \makebox[1em]{→} [ \makebox[1em]{⊢} nat] = \verbhole{?h3};
 \end{Verbatim}
 \caption[Example \Beluga signature with holes]{%
-A \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} and \texttt{\verbhole{?h3}}.
+Excerpt of a \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} and \texttt{\verbhole{?h3}}.
 }
 \label{figure:referencing-environment-example}
 \end{subfigure}
@@ -308,6 +327,8 @@ A \Beluga signature with holes \texttt{\verbhole{?h1}}, \texttt{\verbhole{?h2}} 
 The referencing environments $\Xi_{\texttt{\verbhole{?h1}}}$, $\Xi_{\texttt{\verbhole{?h2}}}$ and $\Xi_{\texttt{\verbhole{?h3}}}$ for the holes $\texttt{\verbhole{?h1}}$, $\texttt{\verbhole{?h2}}$ and $\texttt{\verbhole{?h3}}$ in figure~\ref{figure:referencing-environment-example}, denoted using association lists to illustrate the semantics of opening a module as in figure~\ref{figure:frames-addition-removal-definition}.
 Some annotations to the bindings are omitted for brevity.
 Bindings annotated with an asterisk $*$ denote constants that are exported from the module.
+\Beluga does not treat files as modules like in \OCaml, so all declarations in the toplevel module carry over to the next signature file in the project configuration.
+Nested modules, however, respect the semantics of exporting declarations.
 }
 \label{figure:example-reference-environment-formalism}
 \end{subfigure}
@@ -359,7 +380,10 @@ This showcases in particular how indexing context sizes are carried over from ou
 The previous section described the introduction and elimination principles for frames.
 This section focusses on the operations on referencing environments specifically used in supporting the incremental indexing of \Beluga programs.
 
-The abstract data type of referencing environments $\Xi$ has the following operations:
+As defined earlier, a referencing environment $\Xi$ is a uniform representation of the identifiers in scope at any given node in a named \ac{AST} representation of a program.
+An indexing context $\Psi$ is a subsequence of a referencing environment in order of insertions, and it is used to compute de Bruijn indices for variables belonging to that context.
+In \Beluga, the \LF context, the meta-level context and the computation-level context are disjoint indexing contexts, whose bindings are interleaved in the referencing environment.
+The abstract data type of referencing environments has the following operations:
 \begin{itemize}
 \item
 $\Push{\Psi}{x : \tau}{\Xi}$ adds the binding $x : \tau$ onto $\Xi$ as part of the indexing context $\Psi$.
@@ -422,16 +446,17 @@ Indeed, if $x$ is a variable in the domain of the indexing context $\Psi'$, and 
 This is the same computation as subtracting the de Bruijn level of $x$ from the current abstraction depth~\cite{DEBRUIJN1972381, debruijnlevels1995}.
 Chiefly, this approach is scalable to arbitrarily many indexing contexts, provided that the context to use for a variable is known at its binding site.
 Additionally, not having to actually construct $\Psi$, $\Delta$ and $\Gamma$ simplifies shifting contexts with $\Shift{\Psi}{\Xi}$ in cases like $\mathsf{const} = \lambda x.\lambda\_.\ x$ wherein the identifier introduced by a binder is omitted since it is unused in the abstraction's body.
-Indeed, it suffices to increase the indexing context's size to shift it, so there is no need to add an empty binding in the referencing environment.
+Indeed, it suffices to increase the indexing context's size to shift subsequent de Bruijn indices, so there is no need to add an empty binding in the referencing environment.
 
 \begin{figure}[H]
 \centering
 \includegraphics{figures/lf-indexing.eps}
 \caption[Example of de Bruijn indices computation with respect to a lookup table]{%
 Computation of de Bruijn indices for the $\mathbf{S}$-combinator using indexing context sizes stored in the lookup table.
-The \LF context $\Psi$'s bindings are included in the referencing environment $\Xi$.
-The expression $x\ z\ (y\ z)$ is indexed with respect to $\Psi'$ having $|\Psi| + 3$ entries since $x$, $y$ and $z$ are introduced by \LF~abstractions.
-Variables in $\Xi'$ are annotated with the size of the \LF indexing context before each of them was added.
+The ambient \LF context $\Psi$ may be non-empty, in which case its bindings are included in the referencing environment $\Xi$.
+This ensures that the combinator may be indexed correctly when it is nested under additional abstractions like in $\lambda w. (\lambda x. \lambda y. \lambda z.\ x\ z\ (y\ z))$.
+The expression $x\ z\ (y\ z)$ is indexed with respect to $\Psi'$ since it is an \LF expression, and $\Psi'$ has $|\Psi| + 3$ entries since $x$, $y$ and $z$ are introduced by \LF~abstractions.
+Variables in the referencing environment $\Xi'$ are annotated with the size of the \LF indexing context before each of them was added, namely $|\Psi|$ for $x$, $|\Psi| + 1$ for $y$ and $|\Psi| + 2$ for $z$.
 }
 \label{figure:lf-indexing}
 \end{figure}
@@ -711,7 +736,7 @@ Neither formulation of the indexing algorithm is total since the identifier and 
 In the immutable setting, recovering from such failures is trivial since no effects are applied to the association list of bindings.
 On the other hand, the mutable setting does not make any guarantee as to the state of the referencing environment after a computation.
 This potentially allows insertions to occur in an unpredictable order, and for deletions to unintentionally remove bindings that appear in outer frames of the initial referencing environment.
-This next theorem certifies that that is not the case: if a binding removal occurs, then it is immediately preceded by the addition of that same binding.
+This next theorem certifies that that is not the case: if a binding removal occurs during indexing, then it is immediately preceded by the addition of that same binding.
 
 In fact, the referencing environment is restored to its initial state after successfully indexing an \LF object.
 This means that in the event of a failure during indexing, the environment has at least the bindings of its initial state.
