@@ -6,6 +6,8 @@
 
 As established in chapters~\ref{chapter:parsing-reimplementation} and \ref{chapter:indexing-reimplementation}, the parsing and indexing phases of \Beluga had to be reimplemented to improve its usability and to rectify soundness issues in incremental proof developments.
 
+Proven design patterns were introduced in the codebase to facilitate the development of new features and the rectification of parts of \Beluga's existing architecture.
+
 % hyperfine --warmup 3 --runs 15 "opam exec ./TEST"
 % hyperfine --warmup 3 --runs 15 "opam exec ./TEST.sh"
 
@@ -58,36 +60,40 @@ The project was compiled using the same version of its dependencies in all cases
 \footnotetext[2]{Run on an Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark} i5-1135G7 processor}
 \footnotetext[3]{Run on an Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark} i7-3770K processor}
 
-Properly defining referencing environments and implementing indexing with respect to them is a step in the right direction.
-There are still many implementation challenges ahead in order to fully support structural editing of \Beluga programs and \Harpoon proofs.
-Chiefly, proper information flow analysis is required in the later phases of semantic analysis, specifically reconstruction, type-checking and unification, to ascertain whether their stateful operations are always handled soundly.
-Indeed, while there is a trailing mechanism for higher-order unification to keep track of meta-variable instantiations (the assignment of a contextual object to a meta-variable), there are routines during \LF reconstruction that ignore this bookkeeping.
-This can result in unsound programs when users undo edit actions during interactive proof developments.
-
-Fresh name generation is currently unsound in the implementation of \Beluga.
-This has consequences with program synthesis, both for the conversion of \Harpoon proof scripts to \Beluga programs and for error-reporting.
-% TODO: Expand, argue we need something akin to Agda's type-checking monad
-
-The key lessons learned from these reimplementation efforts are:
-
-\begin{enumerate}
-\item Keep the syntax accepted during context-free parsing simple and rely on subsequent processing phases to disambiguate complex syntax overloading and enforce additional syntactic restrictions.
-\item Avoid the common programming pitfall of relying on global mutable data to capture the processor's state.
-\item Keep mechanisms like name resolution simple and intuitive.
-\end{enumerate}
-
 \section{Future Work}
 
-% TODO: Enable knowledge-based development with proper documentation (language specification for the parser is one step towards that goal)
+Properly defining referencing environments and implementing indexing with respect to them is a step in the right direction.
+Indeed, this opened up the indexing procedures to be sound and reusable when visiting holes in \Harpoon proofs in an out-of-order fashion with respect to the \Beluga signature.
+This also enables indexing to be unit-tested independently of the processing pipeline, which offers greatly visibility in the inner workings of the system as well as provides more fine-grained verifiers of the implementation's correctness.
 
-% TODO:
+There are nonetheless many implementation challenges left ahead in order to fully support structural editing of \Beluga programs and \Harpoon proofs.
+Indeed, there are areas of the system which are still reliant on the assumption that signatures are always processed in order of declaration, and hence that the signature reconstruction store only contains data about visible declarations.
 
-%The \Harpoon interactive proof environment is too tightly coupled with the rest of the \Beluga system.
-%In particular, \Harpoon proof scripts are too verbose, error-prone and redundant.
-%Indeed, serializing the meta and computation contexts is unnecessary since they can always be reconstructed, albeit with different names for the bindings.
-%Holes in \Beluga programs can represent backward reasoning settings.
-%The following snippet describes a proof by backward reasoning, whereby a proof for the subgoal can be constructed by invoking f with unknown arguments x and y.
-%
-%let x : t1 = ?
-%and y : t2 = ?
-%in f x y
+\begin{enumerate}
+\item
+Information flow analysis is required in the later phases of semantic analysis, namely reconstruction, type-checking and unification, to ascertain whether their stateful operations are always handled soundly.
+Specifically, while there is a trailing mechanism for higher-order unification to keep track of meta-variable instantiations (the assignment of a contextual object to a meta-variable), there are routines during \LF reconstruction that ignore this bookkeeping.
+This can result in unsound programs when users undo edit actions during interactive proof developments.
+\item
+The logic proof search engine which powers \Harpoon's automation tactics uses the signature reconstruction store to have a global view of the user-defined constants and programs that can be used to solve subgoals.
+As such, synthesized solutions to subgoals may reference declarations that are out of scope.
+That notwithstanding, considering all constants during proof search may result in degraded performance and a non-responsive \ac{REPL} when using automation tactics on larger projects.
+Enforcing the constraint that synthesized proofs must be sound with respect to name resolution at the holes they have to be spliced in may prune the search tree.
+\item 
+Fresh name generation is currently unsound in the implementation of \Beluga.
+Indeed, it does not take into account the identifiers in scope in the signature.
+This has consequences with program synthesis, both for the conversion of \Harpoon proof scripts to \Beluga programs and for error-reporting.
+To address this, one needs to synthesize programs in a nameless representation and then compute readable and easily distinguishable names for variables, which effectively amounts to reversing indexing.
+Dynamic programming over the tree structure of the \ac{AST} would be required to compute sets of used identifiers and de Bruijn indices to select appropriate names at binders.
+\end{enumerate}
+
+\section{Final Remarks}
+
+The key lessons learned from reimplementing \Beluga's parser and indexing phases are:
+
+\begin{enumerate}
+\item If your programming language supports features that make its grammar context-sensitive, separate syntactic analysis into a context-free and a context-sensitive phase, if possible, to ensure good performance.
+\item Keep the syntax accepted during context-free parsing simple, and rely on subsequent processing phases to disambiguate complex syntax overloading and enforce additional syntactic restrictions so that error messages can be augmented with some semantic analysis.
+\item Avoid the common programming pitfall of relying on global mutable data to capture the system's state since there will always be execution scenarios incompatible with that design.
+\item Keep disambiguation and name resolution mechanisms simple and intuitive to ensure good readability of user programs.
+\end{enumerate}
