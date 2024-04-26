@@ -71,29 +71,48 @@ Indeed, there are areas of the system which are still reliant on the assumption 
 
 \begin{enumerate}
 \item
-Information flow analysis is required in the later phases of semantic analysis, namely reconstruction, type-checking and unification, to ascertain whether their stateful operations are always handled soundly.
+Information flow analysis is required in the later phases of semantic analysis, namely type and term reconstruction, type-checking and unification, to ascertain whether their stateful operations are always handled soundly.
 Specifically, while there is a trailing mechanism for higher-order unification to keep track of meta-variable instantiations (the assignment of a contextual object to a meta-variable), there are routines during \LF reconstruction that ignore this bookkeeping.
 This can result in unsound programs when users undo edit actions during interactive proof developments.
+Fixing this issue will require significant refactoring to decouple those phases from global data structures such as the signature reconstruction store.
 \item
 The logic proof search engine which powers \Harpoon's automation tactics uses the signature reconstruction store to have a global view of the user-defined constants and programs that can be used to solve subgoals.
 As such, synthesized solutions to subgoals may reference declarations that are out of scope.
 That notwithstanding, considering all constants during proof search may result in degraded performance and a non-responsive \ac{REPL} when using automation tactics on larger projects.
 Enforcing the constraint that synthesized proofs must be sound with respect to name resolution at the holes they have to be spliced in may prune the search tree.
 \item 
-Fresh name generation is currently unsound in the implementation of \Beluga.
-Indeed, it does not take into account the identifiers in scope in the signature.
+Fresh name generation for the nameless representation of \Beluga programs is currently unsound in the implementation.
+Indeed, that procedure does not wholly take into account the identifiers in scope as it restricts its focus on the declarations in indexing contexts.
 This has consequences with program synthesis, both for the conversion of \Harpoon proof scripts to \Beluga programs and for error-reporting.
+Much like was the case with the now resolved soundness issue of navigating to holes in \Harpoon proofs, spliced \Beluga programs corresponding to \Harpoon proof scripts may refer to shadowed constants.
 To address this, one needs to synthesize programs in a nameless representation and then compute readable and easily distinguishable names for variables, which effectively amounts to reversing indexing.
-Dynamic programming over the tree structure of the \ac{AST} would be required to compute sets of used identifiers and de Bruijn indices to select appropriate names at binders.
+Dynamic programming over the tree structure of the \ac{AST} would be required to compute sets of used identifiers and de Bruijn indices to select appropriate names at the binding sites.
 \end{enumerate}
 
 \section{Final Remarks}
 
-The key lessons learned from reimplementing \Beluga's parser and indexing phases are:
+In conclusion, \Beluga's parsing and indexing phases were reimplemented to address correctness, maintainability and soundness issues.
+The language's grammar was formalized, then a two-phase syntactic analysis was implemented to first parse \Beluga signatures following a context-free grammar with overloaded syntactic constructs, and then disentangle those syntactic constructs in a context-sensitive disambiguation phase.
+Name resolution for the language was reimplemented to unify constant declarations and indexing contexts into one referencing environment to support simple lexical scoping rules.
+De Bruijn indices computations were implemented with respect to this referencing environment structure, and indexing for the \LF part of \Beluga was formalized.
+During \Harpoon structural editing sessions on proof scripts, the soundness of navigating between holes with respect to name resolution was rectified by ensuring that disambiguation and indexing are explicitly dependant on the state of the referencing environment.
+These improvements pave the way for the later phases of \Beluga's processing pipeline to be rectified.
+The key lessons learned from this experience with regards to programming language design and implementation are as follows:
 
 \begin{enumerate}
-\item If your programming language supports features that make its grammar context-sensitive, separate syntactic analysis into a context-free and a context-sensitive phase, if possible, to ensure good performance.
-\item Keep the syntax accepted during context-free parsing simple, and rely on subsequent processing phases to disambiguate complex syntax overloading and enforce additional syntactic restrictions so that error messages can be augmented with some semantic analysis.
-\item Avoid the common programming pitfall of relying on global mutable data to capture the system's state since there will always be execution scenarios incompatible with that design.
-\item Keep disambiguation and name resolution mechanisms simple and intuitive to ensure good readability of user programs.
+\item
+If a programming language is context-sensitive, separate its syntactic analysis into a context-free and a context-sensitive phase, if possible.
+This ensures good runtime performance for the parser, and facilitates the language integration with tools that primarily support context-free languages.
+\item
+Keep the syntax accepted during context-free parsing simple, and rely on subsequent processing phases to disambiguate complex syntax overloading and enforce additional syntactic restrictions.
+This enables error messages to be augmented with some semantic analysis to suggest corrections.
+\item
+Keep disambiguation and name resolution mechanisms simple and intuitive.
+This ensures that user programs will be readable, at least at the syntactic level.
+\item
+Ensure that the programming language's grammar supports desugared forms for all syntactic sugars, as well as syntax for explicitly supplying what are otherwise implicit terms.
+This facilitates the traceability of programs from their parsed representation to their elaborated representation, it allows users to opt out of using syntactic sugars, and it enables users to observe and verify the results of term and type reconstruction.
+\item
+Avoid the common programming pitfall of relying on global mutable data to capture the implemented system's state.
+There will always be execution scenarios incompatible with that design, in particular incremental development and unit testing.
 \end{enumerate}
