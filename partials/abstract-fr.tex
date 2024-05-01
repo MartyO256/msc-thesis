@@ -1,3 +1,12 @@
 \chapter*{Résumé}
 
-% TODO:
+\Beluga est un langage de programmation fonctionnelle et un assistant de preuve pour déclarer et prouver mécaniquement des théorèmes spécifiés dans \acs{LF}.
+Afin de faciliter le développement incrémental de preuves au moyen de commandes et de tactiques d'automatisation, l'environnement interactif de preuve \Harpoon est implémenté en tant que \acs{REPL} avec des fonctionnalités d'édition structurelle de programmes écrits dans \Beluga.
+Parmi ces fonctionnalités, l'habileté de naviguer d'un endroit à l'autre d'une preuve incomplète est instrumental pour le développement de preuves vertical et dans le désordre, où des preuves sont différées ou complétées partiellement.
+Cependant, cette fonctionnalité de changement de contexte peut causer des problèmes de cohérence, qui résultent en un environnement de preuve invalide, et des scripts de preuve ne pouvant pas être traduits en programmes dans \Beluga sans erreurs sémantiques.
+La cause principale de ces problèmes est due à des limitations architecturales dans l'implémentation de \Beluga.
+
+Cette thèse présente les défis techniques et les solutions à l'implémentation cohérente d'édition structurelle avec la navigation d'un endroit à l'autre de preuves incomplètes, avec un accent sur l'analyse syntaxique et les premières phases d'analyse sémantique.
+Des aspects de la conception de la syntaxe d'un langage de programmation sont explorés afin de supporter l'analyse syntaxique contextuelle d'opérateurs préfixes, infixes et postfixes définis par l'utilisateur au moyen d'un analyseur syntaxique en deux phases.
+Ensuite, la résolution de nom pour \Beluga est rectifiée avec l'implémentation d'un environnement de référencement uniforme pour l'indexation de programmes définis par rapport à des contextes distincts pour différentes classes de variables.
+Enfin, le nouvel analyseur syntaxique et processus de résolution de nom sont intégrés dans \Harpoon pour garantir que l'état des identifiants visibles à n'importe quel endroit dans une preuve incomplète est cohérent avec son emplacement.

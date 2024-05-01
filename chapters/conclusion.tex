@@ -44,7 +44,7 @@ Proven design patterns were introduced in the codebase to facilitate the develop
 \begin{figure}
 \centering
 \begin{tabular}{lccc}
-System & \Beluga \texttt{v1.0} runtime (\si{\second}) & \Beluga \texttt{v1.1} runtime & Difference (\si{\percent})\\
+System & \href{https://github.com/Beluga-lang/Beluga/releases/tag/v1.0}{\Beluga \texttt{v1.0}} runtime (\si{\second}) & \href{https://github.com/Beluga-lang/Beluga/releases/tag/v1.1}{\Beluga \texttt{v1.1}} runtime & Difference (\si{\percent})\\
 System 1\footnotemark & \SI{8.412(0.133)}{} & \SI{8.045(0.126)}{} & \SI{-4.36(2.18)}{}\\
 System 2\footnotemark & \SI{8.863(0.089)}{} & \SI{8.343(0.087)}{} & \SI{-5.87(1.41)}{}\\
 System 3\footnotemark & \SI{16.237(0.041)}{} & \SI{14.830(0.041)}{} & \SI{-8.67(0.36)}{}
@@ -63,8 +63,8 @@ The project was compiled using the same version of its dependencies in all cases
 \section{Future Work}
 
 Properly defining referencing environments and implementing indexing with respect to them is a step in the right direction.
-Indeed, this opened up the indexing procedures to be sound and reusable when visiting holes in \Harpoon proofs in an out-of-order fashion with respect to the \Beluga signature.
-This also enables indexing to be unit-tested independently of the processing pipeline, which offers greatly visibility in the inner workings of the system as well as provides more fine-grained verifiers of the implementation's correctness.
+Indeed, this opens up the indexing procedures to be sound and reusable when visiting holes in \Harpoon proofs in an out-of-order fashion with respect to the \Beluga signature.
+This also enables indexing to be unit-tested independently of the processing pipeline, which offers greatly visibility into the inner workings of the system, as well as provides more fine-grained verifiers of the implementation's correctness.
 
 There are nonetheless many implementation challenges left ahead in order to fully support structural editing of \Beluga programs and \Harpoon proofs.
 Indeed, there are areas of the system which are still reliant on the assumption that signatures are always processed in order of declaration, and hence that the signature reconstruction store only contains data about visible declarations.
@@ -102,7 +102,7 @@ The key lessons learned from this experience with regards to programming languag
 \begin{enumerate}
 \item
 If a programming language is context-sensitive, separate its syntactic analysis into a context-free and a context-sensitive phase, if possible.
-This ensures good runtime performance for the parser, and facilitates the language integration with tools that primarily support context-free languages.
+This ensures good runtime performance for the parser, and facilitates the integration of the language with tools that primarily support context-free languages.
 \item
 Keep the syntax accepted during context-free parsing simple, and rely on subsequent processing phases to disambiguate complex syntax overloading and enforce additional syntactic restrictions.
 This enables error messages to be augmented with some semantic analysis to suggest corrections.

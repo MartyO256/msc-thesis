@@ -1,3 +1,12 @@
 \chapter*{Abstract}
 
-% TODO:
+\Beluga is a functional programming language and proof assistant for stating and mechanically proving theorems on systems specified in \acs{LF}.
+To facilitate the incremental development of proofs with commands and automation tactics, the \Harpoon interactive proof environment is subsequently implemented as a \acs{REPL} with structural editing features over \Beluga programs.
+Of these features, the ability to seamlessly switch between holes in proofs is instrumental to proof development top-down and out-of-order fashions, where proofs are postponed or partially completed.
+However, this context-switching feature can cause soundness issues, resulting in the proof environment being invalid, and proof scripts translated to \Beluga programs failing semantic checks.
+The root cause for these issues is due to architectural limitations in the implementation of \Beluga.
+
+This thesis reports on technical challenges and solutions to soundly implementing the structural editing of proofs with navigation between proof holes, with a main focus on syntactic analysis the early phases of semantic analysis.
+Aspects of programming language syntax design are explored to support context-sensitive parsing of user-defined prefix, infix and postfix operators with a two-phase parser.
+Then, name resolution for \Beluga is rectified with the implementation of a uniform referencing environment representation for indexing programs with separate contexts for different classes of variables.
+Finally, the revised parser and name resolution phases are integrated into \Harpoon to ensure the state of identifiers in scope at any given proof hole is sound with respect to where the hole occurs.
