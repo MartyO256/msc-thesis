@@ -70,6 +70,81 @@ Excerpt of \Beluga's internal syntax~\cite{nanevski2008contextual, germain2010im
 \label{figure:internal-syntax}
 \end{figure}
 
+\clearpage
+
+To illustrate how \Beluga is leveraged to mechanically prove properties about formal systems, consider the following running example adapted from \cite{felty2010reasoning} where it is shown that algorithmic equality for the untyped $\lambda$-calculus is reflexive.
+
+{\footnotesize
+\begin{mdframed}[frametitle={$\boxed{\Gamma \vdash \Term{M}}$ : the term $M$ is well-formed in context $\Gamma$}]
+\begin{equation}
+\infer{\Gamma \vdash \Term{x}}{x \in \Gamma}
+\end{equation}
+\begin{equation}
+\infer{\Gamma \vdash \Term{\lambda x. M}}{\Gamma, x : \mathsf{term} \vdash \Term{M}}
+\end{equation}
+\begin{equation}
+\infer{\Gamma \vdash \Term{M\ N}}{\Gamma \vdash \Term{M} & \Gamma \vdash \Term{N}}
+\end{equation}
+\begin{equation}
+\infer{\Gamma \vdash \Term{\Unit}}{}
+\end{equation}
+\end{mdframed}
+
+\begin{mdframed}[frametitle={$\boxed{\Gamma \vdash M \equiv N}$ : the term $M$ is algorithmically equal to $N$ in context $\Gamma$}]
+\begin{equation}
+\infer[\equiv\text{-lam}]{\Gamma \vdash \lambda x. M \equiv \lambda x. N}{\Gamma, x : \mathsf{term}, e : x \equiv x \vdash M\ x \equiv N\ x}
+\end{equation}
+\begin{equation}
+\infer[\equiv\text{-app}]{\Gamma \vdash M_1\ M_2 \equiv N_1\ N_2}{\Gamma \vdash M_1 \equiv N_1 & \Gamma \vdash M_2 \equiv N_2}
+\end{equation}
+\begin{equation}
+\infer[\equiv\text{-unit}]{\Gamma \vdash \Unit \equiv \Unit}{}
+\end{equation}
+\end{mdframed}
+}
+
+\begin{figure}[H]
+\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1, numbers=left]
+\verbbf{module} Term = \verbbf{struct}
+  \verbbf{LF} term : \verbbf{type} =
+  | lam : (term \makebox[1em]{→} term) \makebox[1em]{→} term
+  | app : term \makebox[1em]{→} term \makebox[1em]{→} term
+  | unit : term;
+  \verbprag{--name term M.}
+\verbbf{end}
+\verbbf{module} Algorithmic_equality = \verbbf{struct}
+  \verbprag{--open Term.}
+  \verbprag{--infix \makebox[1em]{≡} none.}
+  \verbbf{LF} \makebox[1em]{≡} : term \makebox[1em]{→} term \makebox[1em]{→} \verbbf{type} =
+  | lam : (\{x : term\} \makebox[1em]{→} x \makebox[1em]{≡} x \makebox[1em]{→} M x \makebox[1em]{≡} N x) \makebox[1em]{→} Term.lam M \makebox[1em]{≡} Term.lam N
+  | app : M1 \makebox[1em]{≡} N1 \makebox[1em]{→} M2 \makebox[1em]{≡} N2 \makebox[1em]{→} Term.app M1 M2 \makebox[1em]{≡} Term.app N1 N2
+  | unit : Term.unit \makebox[1em]{≡} Term.unit;
+\verbbf{end}
+\verbprag{--open Term.}
+\verbprag{--open Algorithmic_equality.}
+\verbbf{schema} ctx = \verbbf{block} (x : term, eq : x \makebox[1em]{≡} x);
+\verbbf{rec} refl : (g : ctx) \makebox[1em]{→} \{M : [g \makebox[1em]{⊢} term]\} \makebox[1em]{→} [g \makebox[1em]{⊢} M \makebox[1em]{≡} M] =
+  / total d (refl _ d) /
+  \verbbf{mlam} M \makebox[1em]{⇒}
+    \verbbf{case} [_ \makebox[1em]{⊢} M] \verbbf{of}
+    | [g \makebox[1em]{⊢} #p.x] \makebox[1em]{⇒} [g \makebox[1em]{⊢} #p.eq]
+    | [g \makebox[1em]{⊢} Term.lam {\textbackslash}x. F] \makebox[1em]{⇒}
+        \verbbf{let} [g, b : \verbbf{block} (x : term, eq : x \makebox[1em]{≡} x) \makebox[1em]{⊢} D] =
+          refl [g, b : \verbbf{block} (x : term, eq : x \makebox[1em]{≡} x) \makebox[1em]{⊢} F[\monoellipsis, b.x]]
+        \verbbf{in}
+        [g \makebox[1em]{⊢} Algorithmic_equality.lam {\textbackslash}x. {\textbackslash}eq. D[\monoellipsis, <x; eq>]]
+    | [g \makebox[1em]{⊢} Term.app M1 M2] \makebox[1em]{⇒}
+        \verbbf{let} [g \makebox[1em]{⊢} D1] = refl [g \makebox[1em]{⊢} M1] \verbbf{in}
+        \verbbf{let} [g \makebox[1em]{⊢} D2] = refl [g \makebox[1em]{⊢} M2] \verbbf{in}
+        [g \makebox[1em]{⊢} Algorithmic_equality.app D1 D2]
+    | [g \makebox[1em]{⊢} Term.unit] \makebox[1em]{⇒} [g \makebox[1em]{⊢} Algorithmic_equality.unit];
+\end{Verbatim}
+\caption[Algorithmic equality in \Beluga]{%
+Running example proof of algorithmic equality in \Beluga for an untyped $\lambda$-calculus, adapted from \cite{felty2010reasoning}.
+}
+\label{figure:running-example}
+\end{figure}
+
 \section{The Legacy Implementation of \Beluga} \label{section:beluga-implementation}
 
 This section presents an overview of the implementation of \Beluga before any contribution detailed in this thesis were made\footnote{The implementation of \Beluga at revision hash \href{https://github.com/Beluga-lang/Beluga/tree/3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2}{3db1ffd08d4c3bde7ad2ceb924bfb95488eef2b2, available on GitHub.}}.
