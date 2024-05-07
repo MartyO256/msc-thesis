@@ -1,75 +1,37 @@
-module Tp = struct
-  LF tp : type =
-  | unit : tp
-  | ⟶ : tp → tp → tp
-  ;
-  --name tp T.
-  --infix ⟶ right.
-end
-
 module Term = struct
   LF term : type =
-  | unit : term
-  | app : term → term → term
-  | abs : (term → term) → term
-  ;
+  | lam : (term -> term) -> term
+  | app : term -> term -> term
+  | unit : term;
   --name term M.
 end
 
-module Value = struct
+module Algorithmic_equality = struct
   --open Term.
-  LF value : term → type =
-  | unit : value unit
-  | lam : value (abs M)
-  ;
+  --infix ≡ none.
+  LF ≡ : term -> term -> type =
+  | lam : ({x : term} -> x ≡ x -> M x ≡ N x) -> Term.lam M ≡ Term.lam N
+  | app : M1 ≡ N1 -> M2 ≡ N2 -> Term.app M1 M2 ≡ Term.app N1 N2
+  | unit : Term.unit ≡ Term.unit;
 end
 
-module Step = struct
-  --open Term.
-  --open Value.
-  LF step : term → term → type =
-  | app_cong1 : step M M' → step (app M N) (app M' N)
-  | app_cong2 : step N N' → step (app M N) (app M N')
-  | beta : value N → step (app (abs (\x. F x)) N) (F N)
-  ;
-end
+--open Term.
+--open Algorithmic_equality.
 
-module Typing = struct
-  --open Term.
-  --open Tp.
+schema ctx = block (x : term, eq : x ≡ x);
 
-  LF oft : term → tp → type =
-  | unit : oft Term.unit Tp.unit
-  | app : oft M (T1 ⟶ T2) → oft N T1 → oft (Term.app M N) T2
-  | abs :
-      ({x : term} → oft x T1 → oft (M x) T2) →
-      oft (Term.abs \x. M x) (T1 ⟶ T2)
-  ;
-end
-
-module Progress = struct
-  --open Term.
-  LF step_or_value : term → type =
-  | step : Step.step M M' → step_or_value M
-  | value : Value.value M → step_or_value M
-  ;
-end
-
-rec progress : [ ⊢ Typing.oft M T] → [ ⊢ Progress.step_or_value M] =
-/ total d (progress _ _ d) /
-fn d ⇒
-  case d of
-  | [ ⊢ Typing.unit] ⇒ [ ⊢ Progress.value Value.unit]
-  | [ ⊢ Typing.app D1 D2] ⇒ (
-      case progress [ ⊢ D1] of
-      | [ ⊢ Progress.step E1] ⇒ [ ⊢ Progress.step (Step.app_cong1 E1)]
-      | [ ⊢ Progress.value V1] ⇒ (
-          case progress [ ⊢ D2] of
-          | [ ⊢ Progress.step E2] ⇒ [ ⊢ Progress.step (Step.app_cong2 E2)]
-          | [ ⊢ Progress.value V2] ⇒
-              let [ ⊢ Value.lam] = [ ⊢ V1] in
-              [ ⊢ Progress.step (Step.beta V2)]
-          )
-      )
-  | [ ⊢ Typing.abs (\x. \d. F)] ⇒ [ ⊢ Progress.value Value.lam]
-;
+rec aeq_reflexivity : (g : ctx) -> {M : [g |- term]} -> [g |- M ≡ M] =
+  / total d (aeq_reflexivity _ d) /
+  mlam M =>
+    case [_ |- M] of
+    | [g |- #p.x] => [g |- #p.eq]
+    | [g |- Term.lam \x. F] =>
+        let [g, b : block (x : term, eq : x ≡ x) |- D] =
+          aeq_reflexivity [g, b : block (x : term, eq : x ≡ x) |- F[.., b.x]]
+        in
+        [g |- Algorithmic_equality.lam \x. \eq. D[.., <x; eq>]]
+    | [g |- Term.app M1 M2] =>
+        let [g |- D1] = aeq_reflexivity [g |- M1] in
+        let [g |- D2] = aeq_reflexivity [g |- M2] in
+        [g |- Algorithmic_equality.app D1 D2]
+    | [g |- Term.unit] => [g |- Algorithmic_equality.unit];
