@@ -74,22 +74,18 @@ Excerpt of \Beluga's internal syntax~\cite{nanevski2008contextual, germain2010im
 
 To illustrate how \Beluga is leveraged to mechanically prove properties about formal systems, consider the following running example adapted from \cite{felty2010reasoning} where it is shown that algorithmic equality for the untyped $\lambda$-calculus is reflexive.
 
-{\footnotesize
-\begin{mdframed}[frametitle={$\boxed{\Gamma \vdash \Term{M}}$ : the term $M$ is well-formed in context $\Gamma$}]
-\begin{equation}
-\infer{\Gamma \vdash \Term{x}}{x \in \Gamma}
-\end{equation}
-\begin{equation}
-\infer{\Gamma \vdash \Term{\lambda x. M}}{\Gamma, x : \mathsf{term} \vdash \Term{M}}
-\end{equation}
-\begin{equation}
-\infer{\Gamma \vdash \Term{M\ N}}{\Gamma \vdash \Term{M} & \Gamma \vdash \Term{N}}
-\end{equation}
-\begin{equation}
-\infer{\Gamma \vdash \Term{\Unit}}{}
-\end{equation}
-\end{mdframed}
-
+\begin{figure}[H]
+\begin{subfigure}{\linewidth}
+\centering
+\begin{tabular}{p{2cm} >{\raggedleft}p{1cm} r l}
+Terms & $M, N$ & $\Coloneqq$ & $x \mid \lambda x. M \mid M\ N \mid \Unit$
+\end{tabular}
+\caption{%
+Syntax definition for the untyped $\lambda$-calculus used in the running example.
+}
+\end{subfigure}
+\par\bigskip
+\begin{subfigure}{\linewidth}
 \begin{mdframed}[frametitle={$\boxed{\Gamma \vdash M \equiv N}$ : the term $M$ is algorithmically equal to $N$ in context $\Gamma$}]
 \begin{equation}
 \infer[\equiv\text{-lam}]{\Gamma \vdash \lambda x. M \equiv \lambda x. N}{\Gamma, x : \mathsf{term}, e : x \equiv x \vdash M\ x \equiv N\ x}
@@ -101,9 +97,12 @@ To illustrate how \Beluga is leveraged to mechanically prove properties about fo
 \infer[\equiv\text{-unit}]{\Gamma \vdash \Unit \equiv \Unit}{}
 \end{equation}
 \end{mdframed}
-}
-
-\begin{figure}[H]
+\caption{Definition of algorithmic equality over the untyped terms.}
+\end{subfigure}
+\caption[Running example of algorithmic equality for an untyped $\lambda$-calculus]{Running example.}
+\end{figure}%
+\begin{figure}\ContinuedFloat
+\begin{subfigure}{\linewidth}
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1, numbers=left]
 \verbbf{module} Term = \verbbf{struct}
   \verbbf{LF} term : \verbbf{type} =
@@ -142,6 +141,8 @@ To illustrate how \Beluga is leveraged to mechanically prove properties about fo
 \caption[Algorithmic equality in \Beluga]{%
 Running example proof of algorithmic equality in \Beluga for an untyped $\lambda$-calculus, adapted from \cite{felty2010reasoning}.
 }
+\end{subfigure}
+\caption[]{Running example (contd.).}
 \label{figure:running-example}
 \end{figure}
 

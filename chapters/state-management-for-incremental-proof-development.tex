@@ -112,9 +112,9 @@ The contrived but valid example program \verb*|f| below illustrates this: the co
 This is admissible because only one namespace is made available at a time based on the variant of \ac{AST} node the identifier lies in.
 \bigskip
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
-{\verbbf{LF}} tm : {\verbbf{type}} = ...;
-{\verbbf{schema}} ctx = ...;
-{\verbbf{inductive}} Ex : {\verbbf{ctype}} = ...;
+{\verbbf{LF}} tm : {\verbbf{type}} = \monoellipsis;
+{\verbbf{schema}} ctx = \monoellipsis;
+{\verbbf{inductive}} Ex : {\verbbf{ctype}} = \monoellipsis;
 
 {\verbbf{rec}} f : {\{g : ctx\}} -> [g |- tm] -> Ex -> Ex =
   {\verbbf{mlam}} {\color{red}{g}} => {\verbbf{fn}} {\color{blue}{g}} => {\verbbf{fn}} {\color{teal}{x}} => {\verbbf{let}} [_ |- {\color{magenta}{x}}] = {\color{blue}{g}} {\verbbf{in}} f [{\color{red}{g}}] [{\color{red}{g}} |- {\color{magenta}{x}}] {\color{teal}{x}};
