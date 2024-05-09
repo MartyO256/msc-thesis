@@ -21,9 +21,9 @@ Case $\D = \infer{
 	& \deduce{\Hoare{\Env = \Shift{\Psi}{\Xi''}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'''}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$ and $\Xi'' = \Xi$.
+By the induction hypothesis on $\D_1$, we have $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$ and $\Xi'' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Shift{\Psi}{\Xi''} \vdash \IndexesKind{K}{\tilde K}}{\E_2}$ and $\Xi''' = \Shift{\Psi}{\Xi''}$.
+By the induction hypothesis on $\D_2$, we have $\deduce{\Shift{\Psi}{\Xi''} \vdash \IndexesKind{K}{\tilde K}}{\E_2}$ and $\Xi''' = \Shift{\Psi}{\Xi''}$.
 \par
 Then, $\Xi' = \Unshift{\Psi}{\Xi'''} = \Unshift{\Psi}{\Shift{\Psi}{\Xi''}} = \Xi'' = \Xi$, and
 \begin{equation*}
@@ -43,9 +43,9 @@ Case $\D = \infer{
 	& \deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi''}}{\IndexesKind{K}{\tilde K}}{\Env = \Xi'''}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$ and $\Xi'' = \Xi$.
+By the induction hypothesis on $\D_1$, we have $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$ and $\Xi'' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi''} \vdash \IndexesKind{K}{\tilde K}}{\E_2}$ and $\Xi''' = \Push{\Psi}{x : \LFTerm}{\Xi''}$.
+By the induction hypothesis on $\D_2$, we have $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi''} \vdash \IndexesKind{K}{\tilde K}}{\E_2}$ and $\Xi''' = \Push{\Psi}{x : \LFTerm}{\Xi''}$.
 \par
 Then, $\Xi' = \Pop{\Psi}{x}{\Xi'''} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi''}} = \Xi'' = \Xi$, and
 \begin{equation*}
@@ -77,9 +77,9 @@ Case $\D = \infer{
 	& \deduce{\Hoare{\Env = \Shift{\Psi}{\Xi''}}{\IndexesType{B}{\tilde B}}{\Env = \Xi'''}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A \to B}{\tilde A \to \tilde B}}{\E_1}$ and $\Xi'' = \Xi$.
+By the induction hypothesis on $\D_1$, we have $\deduce{\Xi \vdash \IndexesType{A \to B}{\tilde A \to \tilde B}}{\E_1}$ and $\Xi'' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Shift{\Psi}{\Xi''} \vdash \IndexesType{B}{\tilde B}}{\E_2}$ and $\Xi''' = \Shift{\Psi}{\Xi''}$.
+By the induction hypothesis on $\D_2$, we have $\deduce{\Shift{\Psi}{\Xi''} \vdash \IndexesType{B}{\tilde B}}{\E_2}$ and $\Xi''' = \Shift{\Psi}{\Xi''}$.
 \par
 Then, $\Xi' = \Unshift{\Psi}{\Xi'''} = \Unshift{\Psi}{\Shift{\Psi}{\Xi''}} = \Xi'' = \Xi$, and
 \begin{equation*}
@@ -103,9 +103,9 @@ Case $\D = \infer{
 	& \deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi''}}{\IndexesType{B}{\tilde B}}{\Env = \Xi'''}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$ and $\Xi'' = \Xi$.
+By the induction hypothesis on $\D_1$, we have $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_1}$ and $\Xi'' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi''} \vdash \IndexesType{B}{\tilde B}}{\E_2}$ and $\Xi''' = \Push{\Psi}{x : \LFTerm}{\Xi''}$.
+By the induction hypothesis on $\D_2$, we have $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi''} \vdash \IndexesType{B}{\tilde B}}{\E_2}$ and $\Xi''' = \Push{\Psi}{x : \LFTerm}{\Xi''}$.
 \par
 Then, $\Xi' = \Pop{\Psi}{x}{\Xi'''} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi''}} = \Xi'' = \Xi$, and
 \begin{equation*}
@@ -145,9 +145,9 @@ Case $\D = \infer{
 	& \deduce{\left(\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi_k}\right)_{k \in \set{1, 2, \dots, n}}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_0$, $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_0}$ and $\Xi_0 = \Xi$.
+By the induction hypothesis on $\D_0$, we have $\deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\E_0}$ and $\Xi_0 = \Xi$.
 \par
-For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\deduce{\Xi_{k - 1} \vdash \IndexesTerm{M_k}{\tilde M_k}}{\E_k}$ and $\Xi_{k - 1} = \Xi_k$.
+For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, we have $\deduce{\Xi_{k - 1} \vdash \IndexesTerm{M_k}{\tilde M_k}}{\E_k}$ and $\Xi_{k - 1} = \Xi_k$.
 \par
 Then, inductively on $n$, we have $\Xi_n = \Xi_{n - 1} = \cdots = \Xi_0 = \Xi$, and
 \begin{equation*}
@@ -206,7 +206,7 @@ Case $\D = \infer{
 	\deduce{\Hoare{\Env = \Push{\Psi}{x : \LFTerm}{\Xi}}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi''}}{\D'}
 }$.
 \par
-By the induction hypothesis on $\D'$, $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi} \vdash \IndexesTerm{M}{\tilde M}}{\E'}$ and $\Xi'' = \Push{\Psi}{x : \LFTerm}{\Xi}$.
+By the induction hypothesis on $\D'$, we have $\deduce{\Push{\Psi}{x : \LFTerm}{\Xi} \vdash \IndexesTerm{M}{\tilde M}}{\E'}$ and $\Xi'' = \Push{\Psi}{x : \LFTerm}{\Xi}$.
 \par
 Then, $\Xi' = \Pop{\Psi}{x}{\Xi''} = \Pop{\Psi}{x}{\Push{\Psi}{x : \LFTerm}{\Xi}} = \Xi$, and
 \begin{equation*}
@@ -229,9 +229,9 @@ Case $\D = \infer{
 	& \left(\deduce{\Hoare{\Env = \Xi_{k - 1}}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi_k}}{\D_k}\right)_{k \in \set{1, 2, \dots, n}}
 }$.
 \par
-By the induction hypothesis on $\D_0$, $\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\E_0}$ and $\Xi_0 = \Xi$.
+By the induction hypothesis on $\D_0$, we have $\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\E_0}$ and $\Xi_0 = \Xi$.
 \par
-For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\deduce{\Xi_{k - 1} \vdash \IndexesTerm{N_k}{\tilde N_k}}{\E_k}$ and $\Xi_k = \Xi_{k - 1}$.
+For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, we have $\deduce{\Xi_{k - 1} \vdash \IndexesTerm{N_k}{\tilde N_k}}{\E_k}$ and $\Xi_k = \Xi_{k - 1}$.
 \par
 Then, inductively on $n$, we have $\Xi_n = \Xi_{n - 1} = \cdots = \Xi_0 = \Xi$, and
 \begin{equation*}
@@ -251,9 +251,9 @@ Case $\D = \infer{
 	& \deduce{\Hoare{\Env = \Xi''}{\IndexesType{A}{\tilde A}}{\Env = \Xi'}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_1$, $\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\E_1}$ and $\Xi'' = \Xi$.
+By the induction hypothesis on $\D_1$, we have $\deduce{\Xi \vdash \IndexesTerm{M}{\tilde M}}{\E_1}$ and $\Xi'' = \Xi$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Xi'' \vdash \IndexesType{A}{\tilde A}}{\E_2}$ and $\Xi' = \Xi''$.
+By the induction hypothesis on $\D_2$, we have $\deduce{\Xi'' \vdash \IndexesType{A}{\tilde A}}{\E_2}$ and $\Xi' = \Xi''$.
 \par
 Then, $\Xi' = \Xi'' = \Xi$, and
 \begin{equation*}
@@ -282,9 +282,9 @@ Case $\D = \infer{
 	& \deduce{\Xi, \_ : \LFTerm \vdash \IndexesKind{K}{\tilde K}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_1$, $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}$.
+By the induction hypothesis on $\D_1$, we have $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Hoare{\Env = \Xi, \_ : \LFTerm}{\IndexesKind{K}{\tilde K}}{\Env = \Xi, \_ : \LFTerm}}{\E_2}$.
+By the induction hypothesis on $\D_2$, we have $\deduce{\Hoare{\Env = \Xi, \_ : \LFTerm}{\IndexesKind{K}{\tilde K}}{\Env = \Xi, \_ : \LFTerm}}{\E_2}$.
 \par
 Then,
 \begin{equation*}
@@ -308,9 +308,9 @@ Case $\D = \infer{
 	& \deduce{\Xi, x : \LFTerm \vdash \IndexesKind{K}{\tilde K}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $ \D_1 $, $ \deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1} $.
+By the induction hypothesis on $ \D_1 $, we have $ \deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1} $.
 \par
-By the induction hypothesis on $ \D_2 $, $ \deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesKind{K}{\tilde K}}{\Env = \Xi, x : \LFTerm}}{\E_2} $.
+By the induction hypothesis on $ \D_2 $, we have $ \deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesKind{K}{\tilde K}}{\Env = \Xi, x : \LFTerm}}{\E_2} $.
 \par
 Then,
 \begin{equation*}
@@ -345,9 +345,9 @@ Case $\D = \infer{
 	& \deduce{\Xi, \_ : \LFTerm \vdash \IndexesType{B}{\tilde B}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_1$, $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}$.
+By the induction hypothesis on $\D_1$, we have $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Hoare{\Env = \Xi, \_ : \LFTerm}{\IndexesType{B}{\tilde B}}{\Env = \Xi, \_ : \LFTerm}}{\E_2}$.
+By the induction hypothesis on $\D_2$, we have $\deduce{\Hoare{\Env = \Xi, \_ : \LFTerm}{\IndexesType{B}{\tilde B}}{\Env = \Xi, \_ : \LFTerm}}{\E_2}$.
 \par
 Then,
 \begin{equation*}
@@ -376,9 +376,9 @@ Case $\D = \infer{
 	& \deduce{\Xi, x : \LFTerm \vdash \IndexesType{B}{\tilde B}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_1$, $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}$.
+By the induction hypothesis on $\D_1$, we have $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_1}$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesType{B}{\tilde B}}{\Env = \Xi, x : \LFTerm}}{\E_2}$.
+By the induction hypothesis on $\D_2$, we have $\deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesType{B}{\tilde B}}{\Env = \Xi, x : \LFTerm}}{\E_2}$.
 \par
 Then,
 \begin{equation*}
@@ -422,9 +422,9 @@ Case $\D = \infer{
 	& \left(\deduce{\Xi \vdash \IndexesTerm{M_k}{\tilde M_k}}{\D_k}\right)_{k \in \set{1, 2, \dots, n}}
 }$.
 \par
-By the induction hypothesis on $\D_0$, $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_0}$.
+By the induction hypothesis on $\D_0$, we have $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_0}$.
 \par
-For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi}}{\E_k}$.
+For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, we have $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M_k}{\tilde M_k}}{\Env = \Xi}}{\E_k}$.
 \par
 Then,
 \begin{equation*}
@@ -483,7 +483,7 @@ Case $\D = \infer{
 	\deduce{\Xi, x : \LFTerm \vdash \IndexesTerm{M}{\tilde M}}{\D'}
 }$.
 \par
-By the induction hypothesis on $\D'$, $\deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi, x : \LFTerm}}{\E'}$.
+By the induction hypothesis on $\D'$, we have $\deduce{\Hoare{\Env = \Xi, x : \LFTerm}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi, x : \LFTerm}}{\E'}$.
 \par
 Then,
 \begin{equation*}
@@ -510,9 +510,9 @@ Case $\D = \infer{
 	& \left(\deduce{\Xi \vdash \IndexesTerm{N_k}{\tilde N_k}}{\D_k}\right)_{k \in \set{1, 2, \dots, n}}
 }$.
 \par
-By the induction hypothesis on $\D_0$, $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi}}{\E_0}$.
+By the induction hypothesis on $\D_0$, we have $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi}}{\E_0}$.
 \par
-For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi}}{\E_k}$.
+For each $k \in \set{1, 2, \dots, n}$, by the induction hypothesis on $\D_k$, we have $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{N_k}{\tilde N_k}}{\Env = \Xi}}{\E_k}$.
 \par
 Then,
 \begin{equation*}
@@ -532,9 +532,9 @@ Case $\D = \infer{
 	& \deduce{\Xi \vdash \IndexesType{A}{\tilde A}}{\D_2}
 }$.
 \par
-By the induction hypothesis on $\D_1$, $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi}}{\E_1}$.
+By the induction hypothesis on $\D_1$, we have $\deduce{\Hoare{\Env = \Xi}{\IndexesTerm{M}{\tilde M}}{\Env = \Xi}}{\E_1}$.
 \par
-By the induction hypothesis on $\D_2$, $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_2}$.
+By the induction hypothesis on $\D_2$, we have $\deduce{\Hoare{\Env = \Xi}{\IndexesType{A}{\tilde A}}{\Env = \Xi}}{\E_2}$.
 \par
 Then,
 \begin{equation*}
