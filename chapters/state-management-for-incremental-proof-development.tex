@@ -115,22 +115,22 @@ This is admissible because only one namespace is made available at a time based 
 {\verbbf{LF}} tm : {\verbbf{type}} = \monoellipsis;
 {\verbbf{schema}} ctx = \monoellipsis;
 {\verbbf{inductive}} Ex : {\verbbf{ctype}} = \monoellipsis;
-
 {\verbbf{rec}} f : {\{g : ctx\}} -> [g |- tm] -> Ex -> Ex =
   {\verbbf{mlam}} {\color{red}{g}} => {\verbbf{fn}} {\color{blue}{g}} => {\verbbf{fn}} {\color{teal}{x}} => {\verbbf{let}} [_ |- {\color{magenta}{x}}] = {\color{blue}{g}} {\verbbf{in}} f [{\color{red}{g}}] [{\color{red}{g}} |- {\color{magenta}{x}}] {\color{teal}{x}};
+       {\color{red}{1}}       {\color{blue}{2}}       {\color{teal}{3}}              {\color{magenta}{4}}    {\color{blue}{2}}       {\color{red}{1}}   {\color{red}{1}}    {\color{magenta}{4}}  {\color{teal}{3}}
 \end{Verbatim}
 This overloading does not translate well in proofs on paper since that results in an identifier being used to refer to two distinct objects in the same proof.
 It also challenges the identifier scoping rules suggested by \Beluga's concrete syntax.
 An error message like the following one should be raised instead to ensure proper lexical scoping of variable declarations.
 \bigskip
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
-\verbpbf{File "example.bel", line 6, column 52:}  
+\verbpbf{File "example.bel", line 5, column 52:}
 6 |  mlam g => fn g => fn x => let [_ |- x] = g in f [g] [g |- x] x;
-                                                      \verbrbf{^}             
+                                                      \verbrbf{^}
 \verbrbf{Error:} Expected a context variable.
-    \verbpbf{File "example.bel", line 6, column 16:}
+    \verbpbf{File "example.bel", line 5, column 16:}
     6 |  mlam g => fn g => fn x => let [_ |- x] = g in f [g] [g |- x] x;
-                      \verbrbf{^}                                                 
+                      \verbrbf{^}
     \verbrbf{Error:} g is a bound computation variable.
 \end{Verbatim}
 
