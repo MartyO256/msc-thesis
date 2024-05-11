@@ -247,19 +247,15 @@ For instance, the \LF term constant \verb|Algorithmic_equality.app| of figure~\r
 
 \bigskip
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
-\{M1 : term\} → \{N1 : term\} → \{M2 : term\} → \{N2 : term\} →
-M1 \makebox[1em]{≡} N1 \makebox[1em]{→} M2 \makebox[1em]{≡} N2 \makebox[1em]{→} Term.app M1 M2 \makebox[1em]{≡} Term.app N1 N2
+(M1 : term) → (N1 : term) → (M2 : term) → (N2 : term) →
+  (_ : M1 \makebox[1em]{≡} N1) \makebox[1em]{→} (_ : M2 \makebox[1em]{≡} N2) \makebox[1em]{→} Term.app M1 M2 \makebox[1em]{≡} Term.app N1 N2
 \end{Verbatim}
 
 \noindent
 and then de Bruijn indices are recomputed, which yields
-
-\bigskip
-\begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
-λ λ λ λ (4 \makebox[1em]{≡} 3 \makebox[1em]{→} 2 \makebox[1em]{≡} 1 \makebox[1em]{→} Term.app 4 2 \makebox[1em]{≡} Term.app 3 1)
-\end{Verbatim}
-
-\noindent
+\begin{equation*}
+\Pi_{\texttt{term}}\ \Pi_{\texttt{term}}\ \Pi_{\texttt{term}}\ \Pi_{\texttt{term}}\ \Pi_{4 \equiv 3} \Pi_{3 \makebox[1em]{≡} 2}\ \texttt{Term.app}\ 6\ 4\ \equiv \texttt{Term.app}\ 5\ 3
+\end{equation*}
 This phase completes the desugaring of \Beluga programs since it finishes the computation of de Bruijn indices for variables across all levels.
 The main technical challenge abstraction runs into is determining the order in which introduced binders must appear so that dependencies on terms are preserved in inferred dependent types.
 This includes identifying and handling circular dependencies in abstracted parameters.
