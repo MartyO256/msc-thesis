@@ -20,8 +20,8 @@ Mechanisms can then be designed for the interpreter's state to improve its runti
 
 Proof assistants providing interactivity through \acp{REPL} and tools for text editors each approach the problem of incremental development in unique ways tailored to their systems.
 For instance, constraint-based type systems require mechanisms to keep track of the effects of solving said constraints so that those effects can be undone in the event that type-checking fails for a given program.
-Likewise, context-switching between different parts of a program under edit requires updating the state to correctly reflect what identifiers are in scope, both for providing code completion hints and for performing identifier resolution in new terms.
-Furthermore, command histories may be implemented to support undoing and redoing edit actions, which should be a necessary feature for proof assistants since users may apply tactics that do not lead to a solution for a given subgoal.
+Likewise, context-switching between different parts of a program under edit requires updating the state to correctly reflect what identifiers are in scope, both for providing scope-aware code completion hints and for performing identifier resolution in new terms.
+Furthermore, command histories may be implemented to support undoing and redoing edit actions, which should be a feature of all proof assistants since users may apply tactics that do not lead to a solution for a given subgoal and decide to undo the application of those tactics.
 Additionally, incomplete subgoals may be arranged internally as a tree following the structure of a proof to allow navigating between holes.
 The successful implementation of these structured editing features hinges on careful management of recorded state to ensure soundness.
 
@@ -48,7 +48,7 @@ It is an agglomeration of all the data used in \Agda's processing pipeline, read
 This wholly captures the idea of a visiting state over declarations in an \Agda signature.
 The main issues when dealing with this type checking monad are performance overheads, and ensuring that state mutations are sound.
 To mitigate soundness issues, some interaction kinds have defined scopes to restrict their effect on the type checking state.
-In case of bugs arising during edit sessions, separate commands are available to the user to restore the state to earlier checkpoints or to entirely reload the current editor buffer.
+In case of bugs arising during edit sessions, separate user commands are available to restore the state to earlier checkpoints, or to entirely reload the current editor buffer from scratch.
 
 \Coq\footnote{\Coq \texttt{v8.18.0}} and the \CoqIDE~\cite{Coq, bertot2013interactive} implement a state transaction machine to efficiently keep track of changes to proofs and their effects on the system's state.
 This is backed by a version control system whose design is inspired by \textsc{Git}.
@@ -105,11 +105,12 @@ As such, identifier lookups to not respect the global insertion order of constan
 Instead, they are looked up first with respect to the order of identifier kinds, and then by the declaration order within the table for that identifier kind.
 Consequently, parts of the referencing environment do not exist depending on the expected kind of variable or constant encountered in the \ac{AST}.
 For example, it is impossible in \Beluga~\texttt{v1.0} for computation-level coinductive type constant to shadow an inductive one simply because the declaration table for the former kind is always looked up after the declaration table for the latter kind.
+
 Likewise, since identifiers at the meta-level and at the computation-level are kept separate, invalid references to computation-level objects in boxed terms are undetectable as they are instead systematically interpreted as free meta-variables.
 Counterintuitively, different parts of the referencing environment can also be interleaved in one program with this split table and association lists approach.
 Indeed, one can introduce a binder for a meta-level variable and another for a computation-level variable, both using the same identifier, and be able to use both meanings for that identifier in meta-level and computation-level expressions respectively because they effectively occupy different namespaces.
 The contrived but valid example program \verb*|f| below illustrates this: the colour-coded identifiers ${\color{red}{g}}$ and ${\color{magenta}{x}}$ are in $\Delta$, and ${\color{blue}{g}}$ and ${\color{teal}{x}}$ are in $\Gamma$, in such a way that the function's body uses both overloaded meanings of those identifiers.
-This is admissible because only one namespace is made available at a time based on the variant of \ac{AST} node the identifier lies in.
+This is admissible because only one namespace is made available at a time during name resolution based on the variant of \ac{AST} node the identifier lies in.
 \bigskip
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
 {\verbbf{LF}} tm : {\verbbf{type}} = \monoellipsis;
@@ -121,8 +122,10 @@ This is admissible because only one namespace is made available at a time based 
 \end{Verbatim}
 This overloading does not translate well in proofs on paper since that results in an identifier being used to refer to two distinct objects in the same proof.
 It also challenges the identifier scoping rules suggested by \Beluga's concrete syntax.
-An error message like the following one should be raised instead to ensure proper lexical scoping of variable declarations.
+An error message like the following should be raised instead to ensure proper lexical scoping of variable declarations.
 \bigskip
+\begingroup
+\samepage
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
 \verbpbf{File "example.bel", line 5, column 52:}
 6 |  mlam g => fn g => fn x => let [_ |- x] = g in f [g] [g |- x] x;
@@ -133,15 +136,7 @@ An error message like the following one should be raised instead to ensure prope
                       \verbrbf{^}
     \verbrbf{Error:} g is a bound computation variable.
 \end{Verbatim}
-
-\begin{figure}[htb]
-\centering
-\includegraphics{figures/referencing-environment-architecture.eps}
-\caption[Role of the referencing environment in \Beluga]{%
-Diagram of the referencing environment structure as a mediator between the \Beluga signature and the reconstruction store for name resolution.
-}
-\label{figure:referencing-environment-architecture}
-\end{figure}
+\endgroup
 
 Additionally, the legacy indexing algorithm is tightly coupled and implicitly dependent on the store of constants depicted in figure~\ref{figure:legacy-beluga-processing-pipeline}.
 This means that external mutations to that store affect the output of functions responsible for identifier resolution.
@@ -154,7 +149,14 @@ Since the store of constants is stuck at the state it ends up in after the signa
 This can lead to shadowing of constants required for the proof development.
 In order to ensure soundness of incremental proof development with holes in proof scripts located anywhere in a signature, it is necessary for indexing to be explicitly parameterized over the entire referencing environment as opposed to just the stores for variables.
 
-% TODO: Add example?
+\begin{figure}[htb]
+\centering
+\includegraphics{figures/referencing-environment-architecture.eps}
+\caption[Role of the referencing environment in \Beluga]{%
+Diagram of the referencing environment structure as an \ac{AST} visitor state and a mediator between the \Beluga signature and the reconstruction store for name resolution.
+}
+\label{figure:referencing-environment-architecture}
+\end{figure}
 
 The aforementioned incongruities in name resolution and tight coupling with the signature reconstruction store motivate the reimplementation of the indexing phase to use one uniform namespace while ensuring that identifiers from different domains cannot occur in terms in which they don't belong.
 Without having types available at this stage of processing, the accidental feature of identifier overloading had to be discarded to avoid postponing ambiguous references to type-checking.
@@ -180,12 +182,10 @@ Computation-level context & $\Gamma$ & $\Coloneqq$ & $\cdot \mid \Gamma, x : \ta
 \caption[Indexing contexts in \Beluga]{%
 Definition of the indexing contexts in \Beluga, with respect to which variables are indexed as de Bruijn indices.
 This builds upon the definitions of figure~\ref{figure:internal-syntax}.
+A variable resolved at the \LF level is indexed with respect to only the \LF context, and likewise for variables at the meta and computation levels.
 }
 \label{figure:indexing-contexts}
 \end{figure}
-
-% TODO: State more prominently, not just in the text.
-% TODO: But the variables in \Psi, \Delta and \Gamma are still treated separately during type reconstruction, type-checking...
 
 % What are frames?
 % What are scopes?
@@ -199,10 +199,11 @@ Whereas declarations can shadow each other within a frame, all declarations have
 A \textit{fully qualified identifier} $x_1.x_2.\cdots.x_n$ is a list of plain identifiers $x_1$, $x_2$, $\dots$, $x_n$ separated by dots denoting projection out of a namespace.
 A \textit{referencing environment} in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
 In essence, a referencing environment provides a window over a signature for name resolution, and as such its state is restricted to representing one scope at a time.
+This is in line with its role as an \ac{AST} visitor state.
 
 %The uniform indexing phase is designed as a single sequential traversal of the external named \ac{AST} to map it to the approximate locally nameless \ac{AST}, using the referencing environment as visitor state.
 During indexing, the referencing environment is updated by adding or removing identifiers in scope as \ac{AST} nodes are traversed.
-This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across different indexing contexts ($\Psi$, $\Delta$ and $\Gamma$).
+This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across different \textit{indexing contexts} ($\Psi$, $\Delta$ and $\Gamma$).
 %This includes name resolution under lambda-expressions and contexts in contextual \LF patterns, as well as distinguishing between pattern variables and bound identifiers.
 All the while, indexing has to feature some backtracking mechanism to support incremental proof development in \Harpoon sessions.
 It is also worth noting that in the disambiguation phase, where a similar mapping occurs from the parser \ac{AST} to the external \ac{AST}, the visitor state has to additionally keep track of user-defined notations.
@@ -211,7 +212,7 @@ This means that whichever structure is used to model referencing environments ha
 % What motivates the introduction of frames?
 
 Every identifier declaration is allowed to shadow previous declarations in \Beluga.
-The only exception to this rule is that identifiers in mutually recursive declarations have to be unique.
+The only exception to this rule is that identifiers in mutually recursive declarations have to be distinct.
 Everywhere else, declarations for constants and variables introduce their own scope.
 This means that a scope graph~\cite{nameresolution} representation of name resolution for \Beluga programs is essentially a line graph, which is computationally inefficient for name resolution.
 As such, the referencing environment is instead modelled and implemented using frames as a basis.
@@ -222,7 +223,7 @@ The stacks of bindings provide a means of recalling what earlier definitions wer
 Namespaces are handled uniformly since every binding may introduce one in the form of a subtree of bindings.
 The type of entry in a referencing environment is extensible, which allows for additional kinds of identifier references to be defined, and for data to be added to support different kinds of algorithms relying on the named \ac{AST}.
 
-For indexing specifically, the entries are annotated with labels for the various kinds of declarations in \Beluga signatures (i.e., $\LFTerm$, $\Ctx$, $\CompTerm$, $\LFTypeConst$, $\LFTermConst$, ...), as well as indexing context sizes $|\Psi|$, $|\Delta|$ and $|\Gamma|$ for variables, and symbolic identifiers $\tilde a$ and $\tilde c$ for constants in the signature reconstruction store.
+For indexing specifically, the entries are annotated with labels for the various kinds of declarations in \Beluga signatures (i.e., $\LFTerm$, $\Ctx$, $\CompTerm$, $\LFTypeConst$, $\LFTermConst$, etc.), as well as indexing context sizes $|\Psi|$, $|\Delta|$ and $|\Gamma|$ for variables, and symbolic identifiers $\tilde a$ and $\tilde c$ for constants in the signature reconstruction store.
 Indexing context sizes are also kept track of in the structure for bindings to support computing de Bruijn indices.
 
 \begin{figure}[H]
@@ -380,10 +381,10 @@ This showcases in particular how indexing context sizes are carried over from ou
 The previous section described the introduction and elimination principles for frames.
 This section focusses on the operations on referencing environments specifically used in supporting the incremental indexing of \Beluga programs.
 
-As defined earlier, a referencing environment $\Xi$ is a uniform representation of the identifiers in scope at any given node in a named \ac{AST} representation of a program.
-An indexing context $\Psi$ is a subsequence of a referencing environment in order of insertions, and it is used to compute de Bruijn indices for variables belonging to that context.
+As defined earlier, a referencing environment (denoted by $\Xi$) is a uniform representation of the identifiers in scope at any given node in a named \ac{AST} representation of a program.
+An indexing context is a subsequence of a referencing environment in order of insertions, and it is used to compute de Bruijn indices for variables belonging to that context.
 In \Beluga, the \LF context, the meta-level context and the computation-level context are disjoint indexing contexts, whose bindings are interleaved in the referencing environment.
-The abstract data type of referencing environments has the following operations:
+The abstract data type of referencing environments has the following operations, where $\Psi$ generically denotes a single indexing context:
 \begin{itemize}
 \item
 $\Push{\Psi}{x : \tau}{\Xi}$ adds the binding $x : \tau$ onto $\Xi$ as part of the indexing context $\Psi$.
@@ -401,6 +402,8 @@ $\Lookup{x}{\Xi}$ is the latest binding $x : \tau$ associated with the identifie
 $\Index{\Psi}{x}{\Xi}$ is the de Bruijn index of $x$ in $\Xi$ with respect to the indexing context $\Psi$.
 This only succeeds if $\Lookup{x}{\Xi}$ is a binding in $\Psi$.
 \end{itemize}
+
+Identifier lookup and index operations are separate since $\Lookup{x}{\Xi}$ considers the entire referencing environment whereas $\Index{\Psi}{x}{\Xi}$ is restricted to the indexing context $\Psi$ in which $x$ was previously resolved to belong by lookup in $\Xi$.
 Popping a binding from the referencing environment is the inverse of pushing that binding, such that $\Pop{\Psi}{x}{\Push{\Psi}{x : \tau}{\Xi}} = \Xi$.
 Analogously, $\Unshift{\Psi}{\Shift{\Psi}{\Xi}} = \Xi$.
 Additionally, the environments constructed as $\Push{\Psi}{x : \LFTerm}{\Xi} $ and $ (\Xi, x : \LFTerm)$ are equivalent, and so are $\Shift{\Psi}{\Xi} $ and $ (\Xi, \_ : \LFTerm)$ since the \LF indexing context is only comprised of bindings for \LF terms.
@@ -777,6 +780,8 @@ This meant that running the indexing phase on a signature would take more time t
 Thankfully, the indexing phase's implementation was loosely coupled with the representation of the referencing environment, and the state monad was used throughout.
 This made it easy to substitute a mutable data structure for the referencing environment and recover runtime performance comparable to that of the legacy implementation of \Beluga.
 Consequently, checking out incomplete proofs in \Harpoon now involves reconstructing the referencing environment using the internal \ac{AST}'s representation of the signature.
+Because of the language's design, only the identifiers for signature-level and module-level declarations have to be visited, which circumvents having to rerun name resolution over the entire signature.
+Plain frames are also leveraged as a branching mechanism so that the effects of interactive proof sessions on the referencing environment are kept local to those sessions.
 
 From a programming language implementation standpoint, the revised indexing phase simplifies the system's flow of information by decoupling it from the signature reconstruction store.
 This opens up multiple opportunities, including proper unit-testing of the referencing environment structure and indexing functions.

@@ -11,8 +11,8 @@ This means that terms containing free variables can be manipulated and reasoned 
 To illustrate how \Beluga is leveraged to mechanically prove properties about formal systems, consider the following example adapted from \cite{felty2010reasoning} where it is shown that algorithmic equality for an untyped $\lambda$-calculus is reflexive.
 The abstract syntax for this calculus is first defined in figure~\ref{figure:running-example-abstract-syntax}, which is encoded as an \LF type constant \verb|term| with term constants \verb|lam|, \verb|app| and \verb|unit| in the \verb|Term| module of figure~\ref{figure:running-example-implementation}.
 Then, the algorithmic equality judgment for terms is defined in figure~\ref{figure:running-example-equality} and encoded as an \LF type family \verb|≡|, using an infix notation, in module \verb|Algorithmic_equality|.
-Note that this definition for equality does not provide constants to construct witnesses of reflexivity, symmetry nor transitivity.
-These properties may instead be derived, like theorem~\ref{theorem:reflexivity} proving that reflexivity holds.
+Note that this definition for equality does not provide constants to construct witnesses of reflexivity, symmetry or transitivity.
+These properties may instead be derived, like theorem~\ref{theorem:reflexivity} for reflexivity.
 This corresponds to the \verb|refl| recursive program of figure~\ref{figure:running-example-implementation} which constructively shows that for any (possibly open) term $M$, the algorithmic equality $M \equiv M$ holds.
 The notion that $M$ may contain free variables comes into play when proving reflexivity for terms of the form $\lambda x. M$ since the induction hypothesis requires assumptions about the function parameter $x$.
 
@@ -144,7 +144,8 @@ Mechanized proof of algorithmic equality in \Beluga for this $\lambda$-calculus,
 
 As illustrated in figure~\ref{figure:running-example-implementation}, a signature in \Beluga is the list of all the toplevel constant declarations in a mechanization.
 This includes the aforementioned \LF type-level and term-level constant declarations, but also includes inductive and coinductive type declarations at the computation-level, with their associated constructors and destructors respectively, and computation-level programs.
-\Harpoon provides an alternative to specifying proofs as programs in the form of a proof script comprised of tactics and their effects on the meta-level and computation-level contexts for variables.
+Modules can be declared as well to introduce namespaces, which allows constant names to be reused and offers a way of organizing mechanizations.
+Though it is not showcased in that example, \Harpoon provides an alternative to specifying proofs as programs in the form of a proof script comprised of tactics and their effects on the meta-level and computation-level contexts for variables.
 A complete specification of the concrete syntax for signature-level declarations is provided in section~\ref{section:syntax-signature} as part of grammars for parsing.
 To discuss the statics and dynamics of \Beluga, an abstract syntax definition like the following is used instead.
 
@@ -157,6 +158,7 @@ The notation $A \to K$ is used for the \LF kind $\Pi x{:}A. K$ when $x$ does not
 The notation $A \to B$ is defined analogously for \LF types.
 Since \Beluga's type system is bidirectional, the syntax of computation-level expressions is split into those for which a type can be inferred (type-synthesizing expressions), and those that can be checked against a type (type-checkable expressions).
 Meta-objects, classified by meta-types, can be embedded in the computation-level by way of boxes that simultaneously bind all variables from \LF contexts.
+Pattern-matching over type-synthesizing expressions (which includes embedded meta-objects) is supported by way of patterns, whose abstract syntax is omitted from figure~\ref{figure:internal-syntax} for the sake of conciseness.
 
 \begin{figure}
 \begin{subfigure}{\linewidth}
@@ -226,8 +228,9 @@ Parsing of signature-level declarations also features auxiliary data and routine
 
 Indexing in \Beluga is the process by which the concrete syntax is elaborated to a locally nameless representation called the approximate syntax, wherein bound variables are replaced with their corresponding de Bruijn indices, and constant names are replaced with symbolic identifiers defined in the centralized store of declarations.
 For instance, the \LF term $\lambda x. \lambda y. \lambda z.\ x\ z\ (y\ z)$ is indexed as $\lambda\ \lambda\ \lambda\ 3\ 1\ (2\ 1)$.
-As part of \Beluga's design for terse type declarations and programs, the computation of de Bruijn indices for some free variables is postponed until the abstraction phase.
-Indexing is run after parsing, and is additionally responsible for disambiguating the juxtaposition of \LF parsemes at the precedence level of applications (which may contain user-defined operators), as well as disambiguating \LF types from terms and resolving constants.
+As part of \Beluga's design for terse type declarations and programs, some terms may contain free variables, like the variables \verb|M1|, \verb|M2|, \verb|N1| and \verb|N2| in the definition of constant \verb|Algorithmic_equality.app| in figure~\ref{figure:running-example-implementation}.
+The computation of de Bruijn indices of those free variables is postponed until the abstraction phase.
+Indexing is run immediately after parsing, and is additionally responsible for disambiguating the juxtaposition of \LF parsemes at the precedence level of applications (which may contain user-defined operators), as well as disambiguating \LF types from terms and resolving constants.
 This design is sensible since computing de Bruijn indices requires a stateful traversal of the \ac{AST} that accumulates lists of bindings to produce the referencing environment.
 Using the store, some measure of identifier overloading is supported using a pre-defined order of lookups in the referencing environment based on the kind of identifier that is expected for a given \ac{AST} node.
 For instance, computation-level identifiers are resolved by looking up in order the store of computation-level variables, the store of program constants, and then the store of data type constructors.
@@ -236,7 +239,7 @@ Since names appearing in the \LF level are not part of this name resolution stra
 After indexing, the reconstruction~\cite{pientka2013insider} phase is run to reconstruct holes in types and terms, both at the \LF level and the computation level.
 These holes stand for arguments omitted by the user, and provide an elegant way of abbreviating otherwise tedious aspects of programming with dependent types.
 For instance, in the \verb|refl| program of figure~\ref{figure:running-example-implementation}, the context parameter \verb|(g : ctx)| is implicit, meaning that calls like \verb|refl m| actually denote \verb|refl _ m|, with a hole \verb|_| where a context argument is expected.
-This is admissible because any argument for that parameter can be reconstructed from \verb|m| given for the explicit parameter \verb|{M : [g ⊢ term]}|, which is defined with respect to \verb|g|.
+This is admissible because any argument for that parameter can be reconstructed from the argument \verb|m| given for the explicit parameter \verb|{M : [g ⊢ term]}|, which is defined with respect to \verb|g|.
 At the \LF level, approximate types are constructed to partially check the kinding of \LF types and the typing of \LF terms, as well as for guiding the synthesis of normal terms that check against a given type using typing constraints.
 Type-driven unmixing of overloaded syntactic forms occurs at the meta-level, whereby meta-objects are disambiguated from substitutions during reconstruction.
 The approximate \ac{AST} provides a disambiguated representation of the overall \Beluga signatures, which helps in keeping track of the various changes made during this complicated phase.
