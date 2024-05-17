@@ -1,12 +1,24 @@
 \chapter{Discussion and Conclusion}
 
-% TODO:
-
 \section{Evaluation}
 
-As established in chapters~\ref{chapter:parsing-reimplementation} and \ref{chapter:indexing-reimplementation}, the parsing and indexing phases of \Beluga had to be reimplemented to improve its usability and to rectify soundness issues in incremental proof development.
+As established in chapters~\ref{chapter:parsing-reimplementation} and \ref{chapter:indexing-reimplementation}, the parsing and indexing phases of \Beluga had to be reimplemented between versions \texttt{1.0} and \texttt{v1.1} to rectify soundness issues in incremental proof development.
+This functional requirement is verified by way of unit tests for the parser and integration tests for the indexing phase as part of testing for the entire processing pipeline.
+Non-functional requirements such as maintainability and testability were also improved for those phases.
+Indeed, proven design patterns were introduced in the codebase to facilitate both the development of new features and the rectification of parts of \Beluga's existing architecture.
+Stateful operations during parsing, disambiguation and indexing are strictly local to those phases, and decoupled from the rest of the system.
+Despite the introduced changes being justified, they are not without drawbacks.
 
-Proven design patterns were introduced in the codebase to facilitate the development of new features and the rectification of parts of \Beluga's existing architecture.
+Breaking changes to the \Beluga language had to be introduced both at the level of its syntax and its semantics.
+Enforcing unambiguous syntaxes for meta-level objects and types, as well as removing support for overloaded identifiers made the system more robust, but also made it less flexible.
+Additionally, the introduction of the disambiguation phase separate from the indexing phase involved duplicating the name resolution algorithm.
+Duplicated routines also appear in pretty-printing modules to format \Beluga signatures and print them as source code and \HTML pages.
+On one hand, this code duplication ensures that those modules are independent of one another, but on the other hand, it complicates the process of changing \Beluga's concrete syntax.
+
+While \Beluga versions \texttt{1.0} and \texttt{v1.1} are not functionally equivalent in some aspects, version \texttt{v1.1} brought significant performance improvements as evidence by figure~\ref{figure:runtime-improvement}.
+These benchmarks are the result of running the entire processing pipeline on a set of examples testable in both versions, namely the \Beluga signatures in the \texttt{examples} directory, with minor adjustments limited to addressing the syntactic changes to meta-objects and coinductive observation applications.
+The project was compiled using the same version of its dependencies in all cases to ensure fair comparisons.
+Though there were changes to \Beluga between versions \texttt{1.0} and \texttt{v1.1} outside of the parsing, disambiguation and indexing phases, the performance improvement is best explained by the simplification of the grammar for parsing, and the usage of mutable dictionaries instead of association lists for name resolution.
 
 % hyperfine --warmup 3 --runs 15 "opam exec ./TEST"
 % hyperfine --warmup 3 --runs 15 "opam exec ./TEST.sh"
@@ -41,20 +53,22 @@ Proven design patterns were introduced in the codebase to facilitate the develop
 %  Time (mean ± σ):      14.830 s ±  0.041 s    [User: 13.025 s, System: 1.879 s]
 %  Range (min … max):    14.776 s …  14.894 s    15 runs
 
-\begin{figure}
+\clearpage
+\begin{figure}[H]
 \centering
+\makebox[\textwidth][c]{
 \begin{tabular}{lccc}
-System & \href{https://github.com/Beluga-lang/Beluga/releases/tag/v1.0}{\Beluga \texttt{v1.0}} runtime (\si{\second}) & \href{https://github.com/Beluga-lang/Beluga/releases/tag/v1.1}{\Beluga \texttt{v1.1}} runtime & Difference (\si{\percent})\\
+System & \href{https://github.com/Beluga-lang/Beluga/releases/tag/v1.0}{\Beluga \texttt{v1.0}} runtime (\si{\second}) & \href{https://github.com/Beluga-lang/Beluga/releases/tag/v1.1}{\Beluga \texttt{v1.1}} runtime (\si{\second}) & Difference (\si{\percent})\\
 System 1\footnotemark & \SI{8.412(0.133)}{} & \SI{8.045(0.126)}{} & \SI{-4.36(2.18)}{}\\
 System 2\footnotemark & \SI{8.863(0.089)}{} & \SI{8.343(0.087)}{} & \SI{-5.87(1.41)}{}\\
 System 3\footnotemark & \SI{16.237(0.041)}{} & \SI{14.830(0.041)}{} & \SI{-8.67(0.36)}{}
 \end{tabular}
-\caption[Runtime performance improvement from \Beluga \texttt{v1.0} to \Beluga \texttt{v1.1}]{%
-Runtime performance improvement from \Beluga \texttt{v1.0} to \Beluga \texttt{v1.1}.
-These runtimes are the average of 15 runs, with 3 warmup runs, on the set of examples testable in both versions with minor adjustments.
-Those adjustments are limited to addressing the syntactic changes to meta-objects and coinductive observation applications.
-The project was compiled using the same version of its dependencies in all cases.
 }
+\caption[Runtime performance improvement from \Beluga \texttt{v1.0} to \texttt{v1.1}]{%
+Runtime performance improvement from \Beluga \texttt{v1.0} to \texttt{v1.1}.
+These runtimes are the average of 15 runs, with 3 warmup runs.
+}
+\label{figure:runtime-improvement}
 \end{figure}
 \footnotetext[1]{Run on an Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark} i9-12900K processor}
 \footnotetext[2]{Run on an Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark} i5-1135G7 processor}
