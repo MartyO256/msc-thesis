@@ -1,9 +1,5 @@
 \chapter{Introduction}\label{chapter:introduction}
 
-% TODO: Citations
-
-% TODO(Antoine): You answer a lot of "what" questions.  For an introduction, the "why" questions are maybe more important.  "Why mechanized meta-theory?"  "Why dependent types?"  "Why structural editing?"  As a reader, I don't know what problems are solved with these tools.
-
 % What is mechanized meta-theory?
 
 % What are dependently-typed programming languages?
@@ -69,11 +65,10 @@ These actions require surgical manipulation of the editor state to ensure soundn
 
 % In Beluga and Harpoon specifically, what are the challenges to implementing edit actions?
 
-%TODO: Reread this paragraph
 Historically, \Beluga was not implemented with the mindset of supporting the level of interactivity that \Harpoon purports to have.
 Indeed, as is the case with prototype implementations of programming languages, \Beluga's early development focused on implementing a parser for its concrete syntax and a type-checker for its type theory.
 The software architectural pattern that arose from this implementation was the pipeline pattern, in which the data processing of programs from its textual to its \ac{AST} representation is handled in single-responsibility phases that sequentially augment and refine the data for later use.
-Specifically with respect to \Beluga, these phases have evolved to include implicit argument reconstruction, the translation from a named to a nameless representation of binders using de Bruijn indices, normalization, type-checking, and totality-checking.
+Specifically with respect to \Beluga, these phases have evolved to include implicit argument reconstruction, the translation from a named to a nameless representation of binders using de Bruijn indices, term normalization, type-checking, and totality-checking.
 What transpires from this design is a unilateral flow of information from the concrete syntax to the internal representation of programs in \Beluga.
 Early optimizations were put in place to maximize the performance of this processing pipeline.
 In particular, a single global mutable representation of the \Beluga program being processed was implemented to provide information to later processing phases in a feedforward fashion.
@@ -108,9 +103,3 @@ This fixed soundness issues for \Harpoon having to do with its feature of naviga
 \item
 An improved and context-aware pretty-printing algorithms for formatting \Beluga programs in external \ac{AST} representation, and for generating corresponding \HTML pages.
 \end{enumerate}
-
-% TODO: To justify the addition of modules (functioning only as namespaces), use an example of translation between two languages (deBruijn vs. HOAS for instance)
-
-% TODO: To justify the dynamic side of things, consider a query appearing in the middle of a signature. The logic engine is considering too large of a search space by including the constants appearing later in the signature.
-
-% TODO: To additionally justify the dynamic side of things, talk about structured proof editing in a dynamic environment like Harpoon, or Beluga's interactive mode.

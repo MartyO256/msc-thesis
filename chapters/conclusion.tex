@@ -92,9 +92,9 @@ Fixing this issue will require significant refactoring to decouple those phases 
 \item
 The logic proof search engine which powers \Harpoon's automation tactics uses the signature reconstruction store to have a global view of the user-defined constants and programs that can be used to solve subgoals.
 As such, synthesized solutions to subgoals may reference declarations that are out of scope.
-That notwithstanding, considering all constants during proof search may result in degraded performance and a non-responsive \ac{REPL} when using automation tactics on larger projects.
+That notwithstanding, taking all constants into account during proof search may result in degraded performance and a non-responsive \ac{REPL} when using automation tactics on larger projects.
 Enforcing the constraint that synthesized proofs must be sound with respect to name resolution at the holes they have to be spliced in may prune the search tree.
-\item 
+\item
 Fresh name generation for the nameless representation of \Beluga programs is currently unsound in the implementation.
 Indeed, that procedure does not wholly take into account the identifiers in scope as it restricts its focus on the declarations in indexing contexts.
 This has consequences with program synthesis, both for the conversion of \Harpoon proof scripts to \Beluga programs and for error-reporting.
