@@ -167,7 +167,7 @@ Without having types available at this stage of processing, the accidental featu
 
 Uniform indexing is the conversion from a named \ac{AST} to a locally nameless \ac{AST} in a single pass and using a single lookup structure for all identifier kinds.
 By parameterizing procedures dealing with named binders to use such a lookup structure, we can resolve the soundness issue with holes in programs by explicitly managing the state of that structure to correctly reflect what identifiers are in scope.
-For \Beluga, implementing this requires having a merged view of the declaration tables for constants and variables so as to uniformly know what identifiers are in scope at any given \ac{AST} node.
+For \Beluga, implementing this requires having a merged view of the declaration tables for constants and variables so as to uniformly know what identifiers are in scope at any given \ac{AST} node, like in figure~\ref{figure:referencing-environment-architecture}.
 In particular, variable identifiers in the \LF context, the meta-level context, and the computation-level context as illustrated in figure~\ref{figure:indexing-contexts}, which were designed to belong to different identifier worlds~\cite{ferreira2012compiler}, now have to be mixed together for name resolution.
 Subsequent passes of the processing pipeline such as type reconstruction and type-checking may still safely treat those contexts as separate entities using the locally nameless \ac{AST}.
 To solve the problem of uniform indexing, some definitions are in order.
@@ -182,7 +182,8 @@ Computation-level context & $\Gamma$ & $\Coloneqq$ & $\cdot \mid \Gamma, x : \ta
 \caption[Indexing contexts in \Beluga]{%
 Definition of the indexing contexts in \Beluga, with respect to which variables are indexed as de Bruijn indices.
 This builds upon the definitions of figure~\ref{figure:internal-syntax}.
-A variable resolved at the \LF level is indexed with respect to only the \LF context, and likewise for variables at the meta and computation levels.
+A variable resolved to be at the \LF level is indexed only with respect the \LF context.
+An analogous rule applies to variables at the meta and computation levels.
 }
 \label{figure:indexing-contexts}
 \end{figure}
@@ -249,7 +250,7 @@ Definition of referencing environments for \Beluga programs, assigning stacks of
 \end{figure}
 
 The entry stacks and bindings tree structures of figure~\ref{figure:referencing-environment-definition} can be flattened into an association list by keeping track of the insertion order for bindings.
-This is used for presentation purposes, with $[x_1 : \tau_1, x_2 : \tau_2, \cdots, x_n : \tau_n]_\Module$ denoting a module frame with bindings $x_1 : \tau_1$, $x_2 : \tau_2$, ..., $x_n : \tau_n$ like in figure~\ref{figure:example-reference-environment-formalism}.
+This is only used for presentation purposes, with $[x_1 : \tau_1, x_2 : \tau_2, \cdots, x_n : \tau_n]_\Module$ denoting a module frame with bindings $x_1 : \tau_1$, $x_2 : \tau_2$, ..., $x_n : \tau_n$ like in figure~\ref{figure:example-reference-environment-formalism}.
 To illustrate which identifiers are introduced in scope by a frame, the set of toplevel identifiers for frames and binding trees is defined in figure~\ref{figure:definition-domain-frames}.
 %Then, the right-to-left association list corresponding to a referencing environment $\Xi = \mathcal{F}_1; \mathcal{F}_2; \cdots; \mathcal{F}_n$ is $\Domain(\mathcal{F}_1) \oplus \Domain(\mathcal{F}_2) \oplus \cdots \oplus \Domain(\mathcal{F}_n)$ where $\oplus$ denotes concatenation.
 
@@ -289,12 +290,13 @@ To support this, when a constant binding is added to a module frame $(\Bindings,
 This is illustrated in figure~\ref{figure:referencing-environment-modules}.
 \item
 \textit{Pattern frames} $\Pattern$: variables added to this kind of frame are inner pattern-bound or pattern variables.
-Inner pattern-bound variables are introduced by binders in the pattern, like $c$ and $x$ in the contextual lambda term pattern $[c : \mathsf{tm} \rightarrow \mathsf{tm} \vdash \mathsf{lam} (\backslash x. c\; x)]$.
+Inner pattern-bound variables are introduced by binders in the pattern, like $c$ and $x$ in the contextual lambda term pattern \verb|[c : term → term ⊢ Term.lam (\x. c x)]|.
 Pattern variables on the other hand are free variables in the pattern, which become bound variables in the body of the match case.
+For instance, the pattern \verb|[g ⊢ Term.app M1 M2]| of example~\ref{figure:running-example-implementation} introduces \verb|g|, \verb|M1| and \verb|M2| in scope.
 For a pattern frame $(\Bindings_{\text{p}}, \Bindings_{\text{e}})$, the bindings in $\Bindings_{\text{p}}$ are used for name resolution in the pattern, whereas the bindings in $\Bindings_{\text{e}}$ are only used for name resolution in the body of the pattern-matching branch.
 This means that inner pattern-bound variables are added to $\Bindings_{\text{p}}$, and free pattern variables are added to $\Bindings_{\text{e}}$.
-Because of the way meta-level abstractions are automatically reconstructed for patterns, free meta-variables are both inner pattern-bound and pattern variables.
-This allows duplicate occurrences of free meta-variables to occur in a pattern.
+%Because of the way meta-level abstractions are automatically reconstructed for patterns, free meta-variables are both inner pattern-bound and pattern variables.
+%This allows duplicate occurrences of free meta-variables to occur in a pattern.
 \end{enumerate}
 
 \begin{figure}[H]
@@ -384,7 +386,7 @@ This section focusses on the operations on referencing environments specifically
 As defined earlier, a referencing environment (denoted by $\Xi$) is a uniform representation of the identifiers in scope at any given node in a named \ac{AST} representation of a program.
 An indexing context is a subsequence of a referencing environment in order of insertions, and it is used to compute de Bruijn indices for variables belonging to that context.
 In \Beluga, the \LF context, the meta-level context and the computation-level context are disjoint indexing contexts, whose bindings are interleaved in the referencing environment.
-The abstract data type of referencing environments has the following operations, where $\Psi$ generically denotes a single indexing context:
+The abstract data type of referencing environments has the following operations, where $\Psi$, used as a subscript, is a generic label referring to an indexing context:
 \begin{itemize}
 \item
 $\Push{\Psi}{x : \tau}{\Xi}$ adds the binding $x : \tau$ onto $\Xi$ as part of the indexing context $\Psi$.
@@ -403,7 +405,8 @@ $\Index{\Psi}{x}{\Xi}$ is the de Bruijn index of $x$ in $\Xi$ with respect to th
 This only succeeds if $\Lookup{x}{\Xi}$ is a binding in $\Psi$.
 \end{itemize}
 
-Identifier lookup and index operations are separate since $\Lookup{x}{\Xi}$ considers the entire referencing environment whereas $\Index{\Psi}{x}{\Xi}$ is restricted to the indexing context $\Psi$ in which $x$ was previously resolved to belong by lookup in $\Xi$.
+Identifier lookup and index operations are separate since $\Lookup{x}{\Xi}$ considers the entire referencing environment $\Xi$ whereas $\Index{\Psi}{x}{\Xi}$ is restricted to the indexing context $\Psi$ in $\Xi$.
+As discussed later, the implementation obviates the need for an aditional traversal of the referencing environement specifically for the index operation.
 Popping a binding from the referencing environment is the inverse of pushing that binding, such that $\Pop{\Psi}{x}{\Push{\Psi}{x : \tau}{\Xi}} = \Xi$.
 Analogously, $\Unshift{\Psi}{\Shift{\Psi}{\Xi}} = \Xi$.
 Additionally, the environments constructed as $\Push{\Psi}{x : \LFTerm}{\Xi} $ and $ (\Xi, x : \LFTerm)$ are equivalent, and so are $\Shift{\Psi}{\Xi} $ and $ (\Xi, \_ : \LFTerm)$ since the \LF indexing context is only comprised of bindings for \LF terms.
@@ -457,25 +460,14 @@ Indeed, it suffices to increase the indexing context's size to shift subsequent 
 \caption[Example of de Bruijn indices computation with respect to a lookup table]{%
 Computation of de Bruijn indices for the $\mathbf{S}$-combinator using indexing context sizes stored in the lookup table.
 The ambient \LF context $\Psi$ may be non-empty, in which case its bindings are included in the referencing environment $\Xi$.
-This ensures that the combinator may be indexed correctly when it is nested under additional abstractions like in $\lambda w. (\lambda x. \lambda y. \lambda z.\ x\ z\ (y\ z))$.
-The expression $x\ z\ (y\ z)$ is indexed with respect to $\Psi'$ since it is an \LF expression, and $\Psi'$ has $|\Psi| + 3$ entries since $x$, $y$ and $z$ are introduced by \LF~abstractions.
-Variables in the referencing environment $\Xi'$ are annotated with the size of the \LF indexing context before each of them was added, namely $|\Psi|$ for $x$, $|\Psi| + 1$ for $y$ and $|\Psi| + 2$ for $z$.
+This ensures that the combinator may be indexed correctly when it is nested under additional abstractions like in $\lambda v. \lambda w. (\lambda x. \lambda y. \lambda z.\ x\ z\ (y\ z))$.
+The indexing context $\Psi'$ is built upon $\Psi$ by adding the bindings for $x$, $y$ and $z$ introduced by \LF~abstractions.
+We only need the context sizes though, and $ |\Psi'| = |\Psi| + 3 $ in this case, with $|\Psi|$ and $|\Psi'|$ being kept track of in $\Xi$ and $\Xi'$ respectively.
+Variables in $\Xi'$ are annotated with the size of the \LF indexing context before each of them was added to the referencing environment, namely $|\Psi|$ for $x$, $|\Psi| + 1$ for $y$ and $|\Psi| + 2$ for $z$.
+This allows for efficient computation of the de Bruijn indices of $ x $, $ y $ and $ z $ when $x\ z\ (y\ z)$ is indexed with respect to $\Psi'$ in $\Xi'$.
 }
 \label{figure:lf-indexing}
 \end{figure}
-
-%Using the definition for referencing environments in \Beluga, the indexing phase is defined inductively as a set of translations functions.
-%These are of the form $\Xi \vdash e \Translates_{s} e' \dashv \Xi'$, with $\Xi$ and $\Xi'$ being the input and output referencing environments respectively, and $e$ and $e'$ being the input and output term.
-%This captures the notion that as a term is being indexed, data can be read from and written to the referencing environment.
-%The translation $\Translates_{s}$ is split following the semantic classes of figure~\ref{figure:internal-syntax}, with $s$ being one of $K, A, M, U, C, \kappa, \tau, e$ and $i$, with the addition of $Mp, Cp$ and $p$ for \LF patterns, meta-object patterns and computation-level patterns respectively.
-
-
-%A lookup for the definition bound to a fully qualified identifier in a referencing environment searches for the topmost frame whose tree of bindings contains the leading identifier in the fully qualified identifier.
-%Once that frame is found, then its tree of bindings is traversed following the rest of the list of identifiers that forms the fully qualified identifier.
-%The topmost entry in the stack associated with the trailing identifier is the one that's returned.
-%If the traversal of the stack of frames fails or if no node in the tree of bindings can be found to match the fully qualified identifier, then the lookup fails.
-%The stack structures at the level of frames and entries allow for identifier shadowing.
-%On the other hand, the dictionaries speed up identifier lookups.
 
 \subsection{Indexing \acs{LF} Kinds, Types and Terms}
 
@@ -507,6 +499,8 @@ Nameless \LF types & $\tilde A, \tilde B$ & $\Coloneqq$ & $\tilde A\to \tilde B 
 Nameless \LF terms & $\tilde M, \tilde N$ & $\Coloneqq$ & $\iota \mid \tilde c \mid \lambda\ \tilde M \mid \tilde M\ \tilde N_1\ \tilde N_2 \dots \tilde N_n \mid \tilde M : \tilde A$
 \end{tabular}
 \end{figure}
+
+\clearpage
 
 Indexing is first defined with respect to an immutable representation of the referencing environment $\Xi$ as an association list.
 This algorithm is easy to implement, but comes at the expense of degraded runtime performance for lookups.
@@ -575,6 +569,8 @@ It is assumed that these computations take place in either a plain or module fra
 }
 \end{equation}
 \end{mdframed}
+
+\clearpage
 
 \begin{mdframed}[frametitle={$\boxed{\Xi \vdash \IndexesTerm{M}{\tilde M}}$ : in the referencing environment $\Xi$, the \LF term $M$ is indexed as $\tilde M$}]
 \begin{equation}
@@ -745,6 +741,8 @@ In fact, the referencing environment is restored to its initial state after succ
 This means that in the event of a failure during indexing, the environment has at least the bindings of its initial state.
 Hence, pushing a new frame onto the referencing environment and popping it in case of failure is a sufficient mechanism to undo any and all effects on the state, which is paramount for incremental developments.
 Additionally, since the ordering of add and remove operations is preserved, it follows that the computation of de Bruijn indices in the mutable setting are correct.
+
+\clearpage
 
 \begin{restatable}[Equivalence]{theorem}{equivalencetheorem}\label{theorem:equivalence}
 The formalisms for indexing with respect to the immutable and mutable representations of the referencing environment are equivalent.
