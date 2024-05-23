@@ -4,12 +4,14 @@ MAIN := main
 
 .PHONY: clean
 
-all : clean chapters/ figures/
+all: clean chapters/ figures/
 	$(LATEX) $(MAIN)
 	$(BIBTEX) $(MAIN)
 	$(LATEX) $(MAIN)
 	$(LATEX) $(MAIN)
-	mv $(MAIN).pdf OUIMET_Marc-Antoine_SOCS_thesis.pdf
+
+release: all
+	cp $(MAIN).pdf OUIMET_Marc-Antoine_SOCS_thesis.pdf
 
 clean:
 	rm -rf *run.xml *-blx.bib *.aux *.bbl *.blg *.brf *.log *.lof *.lot *.lol *.out *.tcp *.toc *.tps *.bak *.backup *.pdfsync *.synctex.gz *.*~
