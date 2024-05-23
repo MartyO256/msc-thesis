@@ -9,6 +9,7 @@ all : clean chapters/ figures/
 	$(BIBTEX) $(MAIN)
 	$(LATEX) $(MAIN)
 	$(LATEX) $(MAIN)
+	mv $(MAIN).pdf OUIMET_Marc-Antoine_SOCS_thesis.pdf
 
 clean:
 	rm -rf *run.xml *-blx.bib *.aux *.bbl *.blg *.brf *.log *.lof *.lot *.lol *.out *.tcp *.toc *.tps *.bak *.backup *.pdfsync *.synctex.gz *.*~
