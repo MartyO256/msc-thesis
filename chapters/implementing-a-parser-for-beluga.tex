@@ -77,7 +77,7 @@ If a language can be specified by a \ac{CFG}, then it is a \ac{CFL}.
 \Acp{CFL} have many advantages, including the fact that there is an abundance of well-vetted parser generators for such languages.
 \ocamllex together with \ocamlyacc~\cite{smith2007ocamllex} is one example of such a parser generator.
 Crucially, \acp{CFL} are easy to parse, both algorithmically and by the end user.
-As the name suggests, parsers for \acp{CFL} does not require additional data in a context specifically intended for disambiguation.
+As the name suggests, parsers for \acp{CFL} do not require additional data in a context specifically intended for disambiguation.
 This ensures that programs can scale and be readable by the user without having to fully know the context in which programs appear.
 That is, other code sections in a \ac{CFL} do not affect how a given code section is parsed.
 Static operator ambiguities as mentioned previously can be resolved by rewriting the grammar while keeping it context-free.
