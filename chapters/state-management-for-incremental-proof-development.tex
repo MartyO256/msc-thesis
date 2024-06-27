@@ -70,7 +70,7 @@ This enables the development of proofs in a top-down fashion by first stating th
 This is stronger than \Abella's and \Coq's subgoal deferring feature, which \Harpoon also supports, in that theorems may be declared with respect to different subsets of the signature in the same proof session.
 
 Unfortunately, case studies revealed that the implementation of \Harpoon's theorem-switching feature can lead to invalid \Beluga signatures when proof scripts developed out of order are translated into programs.
-Indeed, upon checking out an incomplete proof script, the signature is not be reverted back to the state at which that proof is declared.
+Indeed, upon checking out an incomplete proof script, the signature is not reverted back to the state at which that proof is declared.
 This effectively means that definitions occurring later in a proof session appear in scope during interactive proof sessions.
 To soundly support switching between theorems, the \Beluga system requires a mechanism to rollback the referencing state to the point where theorems are declared.
 This prompted the reimplementation of name resolution in \Beluga and \Harpoon to support visiting states.
@@ -89,7 +89,7 @@ In the implementation, not all variables are replaced with de Bruijn indices dur
 % What was the legacy implementation of indexing? Why did it require reimplementation?
 
 The legacy implementation of indexing is additionally responsible for disambiguating the application of user-defined operators since that phase keeps track of constants as they are introduced in the signature.
-This disambiguation leverages Dijkstra's shunting-yard algorithm as opposed to the recursive descent parsing algorithm presented in section~\ref{section:parsing-user-defined-operators}.
+This disambiguation leverages Dijkstra's shunting-yard algorithm~\cite{dijkstra1961algol} as opposed to the recursive descent parsing algorithm presented in section~\ref{section:parsing-user-defined-operators}.
 In the revised system, this responsibility has been moved to its own disambiguation phase, as presented in section~\ref{section:lexing-parsing-disambiguation}, which requires its own implementation of name resolution.
 While this refactoring could have been sufficient in simplifying the processing pipeline, it uncovered significant technical debt and issues having to do with the way identifiers are handled during indexing.
 
@@ -406,7 +406,7 @@ This only succeeds if $\Lookup{x}{\Xi}$ is a binding in $\Psi$.
 \end{itemize}
 
 Identifier lookup and index operations are separate since $\Lookup{x}{\Xi}$ considers the entire referencing environment $\Xi$ whereas $\Index{\Psi}{x}{\Xi}$ is restricted to the indexing context $\Psi$ in $\Xi$.
-As discussed later, the implementation obviates the need for an aditional traversal of the referencing environement specifically for the index operation.
+As discussed later, the implementation obviates the need for an additional traversal of the referencing environement specifically for the index operation.
 Popping a binding from the referencing environment is the inverse of pushing that binding, such that $\Pop{\Psi}{x}{\Push{\Psi}{x : \tau}{\Xi}} = \Xi$.
 Analogously, $\Unshift{\Psi}{\Shift{\Psi}{\Xi}} = \Xi$.
 Additionally, the environments constructed as $\Push{\Psi}{x : \LFTerm}{\Xi} $ and $ (\Xi, x : \LFTerm)$ are equivalent, and so are $\Shift{\Psi}{\Xi} $ and $ (\Xi, \_ : \LFTerm)$ since the \LF indexing context is only comprised of bindings for \LF terms.

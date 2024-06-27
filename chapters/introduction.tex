@@ -36,7 +36,7 @@ Crucially, \Harpoon is a system integrated into \Beluga's core functionalities i
 
 Structural (or projectional) editing in programming language tooling is the functionality of a software editor that allows the user to manipulate \acp{AST} directly.
 This is in contrast with plain text editors in which users may only edit textual representations of their programs, that then subsequently require parsing to be interpreted.
-The \Hazel~\cite{omar2017hazelnut, omar2019live} functional programming environment is a notable example of a structural editor in the functional programming community for its ability to dynamically provide type information as the user writes programs with holes.
+The \Hazel~\cite{omar2017hazelnut, omar2019live} functional programming environment is an example of a structural editor, notable in the functional programming community for its ability to dynamically provide type information as the user writes programs with holes.
 This is achieved using carefully designed semantics of moving a text-editing cursor in the concrete syntax and mapping its location to a node in the parsed \ac{AST}.
 When it comes to theorem provers, one example of structured editing is the \CoqIDE~\cite{Coq}, which leverages the \Coq \XML protocol and a state transaction system to interact with the proof system's kernel by way of messages.
 This is not too dissimilar to what is done with implementations of the language server protocol to provide advanced editing functionalities for programming languages.
@@ -75,7 +75,7 @@ In particular, a single global mutable representation of the \Beluga program bei
 This simplified the implementation of new features since globally accessible data does not need intricate data routing procedures like dependency injection.
 This design was sound only under the assumption that the necessary information for processing \Beluga signatures would flow in only one direction.
 Unfortunately, the introduction of \Beluga's interactive mode and subsequently \Harpoon inadvertently broke that assumption.
-Indeed, soundness issues have arose with regards to features and processes of the two systems that require inspecting only a subset of a signature, and as such using referencing environments built out of order.
+Indeed, soundness issues have arisen with regards to features and processes of the two systems that require inspecting only a subset of a signature, and as such using referencing environments built out of order.
 This issue of locality in references has further been shown to deteriorate the performance of \Beluga's logic programming engine used to automate proof search.
 
 % What is the proposed approach to supporting edit actions in Beluga and Harpoon?

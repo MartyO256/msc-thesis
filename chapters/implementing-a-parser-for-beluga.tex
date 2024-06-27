@@ -136,7 +136,7 @@ By accepting a wider range of programs during parsing, the subsequent disambigua
 \item
 \textit{Improve the processing pipeline's maintainability.}
 By decoupling disambiguation from indexing, both phases now respect the single-responsibility principle, which in turn simplifies the information flow at the early stage of signature reconstruction.
-Dependency injection of mutable states is also introduced define clear boundaries on effects in the implementation of the disambiguation phase, which enables the development of structured editing procedures.
+Dependency injection of mutable states is also introduced to define clear boundaries on effects in the implementation of the disambiguation phase, which enables the development of structured editing procedures.
 \item
 \textit{Provide unambiguous external \acp{AST} to enable debugging of signature reconstruction.}
 Since the disambiguated external \ac{AST} of a program fully captures the meaning of what the user wrote, then the internal \ac{AST} as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline} is no longer the only unambiguous data representation for programs in \Beluga.
@@ -188,6 +188,7 @@ In general, it is inadvisable to mutate the stream of tokens during parsing, esp
 
 \subsection{Parsing}
 
+% TODO: Specify the pathological case
 Parsing of \Beluga signatures is achieved using $ \mathsf{LL(\infty)} $ parsing in pathological cases and $ \mathsf{LL(1)} $ parsing in the most frequent cases.
 This is implemented using the monadic parser combinator library introduced in \Beluga version \texttt{1.0}.
 Unlimited lookahead is enabled only in select cases, or if no input token has been consumed, which performs efficiently enough for large \Beluga files.
@@ -236,10 +237,10 @@ This greatly broadens the scope of programs accepted by the parser, which in tur
 \alt `block' `(' <identifier> `:' <clf-type> (`,' <identifier> `:' <clf-type>)+ `)'
 \end{grammar}
 \caption[Grammar for parsing contextual \acs{LF} terms in normal form in the legacy \Beluga parser]{%
-The grammar based on figure~\ref{figure:internal-syntax} for parsing contextual \LF terms in normal form in the legacy parser, denoted using the lexical conventions of section~\ref{section:lexical-convention}.
+The grammar based on figure~\ref{figure:internal-syntax} for parsing contextual \LF terms in normal form as implemented in the legacy parser, denoted using the lexical conventions of section~\ref{section:lexical-convention}.
 The definition for the nonterminal \synt{clf-substitution} is omitted for brevity.
 The nonterminals \synt{clf-term-application} and \synt{clf-type-atomic} showcase a dramatic increase in complexity for parsing contextual \LF terms and types.
-This presentation also does not effectively demonstrate that left recursions never occur, and what precedence each operator has.
+%This presentation also does not effectively demonstrate that left recursions never occur, and what precedence each operator has.
 }
 \label{figure:legacy-clf-parsing}
 \end{figure}
@@ -248,9 +249,9 @@ This presentation also does not effectively demonstrate that left recursions nev
 \begin{subfigure}{\linewidth}
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
 exp : \verbbf{type}.
-eq : exp -> exp -> \verbbf{type}.
+eq : exp \makebox[1em]{→} exp \makebox[1em]{→} \verbbf{type}.
 \verbbf{schema} ctx = \verbbf{block} (x : exp, t : eq x x);
-\verbbf{rec} reflexivity : \{g : ctx\} \{M : [g |- exp]\} [g |- (eq M M)[..]] = ?;
+\verbbf{rec} reflexivity : \{g : ctx\} \{M : [g \makebox[1em]{⊢} exp]\} [g \makebox[1em]{⊢} (eq M M)[..]] = ?;
 \end{Verbatim}
 \caption{%
 Example \Beluga theorem statement with a syntactically invalid substitution.
@@ -260,7 +261,7 @@ The identity substitution \texttt{[..]} on the application of an \LF type consta
 \par\bigskip
 \begin{subfigure}{\linewidth}
 \begin{Verbatim}[baselinestretch=1]
-example.bel, line 5, column 59:
+example.bel, line 4, column 57:
 Parse error.
 Unexpected token in stream
   Expected token `]'
@@ -275,8 +276,8 @@ However, the reason for this error is not obvious from its message, in part beca
 \par\bigskip
 \begin{subfigure}{\linewidth}
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
-\verbpbf{File "example.bel", line 5, column 52:}
-5 |rec reflexivity : \{g : ctx\} \{M : [g |- exp]\} [g |- (eq M M)[..]] = ?;
+\verbpbf{File "example.bel", line 5, column 50:}
+4 |rec reflexivity : \{g : ctx\} \{M : [g \makebox[1em]{⊢} exp]\} [g \makebox[1em]{⊢} (eq M M)[..]] = ?;
                                                       \verbrbf{^^^^^^^^^^^^}
 \verbrbf{Error:} Substitution terms may not appear as contextual LF types.
 \end{Verbatim}
