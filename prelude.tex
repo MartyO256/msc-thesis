@@ -60,6 +60,16 @@
 \usepackage{stmaryrd}
 
 \usepackage[printonlyreused, withpage]{acronym}
+\makeatletter
+\AtBeginDocument{%
+  \renewcommand*{\AC@hyperlink}[2]{%
+    \begingroup
+      \hypersetup{hidelinks}%
+      \hyperlink{#1}{#2}%
+    \endgroup
+  }%
+}
+\makeatother
 
 \usepackage{fancyvrb}
 \fvset{listparameters=\setlength{\topsep}{0pt}\setlength{\partopsep}{0pt}}
@@ -173,4 +183,4 @@
 \newcommand{\Domain}{\operatorname{domain}}
 \newcommand{\Term}[1]{#1\ \mathsf{term}}
 \newcommand{\Unit}{\mathsf{unit}}
-\newcommand\monoellipsis{\hbox to.5em{\hss.\hss\hss.\hss\hss.\hss}}
+\newcommand{\monoellipsis}{\hbox to.5em{\hss.\hss\hss.\hss\hss.\hss}}
