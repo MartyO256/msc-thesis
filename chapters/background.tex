@@ -165,9 +165,9 @@ Pattern-matching over type-synthesizing expressions (which includes embedded met
 \begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
 \LF kinds & $K$ & $\Coloneqq$ & $\Pi x{:}A. K \mid \mathbf{type}$\\
 \LF types & $A, B$ & $\Coloneqq$ & $\Pi x{:}A. B \mid P$\\
-Atomic \LF types & $P$ & $\Coloneqq$ & $a \cdot S$\\
+Atomic \LF types & $P$ & $\Coloneqq$ & $a\ S$\\
 \LF normal terms & $M$ & $\Coloneqq$ & $R \mid \lambda x. M$\\
-\LF neutral terms & $R$ & $\Coloneqq$ & $H \cdot S \mid u[\sigma]$\\
+\LF neutral terms & $R$ & $\Coloneqq$ & $H\ S \mid u[\sigma]$\\
 \LF heads & $H$ & $\Coloneqq$ & $x \mid c \mid p[\sigma]$\\
 \LF spines & $S$ & $\Coloneqq$ & $\cdot \mid M\ S$\\
 Substitutions & $\sigma$ & $\Coloneqq$ & $\cdot \mid \mathsf{id}_\psi \mid \sigma, M \mid \mathsf{id}_\psi[\rho]$\\
