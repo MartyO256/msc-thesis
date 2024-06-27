@@ -3,6 +3,12 @@
 \usepackage[french, english]{babel}
 \usepackage{textcomp}
 
+\usepackage{titlesec}
+\titlespacing*{\chapter}{0pt}{0pt}{-100pt}
+\titlespacing*{\section}{0pt}{0pt}{20pt}
+\titlespacing*{\subsection}{0pt}{0pt}{20pt}
+\titlespacing*{\subsubsection}{0pt}{0pt}{20pt}
+
 \usepackage[a-1b]{pdfx}
 
 \usepackage{newunicodechar}
@@ -132,10 +138,6 @@
 \DeclarePairedDelimiter\floor{\lfloor}{\rfloor}
 \DeclarePairedDelimiter\angled{\langle}{\rangle}
 \DeclarePairedDelimiter\ucorner{\ulcorner}{\urcorner}
-
-\makeatletter
-\renewcommand\section{\@startsection {section}{1}{\z@}{-3.5ex \@plus -1ex \@minus -.2ex}{2.3ex \@plus.2ex}{\raggedright\normalfont\Large\bfseries}}
-\makeatother
 
 \usepackage{mdframed}
 \mdfsetup{%

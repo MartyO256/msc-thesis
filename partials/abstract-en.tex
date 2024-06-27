@@ -1,7 +1,8 @@
 \chapter*{Abstract}
+\vspace{-2em}
 
-\Beluga is a functional programming language and proof assistant for specifying formal systems in contextual \acs{LF} and mechanically proving theorems about them using recursive programs.
-To facilitate the incremental development of proofs with commands and automation tactics, the \Harpoon interactive proof environment is subsequently implemented as a \acs{REPL} with structural editing features over \Beluga programs.
+\Beluga is a functional programming language and proof assistant for specifying formal systems in contextual \acs{LF}, an extension of the \acl{LF}, and mechanically proving theorems about them using recursive programs.
+To facilitate the incremental development of proofs with commands and automation tactics, the \Harpoon interactive proof environment is subsequently implemented as a \acl{REPL} with structural editing features over \Beluga programs.
 Due to architectural limitations in the implementation of \Beluga and \Harpoon, top-down and out-of-order proof development sessions can lead to invalid proof states and unsound translated programs.
 
 This thesis reports on technical challenges and solutions to soundly implementing the structural editing of proofs, including the navigation between proof holes, with a main focus on syntactic analysis and the early phases of semantic analysis.
