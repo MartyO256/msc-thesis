@@ -12,7 +12,7 @@ Despite the introduced changes being justified, they are not without drawbacks.
 Breaking changes to the \Beluga language had to be introduced both at the level of its syntax and its semantics.
 Enforcing unambiguous syntaxes for meta-level objects and types, as well as removing support for overloaded identifiers made the system more robust, but also made it less flexible.
 Additionally, the introduction of the disambiguation phase separate from the indexing phase involved duplicating the name resolution algorithm.
-Duplicated routines also appear in pretty-printing modules to format \Beluga signatures and print them as source code and \HTML pages.
+%Duplicated routines also appear in pretty-printing modules to format \Beluga signatures and print them as source code and \HTML pages.
 On one hand, this code duplication ensures that those modules are independent of one another, but on the other hand, it complicates the process of changing \Beluga's concrete syntax.
 
 While \Beluga versions \texttt{1.0} and \texttt{v1.1} are not functionally equivalent in some aspects, version \texttt{v1.1} brought significant performance improvements as evidenced by figure~\ref{figure:runtime-improvement}.
