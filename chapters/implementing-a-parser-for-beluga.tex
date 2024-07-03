@@ -188,9 +188,9 @@ In general, it is inadvisable to mutate the stream of tokens during parsing, esp
 
 \subsection{Parsing}
 
-% TODO: Specify the pathological case
 Parsing of \Beluga signatures is achieved using $ \mathsf{LL(\infty)} $ parsing in pathological cases and $ \mathsf{LL(1)} $ parsing in the most frequent cases.
-This is implemented using the monadic parser combinator library introduced in \Beluga version \texttt{1.0}.
+The pathological cases are discussed in section~\ref{section:parser-discussion}.
+The parser is implemented using the monadic parser combinator library introduced in \Beluga version \texttt{1.0}.
 Unlimited lookahead is enabled only in select cases, or if no input token has been consumed, which performs efficiently enough for large \Beluga files.
 
 The main contribution made to the context-free parsing phase of \Beluga is the simplification of its grammar.
@@ -212,8 +212,8 @@ This greatly broadens the scope of programs accepted by the parser, which in tur
 <clf-normal> ::=
      `\\' <identifier> `.' <clf-term-application>
 \alt `(' <clf-term-application> [`:' <clf-type>] `)'
-\alt <hash-identifier> [<clf-projection>] [ `[' <clf-substitution> `]' ]
-\alt <qualified-identifier> [<clf-projection>] [ `[' <clf-substitution> `]' ]
+\alt <hash-identifier> [<clf-projection>] [ `[' <clf-substitution> `]' ]
+\alt <qualified-identifier> [<clf-projection>] [ `[' <clf-substitution> `]' ]
 \alt `_'
 \alt `?'<identifier>
 \alt `<' <clf-term-application> (`;' <clf-term-application>)+ `>'
@@ -488,7 +488,7 @@ $ \angled{e}_{P + 1} $ & $ \Coloneqq $ & $ \mathbf{a}+ $
 \caption[]{Grammars for parsing user-defined operators in \Beluga (cont.).}
 \end{figure}
 
-\section{Discussion}
+\section{Discussion}\label{section:parser-discussion}
 
 Despite the bugfixes and new features, the revised parser architecture is not without its flaws.
 The additional requirement that parsing must produce an unambiguous \ac{AST} without resorting to complex disambiguation mechanisms prevents the overloading of some syntax.
@@ -500,9 +500,11 @@ Should \Beluga be extended to support multiple context variables in contexts, th
 Likewise, should mixfix notations be a planned feature, then identifier overloading may need to be reintroduced with type-driven disambiguation since those notations typically require the reuse of names across different operators.
 
 Additionally, further blurring of the grammars in section~\ref{section:resolving-grammar-ambiguities} would be required to ensure that the context-free parsing phase does not have to perform infinite lookaheads.
-Indeed, there is a pathological case in parsing computation-level kinds and types where an unbounded lookahead is required because of an overlapping syntax between meta-level types and computation-level types.
+Indeed, there is a pathological case in parsing where an unbounded lookahead is required because of overlapping syntax in two different categories.
+Specifically, the opening parenthesis token is accepted by both the parser for meta-level types and the one for computation-level kinds and types.
+Instead of reworking the grammar to further blur the nonterminals \synt{meta-thing} and \synt{comp-sort-object} from sections~\ref{section:meta-level-grammar-blurring} and \ref{section:comp-level-grammar-blurring}, which could degrade the quality of syntax error messages, unbounded lookahead is enabled when parsing a meta-level type as part of a computation-level kind or type.
 The performance impact of this lookahead has not been measured, but it appears to be negligible based on the performance of running the entire processing pipeline on the numerous examples that are part of the system's test suite.
-Nonetheless, the observation that additional grammar blurring is required to get from an $ \mathsf{LL}(\infty) $ parser to an $ \mathsf{LL}(1) $ parser for \Beluga begs the question whether there should only be one encompassing non-terminal in the grammar of section~\ref{section:resolving-grammar-ambiguities}.
+Nonetheless, the observation that additional grammar blurring is required to get from an $ \mathsf{LL}(\infty) $ parser to an $ \mathsf{LL}(1) $ parser for \Beluga begs the question whether there should only be one encompassing nonterminal in the grammar of section~\ref{section:resolving-grammar-ambiguities}.
 This would make the language's grammar uniform, and allow for more flexibility in overloading syntactic constructs.
 However, since a parselet is required per precedence level in recursive descent parsing, and most static operators in \Beluga have distinct precedences, the resulting increase in the recursion depth for parsing could deteriorate the runtime performance of the parser.
 Arguably, such a design presents more opportunities to improve the precision of syntax error messages during disambiguation.

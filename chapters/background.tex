@@ -66,7 +66,7 @@ Case $\D = \infer[\text{term-lam}]{\Gamma \vdash \Term{\lambda x. N}}{\deduce{\G
 \par
 By weakening on $\D'$, we have $\deduce{\Gamma, x : \mathsf{term}, e : x \equiv x \vdash \Term{N}}{\E}$.
 \par
-By the induction hypothesis on $\E$, we have $\deduce{\Gamma, x : \mathsf{term}, e : x \equiv x \vdash N\ x \equiv N\ x}{\E'}$.
+By the induction hypothesis on $\E$, we have $\deduce{\Gamma, x : \mathsf{term}, e : x \equiv x \vdash N\ x \equiv N\ x}{\E'}$.
 \par
 Then,
 \begin{equation*}
@@ -188,7 +188,7 @@ Meta-objects & $C$ & $\Coloneqq$ & $\cdots \mid \Psi \mid (\Psi \vdash M) \mid (
 \begin{subfigure}{\linewidth}
 \begin{tabular}{p{5.5cm} >{\raggedleft}p{1cm} r l}
 Computation-level kinds & $\kappa$ & $\Coloneqq$ & $[U] \to \kappa \mid \Pi X{:}U. \kappa \mid \mathbf{ctype}$\\
-Computation-level types & $\tau$ & $\Coloneqq$ & $\cdots \mid c \mid \tau_1 \to \tau_2 \mid \Pi X{:}U. \tau \mid [U] \mid \tau\ [C]$\\
+Computation-level types & $\tau$ & $\Coloneqq$ & $\cdots \mid c \mid \tau_1 \to \tau_2 \mid \Pi X{:}U. \tau \mid [U] \mid \tau\ [C]$\\
 Type-checkable expressions & $e$ & $\Coloneqq$ & $\cdots \mid i \mid [C] \mid \mathbf{fn}\ x \Rightarrow e \mid \mathbf{mlam}\ X \Rightarrow e$ \\
 & & $|$ & $\mathbf{let}\ x = i\ \mathbf{in}\ e \mid \mathbf{case}\ i\ \mathbf{of}\ \overrightarrow{p \Rightarrow e}$\\
 Type-synthesizing expressions & $i$ & $\Coloneqq$ & $\cdots \mid x \mid c \mid i \ e \mid e : \tau$

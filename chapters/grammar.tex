@@ -739,7 +739,7 @@ Additionally, the syntax is disambiguated in order of decreasing precedence as f
 \item Binders are weak prefix operators, meaning that the identifier they introduce is in scope for the entire contextual \LF object on the right.
 \end{enumerate}
 
-\subsection{Resolving Syntactic Ambiguities for the Meta-Level's Grammar}
+\subsection{Resolving Syntactic Ambiguities for the Meta-Level's Grammar}\label{section:meta-level-grammar-blurring}
 
 The grammar for context schemas, meta-types, meta-objects, meta-patterns and meta-contexts from section~\ref{section:syntax-meta-level} is ambiguous because the contextual \LF types and terms therein have ambiguous grammars.
 This next grammar blurs together meta-types, meta-objects and meta-patterns with corresponding nonterminals \synt{meta-type}, \synt{meta-object} and \synt{meta-pattern} for context-free parsing.
@@ -775,7 +775,7 @@ Disambiguation of a meta-thing as presented below requires:
 Additionally, in a meta-thing, a fully qualified identifier referring to a context schema constant is ambiguous with a context variable.
 Such context schema constants are disambiguated from the parsed context object.
 
-\subsection{Resolving Syntactic Ambiguities in Computations}
+\subsection{Resolving Syntactic Ambiguities in Computations}\label{section:comp-level-grammar-blurring}
 
 The grammar for computation-level kinds and types from section~\ref{section:syntax-computations} is data-dependent because computational base and cobase type constants are syntactically indistinguishable from one another, and because the grammar relies on meta-level objects.
 This next grammar blurs together computational kinds and types with corresponding nonterminals \synt{comp-kind} and \synt{comp-type} for context-free parsing.
