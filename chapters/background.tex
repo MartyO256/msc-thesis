@@ -1,12 +1,15 @@
 \chapter{Background}
 
+This chapter presents an overview of \Beluga, and \Harpoon, whose implementations were modified as part of this thesis.
+The concept of incremental program development is briefly explained to motivate those modifications.
+
 \section{The \Beluga Language}
 
 In \Beluga, theorems are encoded using contextual \LF, its index language, and proofs are encoded as programs.
 Logic propositions are represented as \LF type families with term-level constants parameterized by $\beta$-normal $\eta$-long \LF terms to construct witnesses for these propositions~\cite{nanevski2008contextual, foundation2008pientka, DBLP:journals/corr/abs-1009-2789}.
 To facilitate the implementation of semantic analysis, and because \LF kinds, types and terms are strongly normalizing~\cite{harper1993framework}, they are required to be encoded in normal form by the user.
 \Beluga extends \LF to support explicit contexts and substitutions, which enables mechanized reasoning with respect to assumptions, like in proofs on paper~\cite{pientka2010programming}.
-This means that terms containing free variables can be manipulated and reasoned about explicitly in \Beluga.
+This means that terms containing free variables can be manipulated and reasoned about explicitly.
 
 To illustrate how \Beluga is leveraged to mechanically prove properties about formal systems, consider the following example adapted from \cite{felty2010reasoning} where it is shown that algorithmic equality for an untyped $\lambda$-calculus is reflexive.
 The abstract syntax for this calculus is first defined in figure~\ref{figure:running-example-abstract-syntax}, which is encoded as an \LF type constant \verb|term| with term constants \verb|lam|, \verb|app| and \verb|unit| in the \verb|Term| module of figure~\ref{figure:running-example-implementation}.
@@ -29,6 +32,7 @@ Syntax definition for the untyped $\lambda$-calculus used in the running example
 \end{subfigure}
 \par\bigskip
 \begin{subfigure}{\linewidth}
+{\footnotesize
 \begin{mdframed}[frametitle={$\boxed{\Gamma \vdash M \equiv N}$ : the term $M$ is algorithmically equal to $N$ in context $\Gamma$}]
 \begin{equation}
 \infer[\equiv\text{-lam}]{\Gamma \vdash \lambda x. M \equiv \lambda x. N}{\Gamma, x : \mathsf{term}, e : x \equiv x \vdash M\ x \equiv N\ x}
@@ -40,6 +44,7 @@ Syntax definition for the untyped $\lambda$-calculus used in the running example
 \infer[\equiv\text{-unit}]{\Gamma \vdash \Unit \equiv \Unit}{}
 \end{equation}
 \end{mdframed}
+}
 \caption{Definition of algorithmic equality over the untyped terms.}
 \end{subfigure}
 \caption[Running example of algorithmic equality for an untyped $\lambda$-calculus]{%
@@ -216,7 +221,8 @@ Since \Beluga is a dependently-typed language featuring code coverage analysis a
 \caption[Overview of \Beluga version \texttt{1.0}'s processing pipeline]{%
 Overview of the implementation of \Beluga version \texttt{1.0}'s processing pipeline.
 The syntax analysis process converts the textual representation of \Beluga programs into an initial \acs{AST}.
-The semantic analysis process refines this \acs{AST} by performing type-directed signature reconstruction, using global mutable data structures that include a store of constant declarations in the signature.
+The semantic analysis process refines this \acs{AST} by performing type-directed signature reconstruction using global mutable data structures.
+This includes a store of constant declarations in the signature, along with auxiliary data for name resolution, fresh name generation and relations between type families.
 }
 \label{figure:legacy-beluga-processing-pipeline}
 \end{figure}
