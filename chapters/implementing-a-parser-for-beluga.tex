@@ -302,11 +302,34 @@ Unrestricted backtracking and infinite lookaheads are not suitable solutions to 
 The implemented solution to this sort of problem during context-free parsing is somewhat counterintuitive.
 The syntactic categories having common syntaxes that appear in ambiguous positions are merged into a single nonterminal in the grammar.
 We call this blurring the grammar since we effectively lose the distinction between those merged syntactic categories during context-free parsing.
-This results in a grammar that accepts a wider range of expressions.
+
+For instance, consider the following subset of \Beluga's grammar with an overloading of the \synt{forward-arrow} operator.
+\begin{grammar}
+<lf-kind> ::= <lf-type> <forward-arrow> <lf-kind> | `type'
+
+<lf-type> ::= <lf-type> <forward-arrow> <lf-type> | <identifier>
+\end{grammar}
+If a parser is in a state where either an \synt{lf-kind} or an \synt{lf-type} is expected, and the sequence \synt{lf-type}~\synt{forward-arrow} is parsed successfully, then the parser expects again either an \synt{lf-kind} or an \synt{lf-type} to appear next.
+While at first left factoring~\cite{aho2007compilers} seems usable to rewrite the grammar for predictive parsing, the problem lies in the shared prefix \synt{lf-type}~\synt{forward-arrow} not being in productions of the same nonterminal.
+A backtracking parser cannot efficiently handle this grammar, and adding memoization to the implementation to avoid redundant parses of the prefix would greatly complicate the parser.
+Instead, we introduce \synt{lf-object} as the merging of the syntactic categories \synt{lf-kind} and \synt{lf-type} obtained as follows:
+\begin{enumerate}
+\item The production rules of \synt{lf-kind} and \synt{lf-type} are added to \synt{lf-object},
+\item Occurrences of \synt{lf-kind} and \synt{lf-type} in the rules of \synt{lf-object} are replaced with \synt{lf-object},
+\item Duplicate production rules in \synt{lf-object} are removed.
+\end{enumerate}
+This yields a simpler grammar whose language contains the languages of the blurred syntactic categories.
+\begin{grammar}
+<lf-object> ::= <lf-object> <forward-arrow> <lf-object> | `type' | <identifier>
+\end{grammar}
+This is a viable solution only if there is a way to disambiguate an \synt{lf-kind} or \synt{lf-type} from a parsed \synt{lf-object}.
+In this case, a syntactically valid \synt{lf-object} is an \synt{lf-kind} if and only if it contains the keyword \lit{type}.
+
+As shown in the previous example, a blurred grammar accepts a wider range of expressions than its original grammars.
 Hence, an additional phase of processing is required to recover a parser for the initial grammars.
-Section~\ref{section:blurred-lf-syntax} provides an example of one such blurred grammar, obtained by merging the nonterminals \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} of section~\ref{section:syntax-lf} into one syntactic category, with corresponding nonterminal \synt{lf-object}.
+Section~\ref{section:blurred-lf-syntax} provides the complete example of a blurred grammar used in the implementation, obtained by merging the nonterminals \synt{lf-kind}, \synt{lf-type} and \synt{lf-term} of section~\ref{section:syntax-lf} into one syntactic category, with corresponding nonterminal \synt{lf-object}.
 The context-sensitive disambiguation phase outlined in the next section is then tasked with recovering the original \LF kind, type or term corresponding to a parsed \LF object.
-We note that a similar technique was used in \Twelf since its shift-reduce parser could not perform disambiguation during parsing.
+We note that a similar technique was used in the implementation of \Twelf since its shift-reduce parser could not perform disambiguation during parsing.
 
 \subsection{Disambiguation}
 
