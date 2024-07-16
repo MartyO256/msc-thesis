@@ -1,0 +1,5 @@
+LF tm : type = ;
+schema ctx = tm;
+inductive Ex : ctype = ;
+rec f : {g : ctx} → [g ⊢ tm] → Ex → Ex =
+  mlam g ⇒ fn g ⇒ fn x ⇒ let [_ ⊢ x] = g in f [g] [g ⊢ x] x;

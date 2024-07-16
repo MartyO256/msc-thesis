@@ -1,0 +1,4 @@
+exp : type.
+eq : exp → exp → type.
+schema ctx = block (x : exp, t : eq x x);
+rec reflexivity : {g : ctx} {M : [g ⊢ exp]} [g ⊢ (eq M M)[..]] = ?;
