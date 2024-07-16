@@ -116,8 +116,8 @@ This is admissible because only one namespace is made available at a time during
 {\verbbf{LF}} tm : {\verbbf{type}} = \monoellipsis;
 {\verbbf{schema}} ctx = \monoellipsis;
 {\verbbf{inductive}} Ex : {\verbbf{ctype}} = \monoellipsis;
-{\verbbf{rec}} f : {\{g : ctx\}} -> [g |- tm] -> Ex -> Ex =
-  {\verbbf{mlam}} {\color{red}{g}} => {\verbbf{fn}} {\color{blue}{g}} => {\verbbf{fn}} {\color{teal}{x}} => {\verbbf{let}} [_ |- {\color{magenta}{x}}] = {\color{blue}{g}} {\verbbf{in}} f [{\color{red}{g}}] [{\color{red}{g}} |- {\color{magenta}{x}}] {\color{teal}{x}};
+{\verbbf{rec}} f : {\{g : ctx\}} \makebox[1em]{→} [g \makebox[1em]{⊢} tm] \makebox[1em]{→} Ex \makebox[1em]{→} Ex =
+  {\verbbf{mlam}} {\color{red}{g}} \makebox[1em]{⇒} {\verbbf{fn}} {\color{blue}{g}} \makebox[1em]{⇒} {\verbbf{fn}} {\color{teal}{x}} \makebox[1em]{⇒} {\verbbf{let}} [_ \makebox[1em]{⊢} {\color{magenta}{x}}] = {\color{blue}{g}} {\verbbf{in}} f [{\color{red}{g}}] [{\color{red}{g}} \makebox[1em]{⊢} {\color{magenta}{x}}] {\color{teal}{x}};
        {\color{red}{1}}       {\color{blue}{2}}       {\color{teal}{3}}              {\color{magenta}{4}}    {\color{blue}{2}}       {\color{red}{1}}   {\color{red}{1}}    {\color{magenta}{4}}  {\color{teal}{3}}
 \end{Verbatim}
 This overloading does not translate well in proofs on paper since that results in an identifier being used to refer to two distinct objects in the same proof.
@@ -127,12 +127,12 @@ An error message like the following should be raised instead to ensure proper le
 \begingroup
 \samepage
 \begin{Verbatim}[commandchars=\\\{\}, baselinestretch=1]
-\verbpbf{File "example.bel", line 5, column 52:}
-6 |  mlam g => fn g => fn x => let [_ |- x] = g in f [g] [g |- x] x;
+\verbpbf{File "example.bel", line 5, column 48:}
+6 |  mlam g \makebox[1em]{⇒} fn g \makebox[1em]{⇒} fn x \makebox[1em]{⇒} let [_ \makebox[1em]{⊢} x] = g in f [g] [g \makebox[1em]{⊢} x] x;
                                                       \verbrbf{^}
 \verbrbf{Error:} Expected a context variable.
-    \verbpbf{File "example.bel", line 5, column 16:}
-    6 |  mlam g => fn g => fn x => let [_ |- x] = g in f [g] [g |- x] x;
+    \verbpbf{File "example.bel", line 5, column 15:}
+    6 |  mlam g \makebox[1em]{⇒} fn g \makebox[1em]{⇒} fn x \makebox[1em]{⇒} let [_ \makebox[1em]{⊢} x] = g in f [g] [g \makebox[1em]{⊢} x] x;
                       \verbrbf{^}
     \verbrbf{Error:} g is a bound computation variable.
 \end{Verbatim}
@@ -227,7 +227,7 @@ The type of entry in a referencing environment is extensible, which allows for a
 For indexing specifically, the entries are annotated with labels for the various kinds of declarations in \Beluga signatures (i.e., $\LFTerm$, $\Ctx$, $\CompTerm$, $\LFTypeConst$, $\LFTermConst$, etc.), as well as indexing context sizes $|\Psi|$, $|\Delta|$ and $|\Gamma|$ for variables, and symbolic identifiers $\tilde a$ and $\tilde c$ for constants in the signature reconstruction store.
 Indexing context sizes are also kept track of in the structure for bindings to support computing de Bruijn indices.
 
-\begin{figure}[H]
+\begin{figure}
 \centering
 {\footnotesize
 \begin{tabular}{lrcl}
@@ -247,6 +247,24 @@ Entry & $ e $ & $ \Coloneqq $ & $ \cdots \mid (\LFTerm, |\Psi|) \mid (\Ctx, |\De
 Definition of referencing environments for \Beluga programs, assigning stacks of entries to identifiers with a stack of frames.
 }
 \label{figure:referencing-environment-definition}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics{figures/referencing-environment-name-resolution.eps}
+\caption[Example state for a referencing environment]{%
+Example state for a referencing environment supporting name resolution as defined in figure~\ref{figure:referencing-environment-definition}.
+This referencing environment maps identifiers $x_1, x_2, \dots, x_n$ to entries $e_{i,j}$ in frames $\mathcal{F}_1, \mathcal{F}_2, \dots, \mathcal{F}_m$.
+Frames are illustrated in a stack growing upwards.
+Likewise, entries in a given frame are arranged in stacks, like entries $e_{1,1}$ and $e_{1,2}$ bound to $x_1$ in frame $\mathcal{F}_1$.
+Had the referencing environment been formulated with respect to scopes, this would not be admissible.
+The order of insertion for bindings is unknown.
+The bindings reachable in this state for name resolution are $(x_1, e_{1, k})$, $(x_2, e_{2, 3})$, $(x_3, e_{3, 1})$, $\dots$, $(x_n, e_{n, 2})$ and shown in gray.
+These bound entries are the topmost ones for each identifier.
+Indeed, binding $(x_1, e_{1,k})$ shadows $(x_1, e_{1,2})$, which in turn shadows $(x_1, e_{1,1})$.
+To support namespaces, each entry is associated with a tree of bindings, like in figure~\ref{figure:referencing-environment-implementation}.
+}
+\label{figure:referencing-environment-name-resolution}
 \end{figure}
 
 The entry stacks and bindings tree structures of figure~\ref{figure:referencing-environment-definition} can be flattened into an association list by keeping track of the insertion order for bindings.
@@ -414,6 +432,7 @@ Additionally, the environments constructed as $\Push{\Psi}{x : \LFTerm}{\Xi} $ a
 By design, the operations that add or remove bindings only affect the topmost frame in the referencing environment so as to respect the nesting structure of frames.
 The lookup and index operations, however, traverse the entire structure.
 Lookups are defined intuitively as successive lookups in frames, then lookups in trees of bindings, as illustrated in figure~\ref{figure:lookup-definition}.
+This ensures that the topmost entry bound to the identifier is found like in figure~\ref{figure:referencing-environment-name-resolution}.
 The exception to this rule has to do with lookups starting from pattern frames since variable declarations in external frames cannot be referenced in a pattern.
 Computing de Bruijn indices follows the same lookup procedure to stay consistent with identifier shadowing.
 
