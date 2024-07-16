@@ -8,96 +8,6 @@ Some aspects of context-sensitive disambiguation of \acp{AST} are showcased, inc
 This section provides a conceptual introduction to parsing, a discussion on the concept of ambiguity in parsing, and finally an overview of concepts and features of parsers for programming languages in proof assistants.
 Notably, we motivate the introduction of semantic analysis as part of syntactic analysis when it comes to resolving ambiguities in a language like \Beluga.
 
-% What is parsing?
-
-In compiler design, parsing is the process of converting the textual representation of a program into a hierarchical data structure~\cite{aho2007compilers, afroozeh2019practical}, which is typically called a parse tree.
-When a parse tree captures all the data about the text being processed, including comments and parentheses, then it is referred to as a concrete syntax tree.
-Otherwise, when parts of the data have been abstracted away, it is instead called an \ac{AST}.
-
-% What is ambiguity in parsing?
-
-A program's textual representation is ambiguous with respect to a predefined set of parse rules if the program can be parsed into a parse forest, which is multiple parse trees~\cite{aho2007compilers}.
-By way of analogy, a sentence in a natural language is ambiguous if it can be interpreted in multiple valid ways with respect to its syntactic and grammatical rules.
-Since programming languages are tools for describing computerized systems, it is necessary that each valid written program has exactly one interpretation~\cite{aho2007compilers}.
-In the strictest of cases, this unicity of interpretation may be enforced at the level of the grammar and parser, such that all syntactically valid programs have exactly one inferable interpretation.
-This is typically achieved using rules and syntactic conventions that prevent ambiguous programs from being ever written in the first place.
-
-Certain kinds of syntactic ambiguities are unavoidable in programming languages, and are frequently useful to the end user.
-Indeed, programming languages often reuse or overload syntactic constructs to reduce both the number and the complexity of rules that users have to learn in order to read and write programs.
-Ambiguous syntax can also make programs more terse, which may improve some workflows~\cite{resolveAmbiguity}.
-Additional mechanisms need to be put in place as part of the compiler's implementation to detect syntactic ambiguities, and either signal them as errors, or resolve them using additional interpretation rules.
-
-% What is disambiguation in parsing?
-
-Disambiguation is the process by which a parse forest is filtered down to a single parse tree.
-It refers to the procedures used to resolve ambiguities in intermediate results of parsing.
-In parsing systems that do not output parse forests, disambiguation typically involves manipulating the \ac{AST} representation of a single parse tree that captures ambiguities, meaning that some of its nodes represent the overlapping of syntactic constructs.
-Functionally, these nodes suspend parsing until more information is available to disambiguate them to the correct node variant.
-
-% What is the impact of disambiguation on program readability?
-
-Increasing the amount of computation required to disambiguate the textual representation of a program negatively impacts the maintainability and readability of that program for the end user.
-Indeed, some forms of ambiguity in the syntax of a program may prevent the end user from fully understanding it in isolation from the rest of the code sections.
-As such, one can argue that the programmatic strategies for disambiguating the syntax of a programming language should be intuitive so that external software is not required for the end user to read a program.
-For instance, name resolution is sufficiently intuitive for users, whereas searching in a parse forest for a parse tree that type-checks is not necessarily intuitive, especially given the complexity of some type systems.
-Hence, trade-offs between functionality and ease of understanding must be made when designing a language.
-
-% What are some examples of syntactic ambiguities?
-
-Different kinds of concrete syntax ambiguities may arise during parsing of a programming language.
-We distinguish three kinds of syntactic ambiguities that come into play in the implementation of \Beluga, listed below in increasing degree of cognitive complexity required to solve them:
-\begin{enumerate}
-\item
-\textit{Static operator ambiguities}: operators and their operands may be interpreted in different orders depending on where they appear in a whitespace-delimited list of terms.
-For instance, the expression $a + b * c$ is ambiguous with respect to the grammar $e\coloneqq e+e\mid e*e$.
-These ambiguities are typically resolved by assigning a precedence level, a fixity and an associativity to each operator in the language, and parsing them as keywords.
-\item
-\textit{Name-based ambiguities}: overloaded identifiers may be resolved to different binding sites depending on where they appear in an expression, and fall under different semantic categories as a consequence.
-For instance, in a dependently-typed language, type-level and term-level variables may be syntactically ambiguous, but they may have distinct syntaxes for binders.
-Semantic analysis of the \ac{AST} with respect to a symbol table is usually sufficient to disambiguate those cases.
-However, overloading of identifiers coupled with more advanced features, like user-defined mixfix operators~\cite{danielsson2008parsing}, poses additional challenges since identifiers may not be considered in isolation.
-\item
-\textit{Type-based ambiguities}: the correct interpretation of an expression may only be determined once a type has been inferred for it, or if it is checked against a type.
-This does not refer to method overloading in object-oriented programming languages since the syntax for calling a method is not ambiguous.
-Rather, if the expression being parsed is an identifier, then a type-based ambiguity may be that that expression or a surrounding one falls into a different syntactic category based on the identifier's type or kind.
-For instance, the syntax $ \texttt{(g, x : t)} $ may denote a pair of terms, with the variable $ \texttt{x} $ being checked against the type $ \texttt{t} $, or it may denote the context $ \texttt{g} $ with an added variable declaration $ \texttt{x : t} $.
-In this case, what $ \texttt{(g, x : t)} $ syntactically denotes depends on the type of $ \texttt{g} $.
-To solve such ambiguities, some type information may be provided by a symbol table if the type ascribed to an identifier is known at the declaration site.
-In general it is not practical to disambiguate expressions having type-based ambiguities before type-checking, especially when more intricate type inference algorithms need to be applied to determine the type of an identifier.
-Because of this, languages are typically designed to avoid type-based ambiguities.
-In the same way that is done in figure~\ref{figure:internal-syntax}, identifiers like $\psi$ can be reserved to always denote contexts, such that $\texttt{($\psi$, x : t)}$ is unambiguously a context.
-\end{enumerate}
-
-% What do ambiguities have to do with language design?
-% What is the typical workflow for designing syntaxes and implementing parsers? What are parser generators? What are their limitations?
-
-The kinds of syntactic ambiguities that arise in the design of a programming language depend on the system used to specify its syntax, which in turn affects the algorithm required to parse it.
-The concrete syntax of programming languages is typically specified with a \ac{CFG}, denoted in \ac{EBNF}.
-If a language can be specified by a \ac{CFG}, then it is a \ac{CFL}.
-\Acp{CFL} have many advantages, including the fact that there is an abundance of well-vetted parser generators for such languages.
-\ocamllex together with \ocamlyacc~\cite{smith2007ocamllex} is one example of such a parser generator.
-Crucially, \acp{CFL} are easy to parse, both algorithmically and by the end user.
-As the name suggests, parsers for \acp{CFL} do not require additional data in a context specifically intended for disambiguation.
-This ensures that programs can scale and be readable by the user without having to fully know the context in which programs appear.
-That is, other code sections in a \ac{CFL} do not affect how a given code section is parsed.
-Static operator ambiguities as mentioned previously can be resolved by rewriting the grammar while keeping it context-free.
-Name-based and type-based ambiguities however give rise to context-sensitive languages, or even strictly Turing-recognizable languages~\cite{chomsky1956three}.
-Context-sensitive languages necessitate additional data about the context in which parts of a program appear to correctly parse it.
-This typically means that some semantic analysis is required during parsing in order to complete the syntactic analysis.
-Consequently, the concrete syntax's design for a programming language is intrinsically linked with the algorithm required to parse it.
-
-% What are some language design considerations?
-
-We say that a grammar is dynamic (or user-extensible, or featuring syntax extensions) if the way a program is parsed is influenced by directives in the program itself, and otherwise we say that the grammar is static.
-Languages for specifying logics tend to favour user-extensible grammars over static ones.
-Indeed, \Agda and \Isabelle/\HOL support mixfix operators, \Coq has notation declarations, and \Beluga, like \Twelf, has prefix, infix and postfix operators specified by pragmas.
-This is justified by the need for more concise and expressive ways to convey the meaning of definitions and lemmas.
-Such syntax extensions also allow users to develop mechanizations with notations that are closer to what appears on pen-and-paper proofs.
-However, that design choice negatively impacts the implementation of external tools for the language.
-Indeed, user-defined syntax extensions complicate the implementation of incremental parsing for efficiently parsing edits in a text editor, as well as indexing for resolving identifiers to their binding site.
-This forces tooling to be tightly coupled with the core implementation of the language.
-%This is notably the case for tooling in \Cpp because of its rich pre-processor that increases the complexity of parsing and name resolution.
-
 Early versions of the \Beluga language were context-free and used \CamlpFour~\cite{de2003camlp4} as parser generator to implement its parser.
 \Beluga became context-sensitive when modifications were made to its syntax, specifically to improve the readability of contextual objects and to add user-defined operators as in \Twelf for \LF type-level and term-level constants.
 These changes did not pose a problem with the parser's implementation per se, but it did require the introduction of disambiguation mechanisms, or rather the inclusion of syntactically ambiguous nodes in the signature reconstruction algorithm.
@@ -118,8 +28,6 @@ There is still room to improve in the way of user-friendly error messages to hel
 As discussed in the following sections, these shortcomings in error reporting are partly due to the extensive use of overlapping syntactic constructs.
 However, the more significant contributing factor is the stringent syntactic restrictions influenced by the internal workings of the processing pipeline.
 %This also applies to both the internal and user-facing documentation of \Beluga's syntax.
-
-\clearpage
 
 \section{\Beluga Lexing, Parsing and Disambiguation Phases}\label{section:lexing-parsing-disambiguation}
 

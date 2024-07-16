@@ -6,57 +6,6 @@ A formalism and an implementation of identifier resolution for \Beluga are prese
 
 \section{Introduction}
 
-% What are aspects of state management that are required to support incremental proof development?
-% In what way are state management and exception handling closely linked with respect to interactive proof sessions?
-
-Incremental program development is a broad and open problem in the implementation of interpreters and compilers.
-The main challenge with implementing such systems is state invalidation, where editing part of a program causes changes elsewhere, both in the code the user wrote and in the state of the interpreter analysing it.
-While reprocessing the affected parts of the code from scratch is a valid solution to guarantee soundness, this does not scale efficiently to large programs.
-Structured editing obviates some of the issues with state invalidation and the propagation of changes in incremental development.
-Indeed, edit actions are scoped to a model of the program as opposed to the program's textual representation itself, which means they have a limited and controlled effect on the structured editor's state.
-Mechanisms can then be designed for the interpreter's state to improve its runtime performance in soundly responding to edit actions.
-
-% How do other systems supporting interactive proof sessions handle state management?
-
-Proof assistants providing interactivity through \acp{REPL} and tools for text editors each approach the problem of incremental development in unique ways tailored to their systems.
-For instance, constraint-based type systems require mechanisms to keep track of the effects of solving said constraints so that those effects can be undone in the event that type-checking fails for a given program.
-Likewise, context-switching between different parts of a program under edit requires updating the state to correctly reflect what identifiers are in scope, both for providing scope-aware code completion hints and for performing identifier resolution in new terms.
-Furthermore, command histories may be implemented to support undoing and redoing edit actions, which should be a feature of all proof assistants since users may apply tactics that do not lead to a solution for a given subgoal and decide to undo the application of those tactics.
-Additionally, incomplete subgoals may be arranged internally as a tree following the structure of a proof to allow navigating between holes.
-The successful implementation of these structured editing features hinges on careful management of recorded state to ensure soundness.
-
-The \Abella\footnote{\Abella version \texttt{2.0.8}}~\cite{baelde2014abella} interactive theorem prover has limited support for structurally editing proofs.
-Indeed, it leverages a single global state comprised of mutable references with a snapshot mechanism to copy the entire state on every undoable command.
-This state notably includes the signature of declarations, the subordination relation on type families, and the list of subgoals that have yet to be proven in the current lemma under edit.
-Hence in its interactive mode, \Abella users are restricted to adding new declarations at the end of the session's state.
-Indeed, constructing visiting states to other parts of the signature under edit would require rerunning the processing pipeline from scratch.
-
-\Isabelle/\Isar\footnote{\Isabelle2023} implements a system of transitions between immutable state structures to support pure edit actions~\cite{wenzel2023isabelleimpl, wenzel2023isabelleisarref, wenzel2023isabellesys}.
-Indeed, most of that system's state, internally referred to as contexts~\cite{ballarin2006interpretation}, is implemented using immutable 2-3~trees to tabulate data, with each context holding a list of all its predecessor states.
-The definitions, proofs and terms in the buffer under edit are stored in such contexts.
-Undo operations and modification to the signature then proceed by rolling back the contexts to before the edit was done using their lists of predecessors.
-Mutable references are leveraged to represent the global state of the kernel, though their usage is limited.
-This mutable data is split between synchronized and unsynchronized management strategies, the former adding mutual exclusion locks to references that hold mutable data to enable safe concurrent computations.
-Overall, the extensive use of immutable data structures, coupled with synchronization for mutable data, results in degraded memory usage and runtime performance.
-Nonetheless, this system allows finer edit actions and ensures that cache invalidations are resolved consistently.
-
-\Agda\footnote{\Agda \texttt{v2.6.4}}~\cite{clffolp, norell2007towards, agda2023} supports incremental interactions with its \Agda mode and its implementation of the language server protocol.
-Issuing an edit command with those systems directly affects the text editor's buffer, which provides a seamless editing experience.
-Under the hood, this is supported by \Agda's type checking monad, which is an instance of the state monad whose state structure contains most of the mutable and immutable data used throughout the system.
-This state includes global configuration parameters, scope information, user-defined notations for parsing, typing contexts for variables as association lists, etc.
-It is an agglomeration of all the data used in \Agda's processing pipeline, readily available as a function parameter as opposed to being represented using a global mutable data structure.
-This wholly captures the idea of a visiting state over declarations in an \Agda signature.
-The main issues when dealing with this type checking monad are performance overheads, and ensuring that state mutations are sound.
-To mitigate soundness issues, some interaction kinds have defined scopes to restrict their effect on the type checking state.
-In case of bugs arising during edit sessions, separate user commands are available to restore the state to earlier checkpoints, or to entirely reload the current editor buffer from scratch.
-
-\Coq\footnote{\Coq \texttt{v8.18.0}} and the \CoqIDE~\cite{Coq, bertot2013interactive} implement a state transaction machine to efficiently keep track of changes to proofs and their effects on the system's state.
-This is backed by a version control system whose design is inspired by \textsc{Git}.
-Internally, a \ac{DAG} is created and maintained to represent states as nodes and transactions (or differences) as edges.
-Committed changes to the state create branches in the version control system which can then be merged, deleted or checked out.
-The actual data to use at a given state in this system is reconstructed by traversing the \ac{DAG} from the root node to the target node while applying the effects encoded in each visited edge.
-Concretely, this version control system is used in \Coq's interactive environment when processing vernacular commands, including querying documents, starting proofs, stepping in a proof, and solving a subgoal.
-
 % What are the features desired for Harpoon and Beluga?
 % Why do those features help in incremental proof development?
 
