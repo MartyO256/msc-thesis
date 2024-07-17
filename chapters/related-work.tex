@@ -1,5 +1,9 @@
 \chapter{Related Work}
 
+This chapter provides a review of works in the literature related to \Beluga and the work done as part of this thesis.
+Topics in the design of a programming language's concrete syntax are discussed, along with features found in parsers of languages for proof assistants.
+Then, the design and implementation of incremental editing functionalities of proofs and programs is examined for various proof assistants.
+
 \section{Parsing and Programming Language Design}
 
 % What is parsing?
@@ -84,7 +88,7 @@ Consequently, the concrete syntax's design for a programming language is intrins
 
 A grammar is dynamic (or user-extensible, or featuring syntax extensions) if the way a program is parsed is influenced by directives in the program itself, and otherwise the grammar is static.
 Languages for specifying logics tend to favour user-extensible grammars over static ones.
-Indeed, \Agda and \Isabelle/\HOL support mixfix operators, \Coq has notation declarations, and \Beluga, like \Twelf, has prefix, infix and postfix operators specified by pragmas.
+Indeed, \Agda~\cite{clffolp, agda2023} and \Isabelle/\HOL~\cite{wenzel2023isabelleimpl, wenzel2023isabellesys} support mixfix operators, \Coq~\cite{Coq} has notation declarations, and \Beluga, like \Twelf~\cite{Twelf}, has prefix, infix and postfix operators specified by pragmas.
 This is justified by the need for more concise and expressive ways to convey the meaning of definitions and lemmas.
 Such syntax extensions also allow users to develop mechanizations with notations that are closer to what appears on pen-and-paper proofs.
 However, that design choice negatively impacts the implementation of external tools for the language.
@@ -93,6 +97,7 @@ This forces tooling to be tightly coupled with the core implementation of the la
 %This is notably the case for tooling in \Cpp because of its rich pre-processor that increases the complexity of parsing and name resolution.
 
 \section{Incremental Program and Proof Development}
+
 % What are aspects of state management that are required to support incremental proof development?
 % In what way are state management and exception handling closely linked with respect to interactive proof sessions?
 
