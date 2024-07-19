@@ -1,7 +1,9 @@
 \chapter{Background}
 
 This chapter presents an overview of \Beluga, and \Harpoon, whose implementations were modified as part of this thesis.
-The concept of incremental program development is briefly explained to motivate those modifications.
+Topics in the design of a programming language's concrete syntax are discussed, along with features found in parsers of languages for proof assistants.
+Then, the concept of incremental proof and program development is briefly explained to motivate those modifications.
+Finally, the design and implementation of incremental development is examined for various proof assistants.
 
 \section{The \Beluga Language}
 
@@ -290,6 +292,96 @@ Both the \ac{REPL} and \Harpoon depend on the earlier processing phases of \Belu
 
 This thesis focuses on the first few phases of the \Beluga processing pipeline, specifically parsing and indexing.
 Rearchitected solutions to those phases are then shown to provide better support for some of \Beluga's and \Harpoon's existing features, while also addressing usability and soundness issues.
+\section{Parsing and Programming Language Design}
+
+% What is parsing?
+
+In compiler design, parsing is the process of converting the textual representation of a program into a hierarchical data structure~\cite{aho2007compilers, afroozeh2019practical}, which is typically called a parse tree.
+When a parse tree captures all the data about the text being processed, including comments and parentheses, then it is referred to as a concrete syntax tree.
+Otherwise, when parts of the data have been abstracted away, it is instead called an \ac{AST}.
+
+% What is ambiguity in parsing?
+
+A program's textual representation is ambiguous with respect to a predefined set of parse rules if the program can be parsed into a parse forest, which is multiple parse trees~\cite{aho2007compilers}.
+By way of analogy, a sentence in a natural language is ambiguous if it can be interpreted in multiple valid ways with respect to its syntactic and grammatical rules.
+Since programming languages are tools for describing computerized systems, it is necessary that each valid written program has exactly one interpretation~\cite{aho2007compilers}.
+In the strictest of cases, this unicity of interpretation may be enforced at the level of the grammar and parser, such that all syntactically valid programs have exactly one inferable interpretation.
+This is typically achieved using rules and syntactic conventions that prevent ambiguous programs from being ever written in the first place.
+
+Certain kinds of syntactic ambiguities are unavoidable in programming languages, and are frequently useful to the end user.
+Indeed, programming languages often reuse or overload syntactic constructs to reduce both the number and the complexity of rules that users have to learn in order to read and write programs.
+Ambiguous syntax can also make programs more terse, which may improve some workflows~\cite{resolveAmbiguity}.
+Additional mechanisms need to be put in place as part of the compiler's implementation to detect syntactic ambiguities, and either signal them as errors, or resolve them using additional interpretation rules.
+
+% What is disambiguation in parsing?
+
+Disambiguation is the process by which a parse forest is filtered down to a single parse tree.
+It refers to the procedures used to resolve ambiguities in intermediate results of parsing.
+In parsing systems that do not output parse forests, disambiguation typically involves manipulating the \ac{AST} representation of a single parse tree that captures ambiguities, meaning that some of its nodes represent the overlapping of syntactic constructs.
+Functionally, these nodes suspend parsing until more information is available to disambiguate them to the correct node variant.
+
+% What is the impact of disambiguation on program readability?
+
+Increasing the amount of computation required to disambiguate the textual representation of a program negatively impacts the maintainability and readability of that program for the end user.
+Indeed, some forms of ambiguity in the syntax of a program may prevent the end user from fully understanding it in isolation from the rest of the code sections.
+As such, one can argue that the programmatic strategies for disambiguating the syntax of a programming language should be intuitive so that external software is not required for the end user to read a program.
+For instance, name resolution is sufficiently intuitive for users, whereas searching in a parse forest for a parse tree that type-checks is not necessarily intuitive, especially given the complexity of some type systems.
+Hence, trade-offs between functionality and ease of understanding must be made when designing a language.
+
+% What are some examples of syntactic ambiguities?
+
+Different kinds of concrete syntax ambiguities may arise during parsing of a programming language.
+We distinguish three kinds of syntactic ambiguities that come into play in the implementation of \Beluga, listed below in increasing degree of cognitive complexity required to solve them:
+\begin{enumerate}
+\item
+\textit{Static operator ambiguities}: operators and their operands may be interpreted in different orders depending on where they appear in a whitespace-delimited list of terms.
+For instance, the expression $a + b * c$ is ambiguous with respect to the grammar $e\coloneqq e+e\mid e*e$.
+These ambiguities are typically resolved by assigning a precedence level, a fixity and an associativity to each operator in the language, and parsing them as keywords.
+\item
+\textit{Name-based ambiguities}: overloaded identifiers may be resolved to different binding sites depending on where they appear in an expression, and fall under different semantic categories as a consequence.
+For instance, in a dependently-typed language, type-level and term-level variables may be syntactically ambiguous, but they may have distinct syntaxes for binders.
+Semantic analysis of the \ac{AST} with respect to a symbol table is usually sufficient to disambiguate those cases.
+However, overloading of identifiers coupled with more advanced features, like user-defined mixfix operators~\cite{danielsson2008parsing}, poses additional challenges since identifiers may not be considered in isolation.
+\item
+\textit{Type-based ambiguities}: the correct interpretation of an expression may only be determined once a type has been inferred for it, or if it is checked against a type.
+This does not refer to method overloading in object-oriented programming languages since the syntax for calling a method is not ambiguous.
+Rather, if the expression being parsed is an identifier, then a type-based ambiguity may be that that expression or a surrounding one falls into a different syntactic category based on the identifier's type or kind.
+For instance, the syntax $ \texttt{(g, x : t)} $ may denote a pair of terms, with the variable $ \texttt{x} $ being checked against the type $ \texttt{t} $, or it may denote the context $ \texttt{g} $ with an added variable declaration $ \texttt{x : t} $.
+In this case, what $ \texttt{(g, x : t)} $ syntactically denotes depends on the type of $ \texttt{g} $.
+To solve such ambiguities, some type information may be provided by a symbol table if the type ascribed to an identifier is known at the declaration site.
+In general it is not practical to disambiguate expressions having type-based ambiguities before type-checking, especially when more intricate type inference algorithms need to be applied to determine the type of an identifier.
+Because of this, languages are typically designed to avoid type-based ambiguities.
+In the same way that is done in figure~\ref{figure:internal-syntax}, identifiers like $\psi$ can be reserved to always denote contexts, such that $\texttt{($\psi$, x : t)}$ is unambiguously a context.
+\end{enumerate}
+
+% What do ambiguities have to do with language design?
+% What is the typical workflow for designing syntaxes and implementing parsers? What are parser generators? What are their limitations?
+
+The kinds of syntactic ambiguities that arise in the design of a programming language depend on the system used to specify its syntax, which in turn affects the algorithm required to parse it.
+The concrete syntax of programming languages is typically specified with a \ac{CFG}, denoted in \ac{EBNF}.
+If a language can be specified by a \ac{CFG}, then it is a \ac{CFL}.
+\Acp{CFL} have many advantages, including the fact that there is an abundance of well-vetted parser generators for such languages.
+\ocamllex together with \ocamlyacc~\cite{smith2007ocamllex} is one example of such a parser generator.
+Crucially, \acp{CFL} are easy to parse, both algorithmically and by the end user.
+As the name suggests, parsers for \acp{CFL} do not require additional data in a context specifically intended for disambiguation.
+This ensures that programs can scale and be readable by the user without having to fully know the context in which programs appear.
+That is, other code sections in a \ac{CFL} do not affect how a given code section is parsed.
+Static operator ambiguities as mentioned previously can be resolved by rewriting the grammar while keeping it context-free.
+Name-based and type-based ambiguities however give rise to context-sensitive languages, or even strictly Turing-recognizable languages~\cite{chomsky1956three}.
+Context-sensitive languages necessitate additional data about the context in which parts of a program appear to correctly parse it.
+This typically means that some semantic analysis is required during parsing in order to complete the syntactic analysis.
+Consequently, the concrete syntax's design for a programming language is intrinsically linked with the algorithm required to parse it.
+
+% What are some language design considerations?
+
+A grammar is dynamic (or user-extensible, or featuring syntax extensions) if the way a program is parsed is influenced by directives in the program itself, and otherwise the grammar is static.
+Languages for specifying logics tend to favour user-extensible grammars over static ones.
+Indeed, \Agda~\cite{clffolp, agda2023} and \Isabelle/\HOL~\cite{wenzel2023isabelleimpl, wenzel2023isabellesys} support mixfix operators, \Coq~\cite{Coq} has notation declarations, and \Beluga, like \Twelf~\cite{Twelf}, has prefix, infix and postfix operators specified by pragmas.
+This is justified by the need for more concise and expressive ways to convey the meaning of definitions and lemmas.
+Such syntax extensions also allow users to develop mechanizations with notations that are closer to what appears on pen-and-paper proofs.
+However, that design choice negatively impacts the implementation of external tools for the language.
+Indeed, user-defined syntax extensions complicate the implementation of incremental parsing for efficiently parsing edits in a text editor, as well as indexing for resolving identifiers to their binding site.
+This forces tooling to be tightly coupled with the core implementation of the language.
 
 \section{State Management and Incremental Program Development}\label{section:intro-state-management}
 
@@ -317,3 +409,65 @@ If such a routine is invoked during an interactive program development session, 
 In this case, the edit action requires visiting a selected \ac{AST} node with the referencing environment as visitor state.
 The issue then becomes how to efficiently construct and preserve the correctness of such visitor states.
 As it pertains to \Beluga and \Harpoon, this specifically affects \ac{REPL} sessions instantiated at program holes.
+
+\section{Incremental Proof Development in Other Languages}
+
+% What are aspects of state management that are required to support incremental proof development?
+% In what way are state management and exception handling closely linked with respect to interactive proof sessions?
+
+Incremental program development is a broad and open problem in the implementation of interpreters and compilers.
+The main challenge with implementing such systems is state invalidation, where editing part of a program causes changes elsewhere, both in the code the user wrote and in the state of the interpreter analysing it.
+While reprocessing the affected parts of the code from scratch is a valid solution to guarantee soundness, this does not scale efficiently to large programs.
+Structured editing obviates some of the issues with state invalidation and the propagation of changes in incremental development.
+Indeed, edit actions are scoped to a model of the program as opposed to the program's textual representation itself, which means they have a limited and controlled effect on the structured editor's state.
+Mechanisms can then be designed for the interpreter's state to improve its runtime performance in soundly responding to edit actions.
+
+% How do other systems supporting interactive proof sessions handle state management?
+
+Proof assistants providing interactivity through \acp{REPL} and tools for text editors each approach the problem of incremental development in unique ways tailored to their systems.
+For instance, constraint-based type systems require mechanisms to keep track of the effects of solving said constraints so that those effects can be undone in the event that type-checking fails for a given program.
+Likewise, context-switching between different parts of a program under edit requires updating the state to correctly reflect what identifiers are in scope, both for providing scope-aware code completion hints and for performing identifier resolution in new terms.
+Furthermore, command histories may be implemented to support undoing and redoing edit actions, which should be a feature of all proof assistants since users may apply tactics that do not lead to a solution for a given subgoal and decide to undo the application of those tactics.
+Additionally, incomplete subgoals may be arranged internally as a tree following the structure of a proof to allow navigating between holes.
+The successful implementation of these structured editing features hinges on careful management of recorded state to ensure soundness.
+
+\subsection*{\Abella}
+
+The \Abella\footnote{\Abella version \texttt{2.0.8}}~\cite{baelde2014abella} interactive theorem prover has limited support for structurally editing proofs.
+Indeed, it leverages a single global state comprised of mutable references with a snapshot mechanism to copy the entire state on every undoable command.
+This state notably includes the signature of declarations, the subordination relation on type families, and the list of subgoals that have yet to be proven in the current lemma under edit.
+Hence in its interactive mode, \Abella users are restricted to adding new declarations at the end of the session's state.
+Indeed, constructing visiting states to other parts of the signature under edit would require rerunning the processing pipeline from scratch.
+
+\subsection*{\Isabelle}
+
+\Isabelle/\Isar\footnote{\Isabelle2023} implements a system of transitions between immutable state structures to support pure edit actions~\cite{wenzel2023isabelleimpl, wenzel2023isabelleisarref, wenzel2023isabellesys}.
+Indeed, most of that system's state, internally referred to as contexts~\cite{ballarin2006interpretation}, is implemented using immutable 2-3~trees to tabulate data, with each context holding a list of all its predecessor states.
+The definitions, proofs and terms in the buffer under edit are stored in such contexts.
+Undo operations and modification to the signature then proceed by rolling back the contexts to before the edit was done using their lists of predecessors.
+Mutable references are leveraged to represent the global state of the kernel, though their usage is limited.
+This mutable data is split between synchronized and unsynchronized management strategies, the former adding mutual exclusion locks to references that hold mutable data to enable safe concurrent computations.
+Overall, the extensive use of immutable data structures, coupled with synchronization for mutable data, results in degraded memory usage and runtime performance.
+Nonetheless, this system allows finer edit actions and ensures that cache invalidations are resolved consistently.
+
+\subsection*{\Agda}
+
+\Agda\footnote{\Agda \texttt{v2.6.4}}~\cite{clffolp, norell2007towards, agda2023} supports incremental interactions with its \Agda mode and its implementation of the language server protocol.
+Issuing an edit command with those systems directly affects the text editor's buffer, which provides a seamless editing experience.
+Under the hood, this is supported by \Agda's type checking monad, which is an instance of the state monad whose state structure contains most of the mutable and immutable data used throughout the system.
+This state includes global configuration parameters, scope information, user-defined notations for parsing, typing contexts for variables as association lists, etc.
+It is an agglomeration of all the data used in \Agda's processing pipeline, readily available as a function parameter as opposed to being represented using a global mutable data structure.
+This wholly captures the idea of a visiting state over declarations in an \Agda signature.
+The main issues when dealing with this type checking monad are performance overheads, and ensuring that state mutations are sound.
+To mitigate soundness issues, some interaction kinds have defined scopes to restrict their effect on the type checking state.
+In case of bugs arising during edit sessions, separate user commands are available to restore the state to earlier checkpoints, or to entirely reload the current editor buffer from scratch.
+
+\subsection*{\Coq}
+
+\Coq\footnote{\Coq \texttt{v8.18.0}} and the \CoqIDE~\cite{Coq, bertot2013interactive} implement a state transaction machine to efficiently keep track of changes to proofs and their effects on the system's state.
+This is backed by a version control system whose design is inspired by \textsc{Git}.
+Internally, a \ac{DAG} is created and maintained to represent states as nodes and transactions (or differences) as edges.
+Committed changes to the state create branches in the version control system which can then be merged, deleted or checked out.
+The actual data to use at a given state in this system is reconstructed by traversing the \ac{DAG} from the root node to the target node while applying the effects encoded in each visited edge.
+Concretely, this version control system is used in \Coq's interactive environment when processing vernacular commands, including querying documents, starting proofs, stepping in a proof, and solving a subgoal.
+
