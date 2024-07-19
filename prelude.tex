@@ -38,7 +38,9 @@
 \usepackage{datetime}
 \newdateformat{monthyeardate}{\monthname[\THEMONTH], \THEYEAR}
 
-\usepackage{geometry}
+\usepackage[left=1in, right=1in, top=1.5in, bottom=1.5in]{geometry}
+
+\linespread{1.5}
 
 \usepackage{float}
 
@@ -85,37 +87,29 @@
 
 \usepackage{vendor/proof}
 
-\linespread{1.5}
+\newcommand{\LF}{\mbox{\ac{LF}}\xspace}
+\newcommand{\Beluga}{\mbox{\textsc{Beluga}}\xspace}
+\newcommand{\Abella}{\mbox{\textsc{Abella}}\xspace}
+\newcommand{\Agda}{\mbox{\textsc{Agda}}\xspace}
+\newcommand{\Isabelle}{\mbox{\textsc{Isabelle}}\xspace}
+\newcommand{\Isar}{\mbox{\textsc{Isar}}\xspace}
+\newcommand{\HOL}{\mbox{\textsc{HOL}}\xspace}
+\newcommand{\Coq}{\mbox{\textsc{Coq}}\xspace}
+\newcommand{\CoqIDE}{\mbox{\textsc{CoqIDE}}\xspace}
+\newcommand{\Lean}{\mbox{\textsc{Lean}}\xspace}
+\newcommand{\Twelf}{\mbox{\textsc{Twelf}}\xspace}
+\newcommand{\Hazel}{\mbox{\textsc{Hazel}}\xspace}
+\newcommand{\Harpoon}{\mbox{\textsc{Harpoon}}\xspace}
+\newcommand{\OCaml}{\mbox{\textsc{OCaml}}\xspace}
+\newcommand{\SystemF}{\mbox{\textsc{System F}}\xspace}
+\newcommand{\ocamlyacc}{\mbox{\textsc{ocamlyacc}}\xspace}
+\newcommand{\ocamllex}{\mbox{\textsc{ocamllex}}\xspace}
+\newcommand{\Commonmark}{\mbox{\textsc{Commonmark}}\xspace}
+\newcommand{\CamlpFour}{\mbox{\textsc{Camlp4}}\xspace}
 
-\setlength{\leftmargin}{1in}
-\setlength{\rightmargin}{1in}
-
-\raggedbottom
-
-\newcommand{\LF}{\ac{LF}\xspace}
-\newcommand{\Beluga}{\textsc{Beluga}\xspace}
-\newcommand{\Abella}{\textsc{Abella}\xspace}
-\newcommand{\Agda}{\textsc{Agda}\xspace}
-\newcommand{\Isabelle}{\textsc{Isabelle}\xspace}
-\newcommand{\Isar}{\textsc{Isar}\xspace}
-\newcommand{\HOL}{\textsc{HOL}\xspace}
-\newcommand{\Coq}{\textsc{Coq}\xspace}
-\newcommand{\CoqIDE}{\textsc{CoqIDE}\xspace}
-\newcommand{\Lean}{\textsc{Lean}\xspace}
-\newcommand{\Twelf}{\textsc{Twelf}\xspace}
-\newcommand{\Hazel}{\textsc{Hazel}\xspace}
-\newcommand{\Harpoon}{\textsc{Harpoon}\xspace}
-\newcommand{\OCaml}{\textsc{OCaml}\xspace}
-\newcommand{\SystemF}{\textsc{System F}\xspace}
-\newcommand{\ocamlyacc}{\textsc{ocamlyacc}\xspace}
-\newcommand{\ocamllex}{\textsc{ocamllex}\xspace}
-\newcommand{\Commonmark}{\textsc{Commonmark}\xspace}
-\newcommand{\Cpp}{\textsc{C++}\xspace}
-\newcommand{\CamlpFour}{\textsc{Camlp4}\xspace}
-
-\newcommand{\HTML}{\texttt{HTML}\xspace}
-\newcommand{\XML}{\texttt{XML}\xspace}
-\newcommand{\Markdown}{\texttt{Markdown}\xspace}
+\newcommand{\HTML}{\mbox{\texttt{HTML}}\xspace}
+\newcommand{\XML}{\mbox{\texttt{XML}}\xspace}
+\newcommand{\Markdown}{\mbox{\texttt{Markdown}}\xspace}
 
 \newcommand{\set}[1]{\{#1\}}
 
