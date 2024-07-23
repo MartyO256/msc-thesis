@@ -1,4 +1,4 @@
-\chapter{Background}
+\chapter{Background}\label{chapter:background}
 
 This chapter presents an overview of \Beluga, and \Harpoon, whose implementations were modified as part of this thesis.
 Topics in the design of a programming language's concrete syntax are discussed, along with features found in parsers of languages for proof assistants.
@@ -47,7 +47,7 @@ Syntax definition for the untyped $\lambda$-calculus used in the running example
 \end{equation}
 \end{mdframed}
 }
-\caption{Definition of algorithmic equality over the untyped terms.}
+\caption{Definition of algorithmic equality for terms in this $\lambda$-calculus.}
 \end{subfigure}
 \caption[Running example of algorithmic equality for an untyped $\lambda$-calculus]{%
 Running example.
@@ -111,6 +111,7 @@ This case holds by $\equiv\text{-unit}$.
   | unit : term;
   \verbprag{--name term M.}
 \verbbf{end}
+
 \verbbf{module} Algorithmic_equality = \verbbf{struct}
   \verbprag{--open Term.}
   \verbprag{--infix \makebox[1em]{≡} none.}
@@ -119,9 +120,12 @@ This case holds by $\equiv\text{-unit}$.
   | app : M1 \makebox[1em]{≡} N1 \makebox[1em]{→} M2 \makebox[1em]{≡} N2 \makebox[1em]{→} Term.app M1 M2 \makebox[1em]{≡} Term.app N1 N2
   | unit : Term.unit \makebox[1em]{≡} Term.unit;
 \verbbf{end}
+
 \verbprag{--open Term.}
 \verbprag{--open Algorithmic_equality.}
+
 \verbbf{schema} ctx = \verbbf{block} (x : term, eq : x \makebox[1em]{≡} x);
+
 \verbbf{rec} refl : (g : ctx) \makebox[1em]{→} \{M : [g \makebox[1em]{⊢} term]\} \makebox[1em]{→} [g \makebox[1em]{⊢} M \makebox[1em]{≡} M] =
   / total d (refl _ d) /
   \verbbf{mlam} M \makebox[1em]{⇒}
@@ -284,15 +288,36 @@ Crucially, the referencing environment used during indexing is computed using th
 At any given point during the processing pipeline, the store's state is valid since program units are processed sequentially.
 New program units may be safely appended afterwards in interactive sessions.
 
+\section{The \Harpoon Interactive Proof Environment}
+
 The \Beluga system provides two ways to interactively perform queries on an existing \Beluga signature, or to augment it with new theorems.
 These are the legacy \ac{REPL} and the \Harpoon system~\cite{errington2021harpoon}, the latter of which is designed as a replacement for the former.
 Both systems allow the user to input \LF-level terms or computation-level expressions and get their type inferred with respect to an already elaborated \Beluga signature.
 \Harpoon further enables the interactive definition and proving of theorems using sets of tactics aimed at automating proof development.
-Both the \ac{REPL} and \Harpoon depend on the earlier processing phases of \Beluga and the flow of information therein.
+Both the \ac{REPL} and \Harpoon depend on the processing phases of \Beluga and the flow of information therein as described in the previous section.
 
-This thesis focuses on the first few phases of the \Beluga processing pipeline, specifically parsing and indexing.
-Rearchitected solutions to those phases are then shown to provide better support for some of \Beluga's and \Harpoon's existing features, while also addressing usability and soundness issues.
-\section{Parsing and Programming Language Design}
+\Harpoon is a structural editor for proof scripts that can be translated into \Beluga programs.
+To do so, it provides edit actions a user may perform in an interactive proof session.
+These actions are split into two categories, namely administrative commands and proof tactics.
+\begin{itemize}
+\item
+Administrative commands affect the ambient state of the \ac{REPL} by allowing the user to navigate in the \Beluga signature and in the history of executed actions.
+These include navigating between incomplete subgoals in a theorem, navigating to incomplete proof scripts, undoing and redoing proof tactics, renaming bound variables, and persisting the changes made to the signature.
+\item
+Proof tactics affect the state of the proof script under edit.
+These include tactics such as \verb|intros| to universally quantify over the current theorem's premises and \verb|split| to perform a case analysis on the structure of a value.
+\Harpoon also features a \verb|suffices| tactic allowing for backwards reasoning on a given subgoal, as well as tactics to perform automated proof search.
+\end{itemize}
+
+In order for \Harpoon edit actions to be sound, they must bring the structural editing session from a valid state to another valid state.
+For proof tactics, this involves carefully keeping track of induction hypotheses generated during case analyses, as well as maintaining a correct record of identifiers in scope at the node under edit in the proof script.
+For administrative commands, the state of identifiers in scope has to always be local to the location in the \Beluga signature where the current theorem is declared, and undoing edit actions has to restore the current proof script to its previous state.
+This in particular requires that effects occurring in type-checking and unification be undoable as well, which includes being able to revert the instantiation of unification variables.
+
+In release \texttt{v1.0} of \Beluga and \Harpoon, not all administrative commands are sound, specifically with regards to the state of identifiers in scope.
+This is explored in chapter~\ref{chapter:indexing-reimplementation}, with a detailed explanation on the soundness issues and solutions to rectify them.
+
+\section{Parsing and Programming Language Design}\label{section:background-parsing}
 
 % What is parsing?
 
