@@ -11,7 +11,7 @@ A formalism and an implementation of identifier resolution for \Beluga are prese
 
 As an interactive frontend for \Beluga, the \Harpoon system is designed such that editing a proof script by way of administrative commands or tactics is guaranteed to preserve the soundness of the proof with respect to the rest of the \Beluga signature.
 This includes, among other things, ensuring that input terms are well-typed, that cases analyses cover all possible branches with respect to type family definitions, and that identifiers can be properly resolved once proof scripts are translated into programs.
-Chiefly, \Harpoon's administrative commands must work as intended in any valid order of execution so as to ensure that user's work does not get lost.
+Chiefly, \Harpoon's administrative commands as presented in section~\ref{section:harpoon-background} must work as intended in any valid order of execution so as to ensure that user's work does not get lost.
 Just like \Abella, \Isabelle/\Isar, \Coq and \Agda, undoable commands in \Harpoon must undo those commands' effects on both the proof script and the editing state.
 Unlike \Abella though, undone commands can be redone, which allows users to move effortlessly forward and backward in the edit history.
 One feature that is unique to \Harpoon is the ability to efficiently checkout the proof state for incomplete theorems occurring anywhere in a \Beluga signature.
@@ -747,7 +747,7 @@ Thankfully, the indexing phase's implementation was loosely coupled with the rep
 This made it easy to substitute a mutable data structure for the referencing environment and recover runtime performance comparable to that of the legacy implementation of \Beluga.
 Consequently, checking out incomplete proofs in \Harpoon now involves reconstructing the referencing environment using the internal \ac{AST}'s representation of the signature.
 Because of the language's design, only the identifiers for signature-level and module-level declarations have to be visited, which circumvents having to rerun name resolution over the entire signature.
-Plain frames are also leveraged as a branching mechanism so that the effects of interactive proof sessions on the referencing environment are kept local to those sessions.
+%Plain frames are also leveraged as a branching mechanism so that the effects of interactive proof sessions on the referencing environment are kept local to those sessions.
 
 From a programming language implementation standpoint, the revised indexing phase simplifies the system's flow of information by decoupling it from the signature reconstruction store.
 This opens up multiple opportunities, including proper unit-testing of the referencing environment structure and indexing functions.

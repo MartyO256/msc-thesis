@@ -1,19 +1,15 @@
 \chapter{Implementing a Parser for \Beluga}\label{chapter:parsing-reimplementation}
 
-This chapter presents an overview of parsing and explains the motivation behind the contributions made to \Beluga's and \Harpoon's parsing algorithms.
-Some aspects of context-sensitive disambiguation of \acp{AST} are showcased, including grammars for parsing user-defined prefix, infix and postfix operators.
+This chapter presents the re-implementation of \Beluga's and \Harpoon's parsing algorithms to improve the system's maintainability, to expand the user-defined notation feature in a reusable way, and to improve syntax error messages for the user.
+Aspects of context-sensitive disambiguation of \acp{AST} are showcased, including grammars for parsing user-defined prefix, infix and postfix operators.
 
 \section{Introduction}\label{section:parser-introduction}
 
-This section provides a conceptual introduction to parsing, a discussion on the concept of ambiguity in parsing, and finally an overview of concepts and features of parsers for programming languages in proof assistants.
-Notably, we motivate the introduction of semantic analysis as part of syntactic analysis when it comes to resolving ambiguities in a language like \Beluga.
-
 Early versions of the \Beluga language were context-free and used \CamlpFour~\cite{de2003camlp4} as parser generator to implement its parser.
-\Beluga became context-sensitive when modifications were made to its syntax, specifically to improve the readability of contextual objects and to add user-defined operators as in \Twelf for \LF type-level and term-level constants.
-These changes did not pose a problem with the parser's implementation per se, but it did require the introduction of disambiguation mechanisms, or rather the inclusion of syntactically ambiguous nodes in the signature reconstruction algorithm.
+\Beluga became context-sensitive when modifications were made to its syntax, specifically to improve the readability of contextual objects and to add user-defined operators as in \Twelf~\cite{Twelf} for \LF type-level and term-level constants.
+These changes did not pose a problem with the parser's implementation per se, but it did require the introduction of disambiguation mechanisms as discussed in section~\ref{section:background-parsing}.
 Specifically, parts of indexing and reconstruction, as illustrated in figure~\ref{figure:legacy-beluga-processing-pipeline}, and the elaboration steps in between, had to be implemented with \ac{AST} node variants that mix together syntactically ambiguous constructs.
-This complicated the processing pipeline since the semantics of a given \Beluga program is only gradually discovered as it is elaborated through the external, approximate and internal syntax representations.
-%The data-dependent semantic rules necessary to complete the syntactic analysis are hence difficult to convey to end users.
+This complicated the processing pipeline because the semantics of a given \Beluga program is only gradually discovered as it is elaborated through the external, approximate and internal syntax representations.
 
 % What are parser combinators? What are some well-known libraries for parser combinators? What are their limitations?
 
@@ -21,17 +17,23 @@ As the \Beluga language grew, so did the complexity of its grammar, such that us
 Hence, \Beluga version \texttt{1.0} featured a new parser implemented using monadic parser combinators, which are higher-order functions for constructing top-down recursive descent parsers~\cite{Burge1975-BURRPT, hutton1996monadic, leijen2001parsec, generalparsercombs, afroozeh2019practical}.
 They provide a more declarative way of constructing complex parsers than shift-reduce parsers.
 Indeed, the combination of smaller parsers (or parselets) in \OCaml using operators closely resembles grammar specifications using \acp{CFG}, which allows for fast prototyping and better readability of the implementation.
-As such, the intent of reworking \Beluga to use parser combinators was to improve error-reporting for the end user, and to improve the overall maintainability of the implementation for subsequent developers by making it more modular.
-These objectives were largely met, and as a consequence \Harpoon was also implemented using that parsing framework.
-%However, one may argue that shifting from a parser generator implementation to parser combinators was detrimental to the system's maintainability since that discarded the benefits of static analyses of the language's grammar for ambiguities.
-There is still room to improve in the way of user-friendly error messages to help newcomers get a better grasp of the language and its features.
-As discussed in the following sections, these shortcomings in error reporting are partly due to the extensive use of overlapping syntactic constructs.
-However, the more significant contributing factor is the stringent syntactic restrictions influenced by the internal workings of the processing pipeline.
-%This also applies to both the internal and user-facing documentation of \Beluga's syntax.
+The intent of reworking \Beluga to use parser combinators was to improve error reporting for the end user, and to improve the overall maintainability of the implementation for developers by making it more modular.
+These objectives were largely achieved, and as a consequence \Harpoon was also implemented using that parsing framework.
+
+Despite the modifications made during the previous parser rewrite from using \CamlpFour to using parser combinators, some major flaws remained in the implementation:
+\begin{enumerate}
+\item
+Error messages produced by the parser did not effectively explain some of the stringent restrictions placed on the syntax of the language as part of its design.
+\item
+A lack of internal documentation with regards to the implemented disambiguation mechanisms hampered modifications to the grammar as well as the reusability of the parser.
+\item
+The user-defined notation feature was not implemented in a reusable way, and its implementation had correctness issues.
+\end{enumerate}
+To resolve these problems, architectural modifications were made to the parser, with a greater focus on correctness and usability.
 
 \section{\Beluga Lexing, Parsing and Disambiguation Phases}\label{section:lexing-parsing-disambiguation}
 
-As part of this thesis, \Beluga's parser was reimplemented to handle expressions in non-canonical form, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
+As part of this thesis, \Beluga's parser was reimplemented to address correctness issues, handle expressions in non-canonical form to improve error reporting, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
 Particularly, semantic analysis is introduced as part of a new context-sensitive disambiguation phase to the parser in order to produce a fully unambiguous \ac{AST} before signature reconstruction.
 The motivation for these changes to the implementation of \Beluga can be summarized in the following points:
 \begin{enumerate}
@@ -113,7 +115,7 @@ This partitioning is required for recursive descent parsing, but those parser ru
 The additional constraints further restrict the language recognized by the parser, which in turn prevents some syntactically invalid programs from being reported with more precision than simply identifying unexpected tokens.
 This is in part evidenced by the grammar in figure~\ref{figure:legacy-clf-parsing} and the example syntax error message in figure~\ref{figure:improved-syntax-error-message}.
 As such, the revised parser's grammar does not distinguish between neutral and normal terms, nor type-synthesizing and type-checkable expressions.
-This greatly broadens the scope of programs accepted by the parser, which in turn allows for later phases of processing to report and reject non-canonical terms with greater flexibility for error-reporting.
+This greatly broadens the scope of programs accepted by the parser, which in turn allows for later phases of processing to report and reject non-canonical terms with greater flexibility for error reporting.
 
 \begin{figure}[H]
 \begin{grammar}
@@ -418,6 +420,8 @@ $ \angled{e}_{P + 1} $ & $ \Coloneqq $ & $ \mathbf{a}+ $
 \end{subfigure}
 \caption[]{Grammars for parsing user-defined operators in \Beluga (cont.).}
 \end{figure}
+
+\clearpage
 
 \section{Discussion}\label{section:parser-discussion}
 
