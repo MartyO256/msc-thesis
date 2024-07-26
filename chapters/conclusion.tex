@@ -1,4 +1,22 @@
-\chapter{Discussion and Conclusion}
+\chapter{Discussion and Conclusion}\label{chapter:conclusion}
+
+The objectives of this thesis were to improve the design and implementation of \Beluga and \Harpoon in order fix soundness issues with the incremental development of proofs in interactive \ac{REPL} sessions.
+This required revising the first few phases of syntactic and semantic analysis for the language in order to make them modular and reusable with respect to different processing states.
+
+The grammar for \Beluga and \Harpoon was fully formalized in \ac{EBNF}, along with a specification of syntactic ambiguities and how they are resolved using precedence levels and grammar blurring.
+The parser was improved with the introduction of a new context-sensitive disambiguation phase.
+This prevented the propagation of ambiguous \ac{AST} nodes into the more complex phases of \Beluga's processing pipeline.
+By the same token, the language's was modified to support non-normal terms, which in turn allowed for syntax error messages to be improved.
+The user-defined notation feature, previously limited to terms in the index language, is now fully supported at the computation-level as well.
+These changes make the implementation robust, and the language more expressive and cohesive, which in turn improves the user experience.
+
+The indexing phase was fully reimplemented using a new structure of the referencing environment at all \ac{AST} nodes in \Beluga programs and \Harpoon proof scripts.
+This structure simplified the name resolution algorithm and allowed for the unification of constant declarations and indexing contexts to support simple lexical scoping rules.
+In tandem, the existing implementation of namespaces for grouping signature-level declarations was rectified.
+De Bruijn indices computations were implemented, and indexing for the \LF part of \Beluga was formalized to prove that the stack structure of frames can be safely leveraged to implement a checkpoint mechanism for the bindings in scope.
+During \Harpoon structural editing sessions on proof scripts, the soundness of navigating between holes with respect to name resolution was rectified by ensuring that disambiguation and indexing are explicitly dependent on the referencing environment's state.
+
+The following sections conclude this work with an evaluation of the implemented changes to \Beluga and \Harpoon, a discussion of future work to rectify long-standing issues in the later phases of semantic analysis, and finally closing remarks on the design and implementation of the system.
 
 \section{Evaluation}
 
@@ -77,8 +95,8 @@ These runtimes are the average of 15 runs, with 3 warmup runs.
 
 \section{Future Work}
 
-Properly defining referencing environments and implementing indexing with respect to them is a step in the right direction.
-Indeed, this opens up the indexing procedures to be sound and reusable when visiting holes in \Harpoon proofs in an out-of-order fashion with respect to the \Beluga signature.
+With regards to the implementation of \Beluga and \Harpoon, properly defining referencing environments and implementing indexing with respect to them is a step in the right direction.
+Indeed, this allows the indexing procedures to be sound and reusable when visiting holes in \Harpoon proofs in an out-of-order fashion with respect to the \Beluga signature.
 This also enables indexing to be unit-tested independently of the processing pipeline, which offers greatly visibility into the inner workings of the system, as well as provides more fine-grained verifiers of the implementation's correctness.
 
 There are nonetheless many implementation challenges left ahead in order to fully support structural editing of \Beluga programs and \Harpoon proofs.
@@ -99,7 +117,7 @@ Enforcing the constraint that synthesized proofs must be sound with respect to n
 \item
 Fresh name generation for the nameless representation of \Beluga programs is currently unsound in the implementation.
 Indeed, that procedure does not wholly take into account the identifiers in scope as it restricts its focus on the declarations in indexing contexts.
-This has consequences with program synthesis, both for the conversion of \Harpoon proof scripts to \Beluga programs and for error-reporting.
+This has consequences with program synthesis, both for the conversion of \Harpoon proof scripts to \Beluga programs and for error reporting.
 Much like was the case with the now resolved soundness issue of navigating to holes in \Harpoon proofs, spliced \Beluga programs corresponding to \Harpoon proof scripts may refer to inadvertedly shadowed constants.
 That is, a generated variable name, which is assumed to be fresh, may actually clash with a required constant name.
 To address this, one needs to synthesize programs in a nameless representation and then compute readable and easily distinguishable names for variables, which effectively amounts to reversing indexing.
@@ -108,12 +126,6 @@ Dynamic programming over the tree structure of the \ac{AST} would be required to
 
 \section{Final Remarks}
 
-In conclusion, \Beluga's parsing and indexing phases were reimplemented to address correctness, maintainability and soundness issues.
-The language's grammar was formalized, then a two-phase syntactic analysis was implemented to first parse \Beluga signatures following a context-free grammar with overloaded syntactic constructs, and then disentangle those syntactic constructs in a context-sensitive disambiguation phase.
-Name resolution for the language was reimplemented to unify constant declarations and indexing contexts into one referencing environment to support simple lexical scoping rules.
-De Bruijn indices computations were implemented with respect to this referencing environment structure, and indexing for the \LF part of \Beluga was formalized.
-During \Harpoon structural editing sessions on proof scripts, the soundness of navigating between holes with respect to name resolution was rectified by ensuring that disambiguation and indexing are explicitly dependant on the state of the referencing environment.
-These improvements pave the way for the later phases of \Beluga's processing pipeline to be rectified.
 The key lessons learned from this experience with regards to programming language design and implementation are as follows:
 
 \begin{enumerate}

@@ -145,16 +145,13 @@ An analogous rule applies to variables at the meta and computation levels.
 A \textit{frame} is a lexical region of an \ac{AST} wherein variable declarations and references can be made.
 A \textit{scope} is a frame in which name resolution is uniform, meaning that references are resolved to the same declaration site irrespective of the \ac{AST} node in the scope.
 Whereas declarations can shadow each other within a frame, all declarations have to be distinct in a scope.
-%Because of this, shadowing with scopes is only supported by nesting.
 A \textit{fully qualified identifier} $x_1.x_2.\cdots.x_n$ is a list of plain identifiers $x_1$, $x_2$, $\dots$, $x_n$ separated by dots denoting projection out of a namespace.
 A \textit{referencing environment} in \Beluga is the data structure that holds the associations from fully qualified identifiers to definitions in a signature.
 In essence, a referencing environment provides a window over a signature for name resolution, and as such its state is restricted to representing one scope at a time.
 This is in line with its role as an \ac{AST} visitor state.
 
-%The uniform indexing phase is designed as a single sequential traversal of the external named \ac{AST} to map it to the approximate locally nameless \ac{AST}, using the referencing environment as visitor state.
 During indexing, the referencing environment is updated by adding or removing identifiers in scope as \ac{AST} nodes are traversed.
 This presents the challenge of cohesively handling namespaces for modules, patterns for computation-level pattern-matching expressions, and the computation of de Bruijn indices across different \textit{indexing contexts} ($\Psi$, $\Delta$ and $\Gamma$).
-%This includes name resolution under lambda-expressions and contexts in contextual \LF patterns, as well as distinguishing between pattern variables and bound identifiers.
 All the while, indexing has to feature some backtracking mechanism to support incremental proof development in \Harpoon sessions.
 It is also worth noting that in the disambiguation phase, where a similar mapping occurs from the parser \ac{AST} to the external \ac{AST}, the visitor state has to additionally keep track of user-defined notations.
 This means that whichever structure is used to model referencing environments has to be extensible.
@@ -219,7 +216,6 @@ To support namespaces, each entry is associated with a tree of bindings, like in
 The entry stacks and bindings tree structures of figure~\ref{figure:referencing-environment-definition} can be flattened into an association list by keeping track of the insertion order for bindings.
 This is only used for presentation purposes, with $[x_1 : \tau_1, x_2 : \tau_2, \cdots, x_n : \tau_n]_\Module$ denoting a module frame with bindings $x_1 : \tau_1$, $x_2 : \tau_2$, ..., $x_n : \tau_n$ like in figure~\ref{figure:example-reference-environment-formalism}.
 To illustrate which identifiers are introduced in scope by a frame, the set of toplevel identifiers for frames and binding trees is defined in figure~\ref{figure:definition-domain-frames}.
-%Then, the right-to-left association list corresponding to a referencing environment $\Xi = \mathcal{F}_1; \mathcal{F}_2; \cdots; \mathcal{F}_n$ is $\Domain(\mathcal{F}_1) \oplus \Domain(\mathcal{F}_2) \oplus \cdots \oplus \Domain(\mathcal{F}_n)$ where $\oplus$ denotes concatenation.
 
 \begin{figure}[H]
 \centering
@@ -262,8 +258,6 @@ Pattern variables on the other hand are free variables in the pattern, which bec
 For instance, the pattern \verb|[g ⊢ Term.app M1 M2]| of example~\ref{figure:running-example-implementation} introduces \verb|g|, \verb|M1| and \verb|M2| in scope.
 For a pattern frame $(\Bindings_{\text{p}}, \Bindings_{\text{e}})$, the bindings in $\Bindings_{\text{p}}$ are used for name resolution in the pattern, whereas the bindings in $\Bindings_{\text{e}}$ are only used for name resolution in the body of the pattern-matching branch.
 This means that inner pattern-bound variables are added to $\Bindings_{\text{p}}$, and free pattern variables are added to $\Bindings_{\text{e}}$.
-%Because of the way meta-level abstractions are automatically reconstructed for patterns, free meta-variables are both inner pattern-bound and pattern variables.
-%This allows duplicate occurrences of free meta-variables to occur in a pattern.
 \end{enumerate}
 
 \begin{figure}[H]
@@ -747,7 +741,6 @@ Thankfully, the indexing phase's implementation was loosely coupled with the rep
 This made it easy to substitute a mutable data structure for the referencing environment and recover runtime performance comparable to that of the legacy implementation of \Beluga.
 Consequently, checking out incomplete proofs in \Harpoon now involves reconstructing the referencing environment using the internal \ac{AST}'s representation of the signature.
 Because of the language's design, only the identifiers for signature-level and module-level declarations have to be visited, which circumvents having to rerun name resolution over the entire signature.
-%Plain frames are also leveraged as a branching mechanism so that the effects of interactive proof sessions on the referencing environment are kept local to those sessions.
 
 From a programming language implementation standpoint, the revised indexing phase simplifies the system's flow of information by decoupling it from the signature reconstruction store.
 This opens up multiple opportunities, including proper unit-testing of the referencing environment structure and indexing functions.
