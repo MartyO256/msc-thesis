@@ -1,7 +1,7 @@
 \chapter{Discussion and Conclusion}\label{chapter:conclusion}
 
 The objectives of this thesis were to improve the design and implementation of \Beluga and \Harpoon in order fix soundness issues with the incremental development of proofs in interactive \ac{REPL} sessions.
-This required revising the first few phases of syntactic and semantic analysis for the language in order to make them modular and reusable with respect to different processing states.
+This required revising the first few phases of syntactic and semantic analysis for the language in order to make them modular and reusable with respect to different instances of processing states.
 
 The grammar for \Beluga and \Harpoon was fully formalized in \ac{EBNF}, along with a specification of syntactic ambiguities and how they are resolved using precedence levels and grammar blurring.
 The parser was improved with the introduction of a new context-sensitive disambiguation phase.
@@ -20,23 +20,29 @@ The following sections conclude this work with an evaluation of the implemented 
 
 \section{Evaluation}
 
-As established in chapters~\ref{chapter:parsing-reimplementation} and \ref{chapter:indexing-reimplementation}, the parsing and indexing phases of \Beluga had to be reimplemented between versions \texttt{1.0} and \texttt{v1.1} to rectify soundness issues in incremental proof development.
-This functional requirement is verified by way of unit tests for the parser and integration tests for the indexing phase as part of testing for the entire processing pipeline.
-Non-functional requirements such as maintainability and testability were also improved for those phases.
-Indeed, proven design patterns were introduced in the codebase to facilitate both the development of new features and the rectification of parts of \Beluga's existing architecture.
-Stateful operations during parsing, disambiguation and indexing are strictly local to those phases, and decoupled from the rest of the system.
-Despite the introduced changes being justified, they are not without drawbacks.
 
-Breaking changes to the \Beluga language had to be introduced both at the level of its syntax and its semantics.
-Enforcing unambiguous syntaxes for meta-level objects and types, as well as removing support for overloaded identifiers made the system more robust, but also made it less flexible.
-Additionally, the introduction of the disambiguation phase separate from the indexing phase involved duplicating the name resolution algorithm.
-%Duplicated routines also appear in pretty-printing modules to format \Beluga signatures and print them as source code and \HTML pages.
-On one hand, this code duplication ensures that those modules are independent of one another, but on the other hand, it complicates the process of changing \Beluga's concrete syntax.
+\subsection*{Runtime Performance}
 
-While \Beluga versions \texttt{1.0} and \texttt{v1.1} are not functionally equivalent in some aspects, version \texttt{v1.1} brought significant performance improvements as evidenced by figure~\ref{figure:runtime-improvement}.
-These benchmarks are the result of running the entire processing pipeline on a set of examples testable in both versions, namely the \Beluga signatures in the \texttt{examples} directory, with minor adjustments limited to addressing the syntactic changes to meta-objects and coinductive observation applications.
-The project was compiled using the same version of its dependencies in all cases to ensure fair comparisons.
-Though there were changes to \Beluga between versions \texttt{1.0} and \texttt{v1.1} outside of the parsing, disambiguation and indexing phases, the performance improvement is best explained by the simplification of the grammar for parsing, and the usage of mutable dictionaries instead of association lists for name resolution.
+% Why was performance a concern?
+
+Runtime performance is one of the main concerns for \Beluga and \Harpoon.
+Indeed, because dependently-typed programming languages are more difficult to work with than typical languages, assisting the user with data generated during syntactic and semantic analyses is instrumental to program development.
+For example, one of \Beluga's most used feature is that of displaying type information about holes in programs
+Users tend to run type-checking at every step of program development to constantly refresh that information.
+Consequently, in the implementation of \Beluga, a greater emphasis was placed on early error detection and reporting to minimize the latency between signature type-checking requests and the display of useful information.
+
+% What were the impacts of the changes on performance?
+
+Signature reconstruction has been sufficiently fast for most of the mechanizations realised in \Beluga~\texttt{v1.0}.
+Consequently, the new parsing and indexing phases introduced in \texttt{v1.1} had to not degrade the runtime performance of the system.
+This objective was surpassed: on a set of \num{429} test \Beluga signatures totalling approximately \num{35000} lines of code, signature reconstruction ran on average in \SI{8.412(0.133)}{\second} in \texttt{v1.0} and \SI{8.045(0.126)}{\second} in \texttt{v1.1}, which means there was a \SI{4}{\percent} runtime improvement with the revised parsing and indexing phases.
+To ensure a fair comparison, these test cases were selected such that they had at most minor differences between them to mitigate the impact of breaking changes to the syntax.
+The system was compiled using the same version of its dependencies, and the average of \num{15} runs was used with \num{3} warmup runs.
+
+With an identical methodology, a similar test was carried out on a larger mechanization: with an average signature reconstruction runtime of \SI{5.457(0.013)}{\second} in \texttt{v1.0} and \SI{3.956(0.011)}{\second} in \texttt{v1.1}, there was a \SI{3}{\percent} runtime improvement.
+This mechanization is mostly comprised of verbose \Harpoon proof scripts tallying over \num{90000} lines of code, which provides a better estimate for the time required to completely parse, reconstruct and type-check larger projects.
+
+Although there were changes to \Beluga between \texttt{v1.0} and \texttt{v1.1} outside of the parsing, disambiguation and indexing phases, the performance improvement is best explained by the simplification of the grammar for parsing, and the usage of mutable dictionaries instead of association lists for name resolution.
 Additionally, having a uniform referencing environment structure reduced the number of lookup misses that would occur when sequentially looking up declaration tables.
 
 % hyperfine --warmup 3 --runs 15 "opam exec ./TEST"
