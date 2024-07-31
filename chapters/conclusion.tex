@@ -45,6 +45,30 @@ This mechanization is mostly comprised of verbose \Harpoon proof scripts tallyin
 Although there were changes to \Beluga between \texttt{v1.0} and \texttt{v1.1} outside of the parsing, disambiguation and indexing phases, the performance improvement is best explained by the simplification of the grammar for parsing, and the usage of mutable dictionaries instead of association lists for name resolution.
 Additionally, having a uniform referencing environment structure reduced the number of lookup misses that would occur when sequentially looking up declaration tables.
 
+\subsection*{Maintainability}
+
+% Why is maintainability a concern?
+
+The \Beluga system has accrued significant technical debt throughout its development cycles.
+This is partly explained by turnover-induced knowledge loss and lack of unit tests.
+Initiatives were put in place to tackle these issues in \texttt{v1.1} during the revision of the parser.
+
+% What were the impacts of the changes on maintainability?
+
+To avoid turnover-induced knowledge loss, the specification for \Beluga's and \Harpoon's grammar from appendix~\ref{chapter:grammar} has been added to the code repository.
+Additionally, the grammar manipulations and disambiguation mechanisms required for parsing is documented more thoroughly in the implementation.
+This ensures that those steps can be repeated in the future, should the grammar be amended to support new features.
+
+The parser implemented in \texttt{v1.0} returned \acp{AST} containing ambiguous nodes, and would postpone the handling of user-defined operators to the indexing phase.
+This discouraged the implementation of unit tests for the parser since its outputs were incomplete and more likely to change.
+In contrast, the parser revised in \texttt{v1.1} returns \acp{AST} in an unambiguous external syntax representation.
+Because of this, \num{345} unit tests were added to verify the parser in isolation from the rest of the system.
+These tests check success and failure scenarios for parsing small inputs for the important syntactic categories of the language and with respect to mock disambiguation states.
+A unit-testing approach this precise could not have been reliably implemented in \texttt{v1.0}.
+Additionally, partial round-trip testing of the parser was added for existing \Beluga examples and case studies using a pretty-printer for signatures in external syntax representation.
+Complete round-trip testing is not supported since the parser discards inline comments during lexical analysis.
+
+
 % hyperfine --warmup 3 --runs 15 "opam exec ./TEST"
 % hyperfine --warmup 3 --runs 15 "opam exec ./TEST.sh"
 
