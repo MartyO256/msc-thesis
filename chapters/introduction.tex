@@ -91,3 +91,18 @@ Most notably, the \Beluga feature of fixity pragmas for defining prefix, infix o
 A uniform name resolution algorithm to improve the clarity of \Beluga programs, implement namespaces, and to support sound incremental proof development.
 This fixed soundness issues for \Harpoon having to do with its feature of navigation between holes in proofs anywhere in a \Beluga signature.
 \end{enumerate}
+To present these contributions, the thesis is structured as follows:
+\begin{itemize}
+\item
+Chapter~\ref{chapter:background} provides an overview of \Beluga's design as a language for proving theorems, followed by a discussion about its implementation.
+Structural editing features of \Harpoon are outlined next to motivate the implementation changes discussed in chapter~\ref{chapter:indexing-reimplementation}.
+A review of relevant and related work on programming language design, parsing, and incremental proof and program development.
+\item
+Chapter~\ref{chapter:parsing-reimplementation} describes technical limitations in the legacy  implementation of \Beluga's parser.
+These issues are then addressed with a new specification for the language's grammar, along with the introduction of a context-sensitive disambiguation phase that follows context-free parsing.
+\item
+Chapter~\ref{chapter:indexing-reimplementation} presents correctness issues regarding name resolution in \Beluga, both in typical use cases for the language as well as for structural editing with \Harpoon.
+Solutions to these problems are shown, along with a formal proof for a property ensuring that name resolution is sound in structural editing settings in which recoverable user errors occur.
+\item
+Chapter~\ref{chapter:conclusion} concludes with an evaluation of the changes to \Beluga and \Harpoon, followed by areas of the implementation that will need to be reviewed in future work to further improve the system.
+\end{itemize}
