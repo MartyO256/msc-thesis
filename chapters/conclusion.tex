@@ -20,6 +20,10 @@ The following sections conclude this work with an evaluation of the implemented 
 
 \section{Evaluation}
 
+% What are the evaluation criteria for the changes?
+
+The reimplementation of \Beluga and \Harpoon's parsing and indexing phases significantly impacted the system.
+To evaluate these changes, we focus here on the non-functional requirements of runtime performance and maintainability, and then on the functional requirement of soundness.
 
 \subsection*{Runtime Performance}
 
@@ -39,8 +43,10 @@ This objective was surpassed: on a set of \num{429} test \Beluga signatures tota
 To ensure a fair comparison, these test cases were selected such that they had at most minor differences between them to mitigate the impact of breaking changes to the syntax.
 The system was compiled using the same version of its dependencies, and the average of \num{15} runs was used with \num{3} warmup runs.
 
-With an identical methodology, a similar test was carried out on a larger mechanization: with an average signature reconstruction runtime of \SI{5.457(0.013)}{\second} in \texttt{v1.0} and \SI{3.956(0.011)}{\second} in \texttt{v1.1}, there was a \SI{3}{\percent} runtime improvement.
+With an identical methodology, a similar test was carried out on a larger mechanization: with an average signature reconstruction runtime of \SI{5.504(0.024)}{\second} in \texttt{v1.0} and \SI{4.716(0.016)}{\second} in \texttt{v1.1}, there was a \SI{14}{\percent} runtime improvement.
 This mechanization is mostly comprised of verbose \Harpoon proof scripts tallying over \num{90000} lines of code, which provides a better estimate for the time required to completely parse, reconstruct and type-check larger projects.
+The referencing environment states at each proof hole were constructed in a separate traversal of the reconstructed \Beluga signature during the initialization of \Harpoon.
+This means the soundness fixes had virtually no runtime performance impact on \Harpoon's proof navigation commands.
 
 Although there were changes to \Beluga between \texttt{v1.0} and \texttt{v1.1} outside of the parsing, disambiguation and indexing phases, the performance improvement is best explained by the simplification of the grammar for parsing, and the usage of mutable dictionaries instead of association lists for name resolution.
 Additionally, having a uniform referencing environment structure reduced the number of lookup misses that would occur when sequentially looking up declaration tables.
@@ -59,7 +65,7 @@ To avoid turnover-induced knowledge loss, the specification for \Beluga's and \H
 Additionally, the grammar manipulations and disambiguation mechanisms required for parsing is documented more thoroughly in the implementation.
 This ensures that those steps can be repeated in the future, should the grammar be amended to support new features.
 
-The parser implemented in \texttt{v1.0} returned \acp{AST} containing ambiguous nodes, and would postpone the handling of user-defined operators to the indexing phase.
+As outlined in section~\ref{section:beluga-implementation}, the parser implemented in \texttt{v1.0} returned \acp{AST} containing ambiguous nodes, and would postpone the handling of user-defined operators to the indexing phase.
 This discouraged the implementation of unit tests for the parser since its outputs were incomplete and more likely to change.
 In contrast, the parser revised in \texttt{v1.1} returns \acp{AST} in an unambiguous external syntax representation.
 Because of this, \num{345} unit tests were added to verify the parser in isolation from the rest of the system.
@@ -68,60 +74,25 @@ A unit-testing approach this precise could not have been reliably implemented in
 Additionally, partial round-trip testing of the parser was added for existing \Beluga examples and case studies using a pretty-printer for signatures in external syntax representation.
 Complete round-trip testing is not supported since the parser discards inline comments during lexical analysis.
 
+\subsection*{Soundness}
 
-% hyperfine --warmup 3 --runs 15 "opam exec ./TEST"
-% hyperfine --warmup 3 --runs 15 "opam exec ./TEST.sh"
+% Why was correctness/soundness a concern?
 
-%i9-12900k v1.0
-%Benchmark 1: opam exec ./TEST
-%  Time (mean ± σ):      8.412 s ±  0.133 s    [User: 6.677 s, System: 1.642 s]
-%  Range (min … max):    8.139 s …  8.640 s    15 runs
+Throughout the development of \Beluga, a greater emphasis was placed on ensuring the soundness of it's type theory and of it's intricate semantic checks for theorem-proving.
+Since this work is experimental, there are unresolved soundness issues in those later semantic checks.
+To facilitate addressing them, the phases preceding those semantic checks also had to be rectified.
 
-%i9-12900k v1.1
-%Benchmark 1: opam exec ./TEST.sh
-%  Time (mean ± σ):      8.045 s ±  0.126 s    [User: 6.106 s, System: 1.839 s]
-%  Range (min … max):    7.821 s …  8.256 s    15 runs
+% What were the impacts of the changes on correctness/soundness?
 
-%i5-1135G7 v1.0
-%Benchmark 1: opam exec ./TEST
-%  Time (mean ± σ):      8.863 s ±  0.089 s    [User: 7.508 s, System: 1.239 s]
-%  Range (min … max):    8.766 s …  9.087 s    15 runs
+Name resolution in interactive \Harpoon proof sessions was unsound in \texttt{v1.0} as explained in section~\ref{section:indexing-introduction}.
+Indeed, the referencing environment was always stuck in its final state at the very end of the \Beluga signature.
+This meant that out-of-order proof sessions would unsoundly have signature-level declarations brought forward in scope despite appearing at later points in the signature.
+The changes introduced in \texttt{v1.1} addressed three soundness issues: fixing the handling of namespaces, allowing the shadowing of signature-level constants, and most importantly fixing the state of referencing environments when navigating to any hole in \Harpoon proof scripts.
+This corrected \num{4}~test cases and generally improved the usability of both \Beluga and \Harpoon.
+Top-down proof development in \Harpoon is now a viable approach for larger mechanizations.
 
-%i5-1135G7 v1.1
-%Benchmark 1: opam exec ./TEST.sh
-%  Time (mean ± σ):      8.343 s ±  0.087 s    [User: 6.573 s, System: 1.657 s]
-%  Range (min … max):    8.165 s …  8.459 s    15 runs
-
-%i7-3770k v1.0
-%Benchmark 1: opam exec ./TEST
-%  Time (mean ± σ):      16.237 s ±  0.041 s    [User: 14.828 s, System: 1.481 s]
-%  Range (min … max):    16.177 s …  16.321 s    15 runs
-
-%i7-3770k v1.1
-%Benchmark 1: opam exec ./TEST.sh
-%  Time (mean ± σ):      14.830 s ±  0.041 s    [User: 13.025 s, System: 1.879 s]
-%  Range (min … max):    14.776 s …  14.894 s    15 runs
-
-\clearpage
-\begin{figure}[H]
-\centering
-\makebox[\textwidth][c]{
-\begin{tabular}{lccc}
-System & \href{https://github.com/Beluga-lang/Beluga/releases/tag/v1.0}{\Beluga \texttt{v1.0}} runtime (\si{\second}) & \href{https://github.com/Beluga-lang/Beluga/releases/tag/v1.1}{\Beluga \texttt{v1.1}} runtime (\si{\second}) & Difference (\si{\percent})\\
-System 1\footnotemark & \SI{8.412(0.133)}{} & \SI{8.045(0.126)}{} & \SI{-4.36(2.18)}{}\\
-System 2\footnotemark & \SI{8.863(0.089)}{} & \SI{8.343(0.087)}{} & \SI{-5.87(1.41)}{}\\
-System 3\footnotemark & \SI{16.237(0.041)}{} & \SI{14.830(0.041)}{} & \SI{-8.67(0.36)}{}
-\end{tabular}
-}
-\caption[Runtime performance improvement from \Beluga \texttt{v1.0} to \texttt{v1.1}]{%
-Runtime performance improvement from \Beluga \texttt{v1.0} to \texttt{v1.1}.
-These runtimes are the average of 15 runs, with 3 warmup runs.
-}
-\label{figure:runtime-improvement}
-\end{figure}
-\footnotetext[1]{Run on an Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark} i9-12900K processor}
-\footnotetext[2]{Run on an Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark} i5-1135G7 processor}
-\footnotetext[3]{Run on an Intel\textsuperscript{\textregistered} Core\textsuperscript{\texttrademark} i7-3770K processor}
+These changes did come with trade-offs, specifically dropping the support for type-driven disambiguation of meta-level objects and for identifier overloading.
+However, these additional restrictions improve the readability of \Beluga signatures since they are now simpler to disambiguate, and because identifiers refer to one declaration at a time.
 
 \section{Future Work}
 
@@ -130,7 +101,7 @@ Indeed, this allows the indexing procedures to be sound and reusable when visiti
 This also enables indexing to be unit-tested independently of the processing pipeline, which offers greatly visibility into the inner workings of the system, as well as provides more fine-grained verifiers of the implementation's correctness.
 
 There are nonetheless many implementation challenges left ahead in order to fully support structural editing of \Beluga programs and \Harpoon proofs.
-Indeed, there are areas of the system which are still reliant on the assumption that signatures are always processed in order of declaration, and hence that the signature reconstruction store only contains data about visible declarations.
+Indeed, there are areas of the system that still rely on the assumption that signatures are always processed in order of declaration, and hence that the signature reconstruction store only contains data about visible declarations.
 The future areas of work on the implementation of \Beluga and \Harpoon include the following:
 
 \begin{enumerate}
@@ -156,7 +127,7 @@ Dynamic programming over the tree structure of the \ac{AST} would be required to
 
 \section{Final Remarks}
 
-The key lessons learned from this experience with regards to programming language design and implementation are as follows:
+In closing, the key lessons learned from this experience with regards to programming language design and implementation are as follows:
 
 \begin{enumerate}
 \item
@@ -167,7 +138,7 @@ Keep the syntax accepted during context-free parsing simple, and rely on subsequ
 This enables error messages to be augmented with some semantic analysis to suggest corrections.
 \item
 Keep disambiguation and name resolution mechanisms simple and intuitive.
-This ensures that user programs will be readable, at least at the syntactic level.
+This ensures that programs written by users will be readable, at least at the syntactic level.
 \item
 Ensure that the programming language's grammar supports desugared forms for all syntactic sugars, as well as syntax for explicitly supplying what are otherwise implicit terms.
 This facilitates the traceability of programs from their parsed representation to their elaborated representation, it allows users to opt out of using syntactic sugars, and it enables users to observe and verify the results of term and type reconstruction.
