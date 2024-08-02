@@ -6,7 +6,7 @@ This required revising the first few phases of syntactic and semantic analysis f
 The grammar for \Beluga and \Harpoon was fully formalized in \ac{EBNF}, along with a specification of syntactic ambiguities and how they are resolved using precedence levels and grammar blurring.
 The parser was improved with the introduction of a new context-sensitive disambiguation phase.
 This prevented the propagation of ambiguous \ac{AST} nodes into the more complex phases of \Beluga's processing pipeline.
-By the same token, the language's was modified to support non-normal terms, which in turn allowed for syntax error messages to be improved.
+By the same token, the language's grammar was modified to support non-normal terms, which in turn allowed for syntax error messages to be improved.
 The user-defined notation feature, previously limited to terms in the index language, is now fully supported at the computation-level as well.
 These changes make the implementation robust, and the language more expressive and cohesive, which in turn improves the user experience.
 
@@ -31,21 +31,23 @@ To evaluate these changes, we focus here on the non-functional requirements of r
 
 Runtime performance is one of the main concerns for \Beluga and \Harpoon.
 Indeed, because dependently-typed programming languages are more difficult to work with than typical languages, assisting the user with data generated during syntactic and semantic analyses is instrumental to program development.
-For example, one of \Beluga's most used feature is that of displaying type information about holes in programs
+For example, one of \Beluga's most used feature is that of displaying type information about holes in programs.
 Users tend to run type-checking at every step of program development to constantly refresh that information.
-Consequently, in the implementation of \Beluga, a greater emphasis was placed on early error detection and reporting to minimize the latency between signature type-checking requests and the display of useful information.
+Consequently, in the implementation of \Beluga, a greater emphasis was placed on early error detection and reporting to minimize the latency between requests to the type-checker and the display of useful information.
 
 % What were the impacts of the changes on performance?
 
 Signature reconstruction has been sufficiently fast for most of the mechanizations realised in \Beluga~\texttt{v1.0}.
 Consequently, the new parsing and indexing phases introduced in \texttt{v1.1} had to not degrade the runtime performance of the system.
 This objective was surpassed: on a set of \num{429} test \Beluga signatures totalling approximately \num{35000} lines of code, signature reconstruction ran on average in \SI{8.412(0.133)}{\second} in \texttt{v1.0} and \SI{8.045(0.126)}{\second} in \texttt{v1.1}, which means there was a \SI{4}{\percent} runtime improvement with the revised parsing and indexing phases.
-To ensure a fair comparison, these test cases were selected such that they had at most minor differences between them to mitigate the impact of breaking changes to the syntax.
-The system was compiled using the same version of its dependencies, and the average of \num{15} runs was used with \num{3} warmup runs.
+These tests were already part of the total~\num{487}~example and integration test cases in \Beluga~\texttt{v1.0}'s testing suite.
+The other \num{58}~tests were filtered out of this benchmark to mitigate the impact of breaking changes to the syntax.
+The system was compiled using the same version of its dependencies, and the reported results are the average of \num{15} runs, with \num{3} warmup runs.
 
 With an identical methodology, a similar test was carried out on a larger mechanization: with an average signature reconstruction runtime of \SI{5.504(0.024)}{\second} in \texttt{v1.0} and \SI{4.716(0.016)}{\second} in \texttt{v1.1}, there was a \SI{14}{\percent} runtime improvement.
 This mechanization is mostly comprised of verbose \Harpoon proof scripts tallying over \num{90000} lines of code, which provides a better estimate for the time required to completely parse, reconstruct and type-check larger projects.
-The referencing environment states at each proof hole were constructed in a separate traversal of the reconstructed \Beluga signature during the initialization of \Harpoon.
+No modifications had to be performed on that mechanization since it did not features that are part of the breaking changes in~\texttt{v1.1}.
+During the initialization of \Harpoon, the referencing environments at each proof hole were constructed using a separate traversal of the reconstructed \Beluga signature.
 This means the soundness fixes had virtually no runtime performance impact on \Harpoon's proof navigation commands.
 
 Although there were changes to \Beluga between \texttt{v1.0} and \texttt{v1.1} outside of the parsing, disambiguation and indexing phases, the performance improvement is best explained by the simplification of the grammar for parsing, and the usage of mutable dictionaries instead of association lists for name resolution.
@@ -97,7 +99,7 @@ However, these additional restrictions improve the readability of \Beluga signat
 \section{Future Work}
 
 With regards to the implementation of \Beluga and \Harpoon, properly defining referencing environments and implementing indexing with respect to them is a step in the right direction.
-Indeed, this allows the indexing procedures to be sound and reusable when visiting holes in \Harpoon proofs in an out-of-order fashion with respect to the \Beluga signature.
+Indeed, this ensures indexing procedures are reusable and sound when visiting holes in \Harpoon proofs in an out-of-order fashion with respect to the \Beluga signature.
 This also enables indexing to be unit-tested independently of the processing pipeline, which offers greatly visibility into the inner workings of the system, as well as provides more fine-grained verifiers of the implementation's correctness.
 
 There are nonetheless many implementation challenges left ahead in order to fully support structural editing of \Beluga programs and \Harpoon proofs.

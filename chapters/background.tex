@@ -2,7 +2,7 @@
 
 This chapter presents an overview of \Beluga, and \Harpoon, whose implementations were modified as part of this thesis.
 Topics in the design of a programming language's concrete syntax are discussed, along with features found in parsers of languages for proof assistants.
-Then, the concept of incremental proof and program development is briefly explained to motivate those modifications.
+Then, the concept of incremental proof and program development is briefly explained to motivate the implementation changes.
 Finally, the design and implementation of incremental development is examined for various proof assistants.
 
 \section{The \Beluga Language}
@@ -302,7 +302,7 @@ These actions are split into two categories, namely administrative commands and 
 \begin{itemize}
 \item
 Administrative commands affect the ambient state of the \ac{REPL} by allowing the user to navigate in the \Beluga signature and in the history of executed actions.
-These include navigating between incomplete subgoals in a theorem, navigating to incomplete proof scripts, undoing and redoing proof tactics, renaming bound variables, and persisting the changes made to the signature.
+These commands include navigating between incomplete subgoals in a theorem, navigating to incomplete proof scripts, undoing and redoing proof tactics, renaming bound variables, and persisting the changes made to the signature.
 \item
 Proof tactics affect the state of the proof script under edit.
 These include tactics such as \verb|intros| to universally quantify over the current theorem's premises and \verb|split| to perform a case analysis on the structure of a value.

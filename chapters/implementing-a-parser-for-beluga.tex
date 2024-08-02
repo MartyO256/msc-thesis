@@ -33,7 +33,7 @@ To resolve these problems, architectural modifications were made to the parser, 
 
 \section{\Beluga Lexing, Parsing and Disambiguation Phases}\label{section:lexing-parsing-disambiguation}
 
-As part of this thesis, \Beluga's parser was reimplemented to address correctness issues, handle expressions in non-canonical form to improve error reporting, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
+As part of this thesis, \Beluga's parser was reimplemented to address correctness issues, to handle expressions in non-canonical, to improve error reporting, to support user-defined operators at the level of computations, and to improve the implementation's maintainability.
 Particularly, semantic analysis is introduced as part of a new context-sensitive disambiguation phase to the parser in order to produce a fully unambiguous \ac{AST} before signature reconstruction.
 The motivation for these changes to the implementation of \Beluga can be summarized in the following points:
 \begin{enumerate}
